@@ -22,27 +22,12 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className={`${sizeClasses[size]} relative brain-icon`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg p-1">
-          <div className="w-full h-full bg-white rounded-md flex items-center justify-center">
-            {/* Brain with circuits icon */}
-            <svg viewBox="0 0 24 24" className="w-full h-full text-blue-600" fill="currentColor">
-              <path d="M12 2C8.69 2 6 4.69 6 8v2c0 .55.45 1 1 1s1-.45 1-1V8c0-2.21 1.79-4 4-4s4 1.79 4 4v2c0 .55.45 1 1 1s1-.45 1-1V8c0-3.31-2.69-6-6-6z"/>
-              <path d="M12 12c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2s2-.9 2-2v-6c0-1.1-.9-2-2-2z"/>
-              <circle cx="8" cy="14" r="1"/>
-              <circle cx="16" cy="14" r="1"/>
-              <circle cx="8" cy="18" r="1"/>
-              <circle cx="16" cy="18" r="1"/>
-              <path d="M7 15h2M15 15h2M7 19h2M15 19h2" stroke="currentColor" strokeWidth="0.5"/>
-            </svg>
-          </div>
-        </div>
-        {/* Puzzle pieces overlay */}
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded transform rotate-12">
-          <svg viewBox="0 0 16 16" className="w-full h-full text-white" fill="currentColor">
-            <path d="M3 1a1 1 0 000 2v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L6 8.586V3a1 1 0 000-2H3z"/>
-          </svg>
-        </div>
+      <div className={`${sizeClasses[size]} relative`}>
+        <img 
+          src="/lovable-uploads/21637d78-a84d-46c7-9307-1bd4869cd140.png" 
+          alt="EdugameIA Logo" 
+          className="w-full h-full object-contain"
+        />
       </div>
       {showText && (
         <div className={`font-bold ${textSizeClasses[size]}`}>
