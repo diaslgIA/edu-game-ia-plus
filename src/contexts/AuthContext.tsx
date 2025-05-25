@@ -14,9 +14,11 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGmail: () => Promise<boolean>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
   updatePoints: (points: number) => void;
+  updateAvatar: (avatar: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -61,6 +63,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGmail = async (): Promise<boolean> => {
+    try {
+      // Simulate Gmail login
+      const mockUser: User = {
+        id: 'gmail_' + Date.now(),
+        name: 'Usuário Gmail',
+        email: 'usuario@gmail.com',
+        points: 0,
+        level: 1,
+        isVerified: false
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('eduGameUser', JSON.stringify(mockUser));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const register = async (userData: any): Promise<boolean> => {
     try {
       // Simulate API call
@@ -94,12 +116,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateAvatar = (avatar: string) => {
+    if (user) {
+      const updatedUser = { ...user, avatar };
+      setUser(updatedUser);
+      localStorage.setItem('eduGameUser', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     user,
     login,
+    loginWithGmail,
     register,
     logout,
     updatePoints,
+    updateAvatar,
     isAuthenticated: !!user
   };
 

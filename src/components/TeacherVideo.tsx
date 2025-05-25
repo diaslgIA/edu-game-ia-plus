@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Volume2, Maximize, Clock } from 'lucide-react';
+import { Play, Pause, Volume2, Maximize, Clock, Lock } from 'lucide-react';
+import { useContentLimits } from '@/hooks/useContentLimits';
+import { useToast } from '@/hooks/use-toast';
 
 interface TeacherVideoProps {
   teacher: string;
@@ -19,12 +21,30 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
   isPremium 
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasWatched, setHasWatched] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [progress, setProgress] = useState(0);
+  
+  const { canWatchVideo, watchVideo, videosWatched, maxVideos } = useContentLimits();
+  const { toast } = useToast();
+
+  const canPlay = isPremium || canWatchVideo;
 
   const handlePlayPause = () => {
-    if (!isPremium) return;
+    if (!canPlay) {
+      toast({
+        title: "Limite atingido",
+        description: `Você já assistiu ${videosWatched}/${maxVideos} vídeos gratuitos. Assine o Premium para acesso ilimitado!`,
+        variant: "destructive",
+      });
+      return;
+    }
     
+    if (!hasWatched && !isPlaying) {
+      watchVideo();
+      setHasWatched(true);
+    }
+
     setIsPlaying(!isPlaying);
     
     if (!isPlaying) {
@@ -52,7 +72,7 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-lg">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg transition-colors duration-300">
       {/* Video Player */}
       <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 aspect-video">
         {/* Video Background */}
@@ -70,29 +90,35 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
           </div>
         </div>
 
-        {/* Premium Overlay */}
-        {!isPremium && (
+        {/* Limit Overlay for Free Users */}
+        {!canPlay && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <div className="text-center text-white">
               <div className="w-16 h-16 mx-auto mb-4 bg-orange-500 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M12,3A3,3 0 0,1 15,6V8H9V6A3,3 0 0,1 12,3Z"/>
-                </svg>
+                <Lock className="w-8 h-8" />
               </div>
-              <p className="text-sm font-medium">Conteúdo Premium</p>
-              <p className="text-xs opacity-80">Assine para assistir</p>
+              <p className="text-sm font-medium">Limite de vídeos atingido</p>
+              <p className="text-xs opacity-80">{videosWatched}/{maxVideos} vídeos assistidos</p>
+              <p className="text-xs opacity-80 mt-2">Assine Premium para acesso ilimitado</p>
             </div>
+          </div>
+        )}
+
+        {/* Premium Overlay */}
+        {!isPremium && canPlay && (
+          <div className="absolute top-4 right-4 bg-orange-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
+            Gratuito: {videosWatched + 1}/{maxVideos}
           </div>
         )}
 
         {/* Play Button */}
         <button
           onClick={handlePlayPause}
-          disabled={!isPremium}
+          disabled={!canPlay}
           className="absolute inset-0 flex items-center justify-center group"
         >
           <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-            isPremium 
+            canPlay 
               ? 'bg-white/20 group-hover:bg-white/30 group-hover:scale-110' 
               : 'bg-gray-500/50 cursor-not-allowed'
           }`}>
@@ -105,7 +131,7 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
         </button>
 
         {/* Video Controls */}
-        {isPremium && (
+        {canPlay && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
             {/* Progress Bar */}
             <div className="mb-3">
@@ -139,14 +165,14 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
 
       {/* Video Info */}
       <div className="p-4">
-        <h3 className="font-bold text-gray-800 mb-2">{topic}</h3>
-        <p className="text-gray-600 text-sm mb-3">
+        <h3 className="font-bold text-gray-800 dark:text-white mb-2 transition-colors duration-300">{topic}</h3>
+        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors duration-300">
           Nesta aula, o Professor {teacher} explica os conceitos fundamentais de {topic} 
           de forma didática e com exemplos práticos para o ENEM.
         </p>
         
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
             <Clock size={16} />
             <span>{duration}</span>
           </div>
@@ -155,9 +181,13 @@ const TeacherVideo: React.FC<TeacherVideoProps> = ({
             <div className="text-green-600 text-sm font-medium">
               ✓ Acesso Liberado
             </div>
-          ) : (
+          ) : canPlay ? (
             <div className="text-orange-600 text-sm font-medium">
-              🔒 Premium
+              🆓 Gratuito ({videosWatched + (hasWatched ? 0 : 1)}/{maxVideos})
+            </div>
+          ) : (
+            <div className="text-red-600 text-sm font-medium">
+              🔒 Limite atingido
             </div>
           )}
         </div>
