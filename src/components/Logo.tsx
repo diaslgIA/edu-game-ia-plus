@@ -24,7 +24,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '
     <div className={`flex items-center gap-3 ${className}`}>
       <div className={`${sizeClasses[size]} relative`}>
         <img 
-          src="/lovable-uploads/21637d78-a84d-46c7-9307-1bd4869cd140.png" 
+          src="/lovable-uploads/c89e1be7-9a09-4ae6-8521-2966b9b1bb58.png" 
           alt="EdugameIA Logo" 
           className="w-full h-full object-contain"
         />

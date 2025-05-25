@@ -1,6 +1,6 @@
 
 import React from 'react';
-import FloatingElements from './FloatingElements';
+import InteractiveBackground from './InteractiveBackground';
 
 interface MobileContainerProps {
   children: React.ReactNode;
@@ -14,14 +14,14 @@ const MobileContainer: React.FC<MobileContainerProps> = ({
   background = 'gradient' 
 }) => {
   const backgroundClass = {
-    gradient: 'gradient-bg',
+    gradient: 'relative',
     light: 'bg-gradient-to-br from-blue-50 to-purple-50',
     white: 'bg-white'
   };
 
   return (
     <div className={`mobile-container ${backgroundClass[background]} ${className}`}>
-      {background === 'gradient' && <FloatingElements />}
+      {background === 'gradient' && <InteractiveBackground />}
       <div className="relative z-10 h-full">
         {children}
       </div>
