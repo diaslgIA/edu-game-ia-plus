@@ -24,7 +24,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '
     <div className={`flex items-center gap-3 ${className}`}>
       <div className={`${sizeClasses[size]} relative`}>
         <img 
-          src="/lovable-uploads/c89e1be7-9a09-4ae6-8521-2966b9b1bb58.png" 
+          src="/lovable-uploads/08babff9-54df-4763-8eb1-122f7d168e73.png" 
           alt="EdugameIA Logo" 
           className="w-full h-full object-contain"
         />
@@ -32,7 +32,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '
       {showText && (
         <div className={`font-bold ${textSizeClasses[size]}`}>
           <span className="text-blue-600">Edugame</span>
-          <span className="text-purple-600">IA</span>
+          <span className="text-yellow-500">iA</span>
         </div>
       )}
     </div>

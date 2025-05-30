@@ -4,246 +4,199 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Settings, Key, Globe, Shield, FileText, Info, Share2, Check, Moon, Sun } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Camera, Trophy, Star, Target, BookOpen } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('Português');
+  const { user, profile, updateProfile, signOut } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: profile?.full_name || '',
+    school_year: profile?.school_year || '',
+    phone_number: profile?.phone_number || ''
+  });
 
-  const languages = [
-    'Português', 'English', 'Español', 'Français', 'Deutsch', 'Italiano', 
-    '中文', '日本語', '한국어', 'العربية', 'Русский', 'Nederlands', 'Polski'
+  const schoolYearOptions = [
+    { value: '1º Ano Ensino Médio', label: '1º Ano do Ensino Médio' },
+    { value: '2º Ano Ensino Médio', label: '2º Ano do Ensino Médio' },
+    { value: '3º Ano Ensino Médio', label: '3º Ano do Ensino Médio' },
+    { value: 'Ensino Médio Concluído', label: 'Ensino Médio Concluído' },
+    { value: 'Cursinho Pré-Vestibular', label: 'Cursinho Pré-Vestibular' }
   ];
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'EduGameIA',
-        text: 'Descubra o melhor app educacional para o ENEM!',
-        url: window.location.origin,
-      });
-    } else {
-      // Fallback para dispositivos que não suportam Web Share API
-      navigator.clipboard.writeText(window.location.origin);
-      alert('Link copiado para a área de transferência!');
+  const handleSave = async () => {
+    const success = await updateProfile(formData);
+    if (success) {
+      setIsEditing(false);
     }
   };
 
-  const handleChangePassword = () => {
-    // Simular mudança de senha
-    const newPassword = prompt('Digite sua nova senha:');
-    if (newPassword) {
-      alert('Senha alterada com sucesso!');
-    }
-  };
-
-  const handleLanguageChange = (language: string) => {
-    setSelectedLanguage(language);
-    alert(`Idioma alterado para ${language}`);
-  };
-
-  const handlePrivacyPolicy = () => {
-    alert('Política de Privacidade:\n\nNós respeitamos sua privacidade e protegemos seus dados pessoais. Coletamos apenas informações necessárias para melhorar sua experiência de aprendizado. Seus dados nunca são vendidos a terceiros.');
-  };
-
-  const handleTermsConditions = () => {
-    alert('Termos e Condições:\n\nAo usar o EduGameIA, você concorda com nossos termos de uso. O app é destinado para fins educacionais. É proibido compartilhar contas ou usar o conteúdo comercialmente.');
-  };
-
-  const handleAboutApp = () => {
-    alert('Sobre o EduGameIA:\n\nVersão 1.0.0\n\nO EduGameIA é um aplicativo educacional gamificado focado em preparar estudantes para o ENEM e vestibulares. Desenvolvido com amor para democratizar a educação de qualidade.');
-  };
-
-  const menuItems = [
-    { 
-      icon: darkMode ? Sun : Moon, 
-      label: 'Modo', 
-      sublabel: darkMode ? 'Claro' : 'Escuro', 
-      hasToggle: true,
-      action: () => setDarkMode(!darkMode)
-    },
-    { 
-      icon: Key, 
-      label: 'Alterar a senha', 
-      hasArrow: true,
-      action: handleChangePassword
-    },
-    { 
-      icon: Globe, 
-      label: 'Idioma', 
-      sublabel: selectedLanguage,
-      hasArrow: true,
-      action: () => {
-        const language = prompt(`Idiomas disponíveis:\n${languages.join('\n')}\n\nDigite o idioma desejado:`);
-        if (language && languages.includes(language)) {
-          handleLanguageChange(language);
-        }
-      }
-    },
-    { 
-      icon: Share2, 
-      label: 'Compartilhar aplicativo', 
-      hasArrow: true,
-      action: handleShare
-    },
-  ];
-
-  const infoItems = [
-    { 
-      icon: Shield, 
-      label: 'Política de Privacidade', 
-      hasArrow: true,
-      action: handlePrivacyPolicy
-    },
-    { 
-      icon: FileText, 
-      label: 'Termos e Condições', 
-      hasArrow: true,
-      action: handleTermsConditions
-    },
-    { 
-      icon: Info, 
-      label: 'Sobre o aplicativo', 
-      hasArrow: true,
-      action: handleAboutApp
-    },
-  ];
-
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
+  const achievements = [
+    { icon: Trophy, label: 'Primeira Conquista', color: 'text-yellow-500' },
+    { icon: Star, label: 'Estudante Dedicado', color: 'text-blue-500' },
+    { icon: Target, label: 'Foco Total', color: 'text-green-500' },
+    { icon: BookOpen, label: 'Leitor Assíduo', color: 'text-purple-500' },
+  ];
+
   return (
     <MobileContainer background="gradient">
-      <div className={`flex flex-col h-full pb-20 transition-colors duration-300 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+      <div className="flex flex-col h-full pb-20">
         {/* Header */}
-        <div className={`p-4 flex items-center justify-between rounded-b-3xl transition-colors duration-300 ${
-          darkMode ? 'bg-gray-900' : 'bg-white/90 backdrop-blur-md'
-        }`}>
-          <div className="flex items-center space-x-3">
+        <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
+          <div className="flex items-center justify-between mb-4">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className={`p-2 ${darkMode ? 'text-white hover:bg-gray-800' : 'text-gray-800 hover:bg-gray-100'}`}
+              className="text-white p-2"
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Perfil</h1>
-          </div>
-          <div className="text-blue-400">
-            <Check size={20} />
+            <Logo size="sm" showText={false} />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              className="text-white/80 hover:text-white text-sm"
+            >
+              Sair
+            </Button>
           </div>
         </div>
 
-        {/* Profile info */}
-        <div className="p-6">
-          <div className="text-center mb-8">
-            <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 relative transition-colors duration-300 ${
-              darkMode ? 'bg-gray-700' : 'bg-gradient-to-br from-blue-400 to-purple-500'
-            }`}>
-              <User size={40} className="text-white" />
-              <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                darkMode ? 'bg-gray-600' : 'bg-white'
-              }`}>
-                <span className="text-xs">✏️</span>
+        {/* Profile Section */}
+        <div className="px-6 py-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-white">
+            {/* Profile Picture */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-4xl font-bold">
+                  {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <Button
+                  size="sm"
+                  className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 p-0"
+                >
+                  <Camera size={14} />
+                </Button>
+              </div>
+              <h2 className="text-xl font-bold mt-3">{profile?.full_name || 'Usuário'}</h2>
+              <p className="text-white/80 text-sm">{user?.email}</p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{profile?.points || 0}</div>
+                <div className="text-xs opacity-80">Pontos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{profile?.level || 1}</div>
+                <div className="text-xs opacity-80">Nível</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">7</div>
+                <div className="text-xs opacity-80">Sequência</div>
               </div>
             </div>
-            <h2 className="text-xl font-bold">{user?.name}</h2>
-            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{user?.email}</p>
-          </div>
 
-          {/* General Configuration */}
-          <div className="mb-8">
-            <h3 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Configuração Geral
-            </h3>
-            <div className="space-y-3">
-              {menuItems.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div 
-                    key={index} 
-                    className={`rounded-2xl p-4 flex items-center justify-between cursor-pointer transition-all duration-300 hover:scale-105 ${
-                      darkMode ? 'bg-gray-800/50 backdrop-blur-md' : 'bg-white/50 backdrop-blur-md'
-                    }`}
-                    onClick={item.action}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-100'}`}>
-                        <Icon size={20} className={darkMode ? 'text-blue-400' : 'text-blue-600'} />
-                      </div>
-                      <div>
-                        <span className="font-medium">{item.label}</span>
-                        {item.sublabel && (
-                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {item.sublabel}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {item.hasToggle && (
-                      <Switch 
-                        checked={darkMode} 
-                        onCheckedChange={setDarkMode}
-                        className="data-[state=checked]:bg-blue-500"
-                      />
-                    )}
-                    {item.hasArrow && (
-                      <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>›</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {/* Edit Profile Button */}
+            <Button
+              onClick={() => setIsEditing(true)}
+              className="w-full bg-white/20 hover:bg-white/30 text-white border-none"
+            >
+              Editar Perfil
+            </Button>
           </div>
-
-          {/* Information */}
-          <div className="mb-8">
-            <h3 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Informações
-            </h3>
-            <div className="space-y-3">
-              {infoItems.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div 
-                    key={index} 
-                    className={`rounded-2xl p-4 flex items-center justify-between cursor-pointer transition-all duration-300 hover:scale-105 ${
-                      darkMode ? 'bg-gray-800/50 backdrop-blur-md' : 'bg-white/50 backdrop-blur-md'
-                    }`}
-                    onClick={item.action}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-purple-100'}`}>
-                        <Icon size={20} className={darkMode ? 'text-purple-400' : 'text-purple-600'} />
-                      </div>
-                      <span className="font-medium">{item.label}</span>
-                    </div>
-                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>›</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Logout button */}
-          <Button
-            onClick={handleLogout}
-            className={`w-full font-semibold py-3 rounded-2xl transition-all duration-300 hover:scale-105 ${
-              darkMode 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
-          >
-            Sair da conta
-          </Button>
         </div>
+
+        {/* Achievements */}
+        <div className="px-6 py-2">
+          <h3 className="text-white text-lg font-semibold mb-4">Conquistas</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {achievements.map((achievement, index) => (
+              <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
+                <achievement.icon className={`${achievement.color} w-8 h-8 mb-2`} />
+                <p className="text-sm font-medium">{achievement.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Edit Profile Modal */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+              <h3 className="text-xl font-bold mb-4">Editar Perfil</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="full_name">Nome Completo</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="school_year">Ano Escolar</Label>
+                  <Select 
+                    value={formData.school_year} 
+                    onValueChange={(value) => setFormData({...formData, school_year: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione seu ano escolar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {schoolYearOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="phone_number">Telefone (Opcional)</Label>
+                  <Input
+                    id="phone_number"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="flex-1"
+                >
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       <BottomNavigation />
