@@ -9,7 +9,167 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      content_usage: {
+        Row: {
+          activities_completed: number | null
+          created_at: string | null
+          id: string
+          reset_date: string | null
+          updated_at: string | null
+          user_id: string
+          videos_watched: number | null
+        }
+        Insert: {
+          activities_completed?: number | null
+          created_at?: string | null
+          id?: string
+          reset_date?: string | null
+          updated_at?: string | null
+          user_id: string
+          videos_watched?: number | null
+        }
+        Update: {
+          activities_completed?: number | null
+          created_at?: string | null
+          id?: string
+          reset_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+          videos_watched?: number | null
+        }
+        Relationships: []
+      }
+      game_modules: {
+        Row: {
+          content_data: Json | null
+          created_at: string | null
+          description: string | null
+          difficulty: number | null
+          id: string
+          is_premium: boolean | null
+          subject_area: string | null
+          target_school_years: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_data?: Json | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: number | null
+          id?: string
+          is_premium?: boolean | null
+          subject_area?: string | null
+          target_school_years?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_data?: Json | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: number | null
+          id?: string
+          is_premium?: boolean | null
+          subject_area?: string | null
+          target_school_years?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_verified: boolean | null
+          level: number | null
+          phone_number: string | null
+          points: number | null
+          profile_picture_url: string | null
+          school_year: string
+          subscription_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_verified?: boolean | null
+          level?: number | null
+          phone_number?: string | null
+          points?: number | null
+          profile_picture_url?: string | null
+          school_year: string
+          subscription_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_verified?: boolean | null
+          level?: number | null
+          phone_number?: string | null
+          points?: number | null
+          profile_picture_url?: string | null
+          school_year?: string
+          subscription_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          last_played_at: string | null
+          module_id: string
+          progress_details: Json | null
+          score: number | null
+          started_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          module_id: string
+          progress_details?: Json | null
+          score?: number | null
+          started_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          module_id?: string
+          progress_details?: Json | null
+          score?: number | null
+          started_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "game_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
