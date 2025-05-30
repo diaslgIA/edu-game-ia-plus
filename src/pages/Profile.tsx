@@ -2,23 +2,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import Logo from '@/components/Logo';
+import AvatarSelector from '@/components/AvatarSelector';
+import SettingsModal from '@/components/SettingsModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Camera, Trophy, Star, Target, BookOpen } from 'lucide-react';
+import { ArrowLeft, Camera, Trophy, Star, Target, BookOpen, Settings } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, profile, updateProfile, signOut } = useAuth();
+  const { playSound } = useSound();
   const [isEditing, setIsEditing] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     school_year: profile?.school_year || '',
-    phone_number: profile?.phone_number || ''
+    phone_number: profile?.phone_number || '',
+    profile_picture_url: profile?.profile_picture_url || ''
   });
 
   const schoolYearOptions = [
@@ -33,12 +39,47 @@ const Profile = () => {
     const success = await updateProfile(formData);
     if (success) {
       setIsEditing(false);
+      playSound('success');
+    } else {
+      playSound('error');
     }
   };
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    playSound('click');
+  };
+
+  const handleAvatarChange = (avatar: string) => {
+    setFormData({ ...formData, profile_picture_url: avatar });
+    playSound('click');
+  };
+
+  const handlePhotoUpload = (file: File) => {
+    // In a real app, you would upload the file to storage
+    // For now, we'll just create a URL for preview
+    const url = URL.createObjectURL(file);
+    setFormData({ ...formData, profile_picture_url: url });
+    playSound('success');
+  };
+
+  const renderAvatar = () => {
+    if (profile?.profile_picture_url) {
+      if (profile.profile_picture_url.length === 2) {
+        // It's an emoji avatar
+        return <span className="text-4xl">{profile.profile_picture_url}</span>;
+      } else {
+        // It's a photo URL
+        return (
+          <img 
+            src={profile.profile_picture_url} 
+            alt="Profile" 
+            className="w-24 h-24 rounded-full object-cover"
+          />
+        );
+      }
+    }
+    return <span className="text-4xl font-bold">{profile?.full_name?.[0]?.toUpperCase() || 'U'}</span>;
   };
 
   const achievements = [
@@ -63,14 +104,24 @@ const Profile = () => {
               <ArrowLeft size={20} />
             </Button>
             <Logo size="sm" showText={false} />
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleLogout}
-              className="text-white/80 hover:text-white text-sm"
-            >
-              Sair
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                className="text-white/80 hover:text-white"
+              >
+                <Settings size={18} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleLogout}
+                className="text-white/80 hover:text-white text-sm"
+              >
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -80,11 +131,12 @@ const Profile = () => {
             {/* Profile Picture */}
             <div className="flex flex-col items-center mb-6">
               <div className="relative">
-                <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-4xl font-bold">
-                  {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+                <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
+                  {renderAvatar()}
                 </div>
                 <Button
                   size="sm"
+                  onClick={() => setIsEditing(true)}
                   className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 p-0"
                 >
                   <Camera size={14} />
@@ -136,26 +188,36 @@ const Profile = () => {
         {/* Edit Profile Modal */}
         {isEditing && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-              <h3 className="text-xl font-bold mb-4">Editar Perfil</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+              <h3 className="text-xl font-bold mb-4 dark:text-white">Editar Perfil</h3>
               
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="full_name">Nome Completo</Label>
-                  <Input
-                    id="full_name"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                  <Label htmlFor="avatar" className="dark:text-white">Avatar / Foto</Label>
+                  <AvatarSelector
+                    currentAvatar={formData.profile_picture_url}
+                    onAvatarChange={handleAvatarChange}
+                    onPhotoUpload={handlePhotoUpload}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="school_year">Ano Escolar</Label>
+                  <Label htmlFor="full_name" className="dark:text-white">Nome Completo</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                    className="dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="school_year" className="dark:text-white">Ano Escolar</Label>
                   <Select 
                     value={formData.school_year} 
                     onValueChange={(value) => setFormData({...formData, school_year: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:text-white">
                       <SelectValue placeholder="Selecione seu ano escolar" />
                     </SelectTrigger>
                     <SelectContent>
@@ -169,12 +231,13 @@ const Profile = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone_number">Telefone (Opcional)</Label>
+                  <Label htmlFor="phone_number" className="dark:text-white">Telefone (Opcional)</Label>
                   <Input
                     id="phone_number"
                     value={formData.phone_number}
                     onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
                     placeholder="(11) 99999-9999"
+                    className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
@@ -183,7 +246,7 @@ const Profile = () => {
                 <Button
                   variant="outline"
                   onClick={() => setIsEditing(false)}
-                  className="flex-1"
+                  className="flex-1 dark:border-gray-600 dark:text-white"
                 >
                   Cancelar
                 </Button>
@@ -200,6 +263,7 @@ const Profile = () => {
       </div>
       
       <BottomNavigation />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </MobileContainer>
   );
 };

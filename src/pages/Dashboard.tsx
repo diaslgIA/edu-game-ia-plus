@@ -1,16 +1,27 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import SettingsModal from '@/components/SettingsModal';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star } from 'lucide-react';
+import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { t } = useLanguage();
+  const { playSound } = useSound();
+  const [showSettings, setShowSettings] = useState(false);
+
+  const handleNavigation = (path: string) => {
+    playSound('click');
+    navigate(path);
+  };
 
   const stats = [
     { icon: Trophy, label: 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
@@ -21,14 +32,14 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      title: 'Matérias',
+      title: t('subjects'),
       description: 'Explore conteúdos por área',
       icon: '📚',
       color: 'from-blue-400 to-blue-600',
       path: '/subjects'
     },
     {
-      title: 'Exercícios',
+      title: t('exercises'),
       description: 'Pratique com atividades',
       icon: '✏️',
       color: 'from-green-400 to-green-600',
@@ -56,15 +67,25 @@ const Dashboard = () => {
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
           <div className="flex items-center justify-between mb-4">
-            <Logo size="md" showText={false} />
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={signOut}
-              className="text-white/80 hover:text-white"
-            >
-              Sair
-            </Button>
+            <Logo size="md" showText={false} animated />
+            <div className="flex space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                className="text-white/80 hover:text-white"
+              >
+                <Settings size={18} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={signOut}
+                className="text-white/80 hover:text-white"
+              >
+                Sair
+              </Button>
+            </div>
           </div>
           <div>
             <h1 className="text-2xl font-bold">
@@ -103,7 +124,7 @@ const Dashboard = () => {
             {quickActions.map((action, index) => (
               <Button
                 key={index}
-                onClick={() => navigate(action.path)}
+                onClick={() => handleNavigation(action.path)}
                 className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl h-auto hover:scale-105 transition-all duration-200 shadow-lg`}
               >
                 <div className="text-center">
@@ -169,6 +190,7 @@ const Dashboard = () => {
       </div>
       
       <BottomNavigation />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </MobileContainer>
   );
 };

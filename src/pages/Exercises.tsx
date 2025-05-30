@@ -1,21 +1,33 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import EducationalGame from '@/components/EducationalGame';
+import SubjectQuiz from '@/components/SubjectQuiz';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Gamepad2, Trophy, Target, Clock, Star, Brain, Zap } from 'lucide-react';
 
 const Exercises = () => {
   const navigate = useNavigate();
+  const { playSound } = useSound();
   const [showGame, setShowGame] = useState(false);
+  const [showSubjectQuiz, setShowSubjectQuiz] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const handleGameComplete = (score: number, timeSpent: number) => {
     console.log(`Jogo concluído! Pontos: ${score}, Tempo: ${timeSpent}s`);
+    playSound('success');
     setShowGame(false);
+    setShowSubjectQuiz(false);
+  };
+
+  const handleSubjectSelect = (subject: string) => {
+    setSelectedSubject(subject);
+    setShowSubjectQuiz(true);
+    playSound('click');
   };
 
   const subjects = [
@@ -27,10 +39,10 @@ const Exercises = () => {
       topics: [
         { name: 'Funções Quadráticas', difficulty: 'Médio', questions: 15, time: '20 min' },
         { name: 'Geometria Analítica', difficulty: 'Difícil', questions: 20, time: '25 min' },
-        { name: 'Estatística Básica', difficulty: 'Fácil', questions: 12, time: '15 min' },
         { name: 'Trigonometria', difficulty: 'Médio', questions: 18, time: '22 min' },
         { name: 'Logaritmos', difficulty: 'Difícil', questions: 16, time: '20 min' },
-        { name: 'Análise Combinatória', difficulty: 'Médio', questions: 14, time: '18 min' }
+        { name: 'Progressões Aritméticas', difficulty: 'Médio', questions: 14, time: '18 min' },
+        { name: 'Análise Combinatória', difficulty: 'Difícil', questions: 22, time: '30 min' }
       ]
     },
     {
@@ -44,7 +56,7 @@ const Exercises = () => {
         { name: 'Sintaxe e Semântica', difficulty: 'Difícil', questions: 15, time: '20 min' },
         { name: 'Literatura Brasileira', difficulty: 'Médio', questions: 14, time: '17 min' },
         { name: 'Gêneros Textuais', difficulty: 'Fácil', questions: 8, time: '10 min' },
-        { name: 'Variação Linguística', difficulty: 'Médio', questions: 11, time: '15 min' }
+        { name: 'Morfologia', difficulty: 'Médio', questions: 11, time: '15 min' }
       ]
     },
     {
@@ -62,29 +74,66 @@ const Exercises = () => {
       ]
     },
     {
-      name: 'Ciências Humanas',
-      icon: '🌍',
+      name: 'História',
+      icon: '🏛️',
       color: 'from-orange-400 to-orange-600',
       bgColor: 'bg-orange-100',
       topics: [
         { name: 'História do Brasil República', difficulty: 'Médio', questions: 16, time: '20 min' },
-        { name: 'Geografia Física', difficulty: 'Fácil', questions: 12, time: '15 min' },
-        { name: 'Filosofia Moderna', difficulty: 'Difícil', questions: 14, time: '18 min' },
-        { name: 'Sociologia Contemporânea', difficulty: 'Médio', questions: 13, time: '17 min' },
-        { name: 'Geopolítica Mundial', difficulty: 'Médio', questions: 15, time: '19 min' },
-        { name: 'História Antiga e Medieval', difficulty: 'Fácil', questions: 11, time: '14 min' }
+        { name: 'História Antiga e Medieval', difficulty: 'Fácil', questions: 11, time: '14 min' },
+        { name: 'Revolução Industrial', difficulty: 'Médio', questions: 13, time: '17 min' },
+        { name: 'Guerras Mundiais', difficulty: 'Difícil', questions: 18, time: '24 min' },
+        { name: 'Brasil Colonial', difficulty: 'Médio', questions: 15, time: '19 min' },
+        { name: 'Era Vargas', difficulty: 'Difícil', questions: 14, time: '18 min' }
       ]
     }
   ];
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Fácil': return 'text-green-600 bg-green-100';
-      case 'Médio': return 'text-yellow-600 bg-yellow-100';
-      case 'Difícil': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'Fácil': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
+      case 'Médio': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
+      case 'Difícil': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-900/30';
     }
   };
+
+  if (showSubjectQuiz && selectedSubject) {
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
+            <div className="flex items-center justify-between mb-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowSubjectQuiz(false)}
+                className="text-white p-2"
+              >
+                <ArrowLeft size={20} />
+              </Button>
+              <Logo size="sm" showText={false} />
+              <div className="w-10" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Brain size={24} />
+              <h1 className="text-2xl font-bold">Quiz de {selectedSubject}</h1>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <SubjectQuiz 
+              subject={selectedSubject}
+              onComplete={handleGameComplete}
+              onBack={() => setShowSubjectQuiz(false)}
+            />
+          </div>
+        </div>
+        
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
   if (showGame) {
     return (
@@ -121,7 +170,7 @@ const Exercises = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
+      <div className="flex flex-col h-full pb-20 dark:text-white">
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
           <div className="flex items-center justify-between mb-4">
@@ -190,7 +239,10 @@ const Exercises = () => {
               </div>
               
               <Button 
-                onClick={() => setShowGame(true)}
+                onClick={() => {
+                  setShowGame(true);
+                  playSound('click');
+                }}
                 className="w-full bg-white text-purple-600 hover:bg-gray-100 font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg"
               >
                 <Gamepad2 size={20} />
@@ -217,28 +269,28 @@ const Exercises = () => {
                     </div>
                   </div>
                   <Button
-                    onClick={() => setSelectedSubject(selectedSubject === subject.name ? null : subject.name)}
+                    onClick={() => handleSubjectSelect(subject.name)}
                     className="bg-white/20 hover:bg-white/30 text-white border-none"
                     size="sm"
                   >
-                    {selectedSubject === subject.name ? 'Ocultar' : 'Ver Tudo'}
+                    Quiz Específico
                   </Button>
                 </div>
 
                 {/* Topics */}
-                <div className="bg-white rounded-b-2xl shadow-sm">
-                  {subject.topics.slice(0, selectedSubject === subject.name ? subject.topics.length : 3).map((topic, topicIndex) => (
+                <div className="bg-white dark:bg-gray-800 rounded-b-2xl shadow-sm">
+                  {subject.topics.slice(0, 3).map((topic, topicIndex) => (
                     <div
                       key={topicIndex}
-                      className="p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+                      className="p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <FileText size={16} className="text-gray-600" />
-                            <h4 className="font-medium text-gray-800">{topic.name}</h4>
+                            <FileText size={16} className="text-gray-600 dark:text-gray-400" />
+                            <h4 className="font-medium text-gray-800 dark:text-gray-200">{topic.name}</h4>
                           </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(topic.difficulty)}`}>
                               {topic.difficulty}
                             </span>
@@ -253,7 +305,7 @@ const Exercises = () => {
                           </div>
                         </div>
                         <Button
-                          onClick={() => setShowGame(true)}
+                          onClick={() => handleSubjectSelect(subject.name)}
                           className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg font-medium"
                           size="sm"
                         >
@@ -263,17 +315,15 @@ const Exercises = () => {
                     </div>
                   ))}
                   
-                  {selectedSubject !== subject.name && subject.topics.length > 3 && (
-                    <div className="p-4 text-center">
-                      <Button
-                        onClick={() => setSelectedSubject(subject.name)}
-                        variant="ghost"
-                        className="text-gray-600 hover:text-gray-800"
-                      >
-                        Ver mais {subject.topics.length - 3} simulados
-                      </Button>
-                    </div>
-                  )}
+                  <div className="p-4 text-center">
+                    <Button
+                      onClick={() => handleSubjectSelect(subject.name)}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Ver todos os {subject.topics.length} simulados de {subject.name}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -289,7 +339,7 @@ const Exercises = () => {
               <p className="text-sm opacity-90 leading-relaxed">
                 Pratique regularmente! Fazer exercícios diariamente é mais eficaz 
                 que estudar por longas horas esporadicamente. Comece com 15-20 
-                minutos por dia.
+                minutos por dia em cada matéria.
               </p>
             </div>
           </div>
