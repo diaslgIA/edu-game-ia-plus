@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import PaymentForm from '@/components/PaymentForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, DollarSign, Crown, Award, ChevronLeft, ChevronRight, Check, Star, Zap, Shield, Users, Gamepad2, BookOpen, Target, CreditCard, Smartphone } from 'lucide-react';
 
@@ -10,6 +10,7 @@ const Subscriptions = () => {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState('premium');
   const [selectedPayment, setSelectedPayment] = useState('credit');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const plans = [
     {
@@ -131,6 +132,50 @@ const Subscriptions = () => {
   ];
 
   const selectedPlanData = plans.find(plan => plan.id === selectedPlan);
+
+  const handleSubscribe = () => {
+    if (selectedPlan === 'free') return;
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentForm(false);
+    navigate('/dashboard');
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentForm(false);
+  };
+
+  if (showPaymentForm && selectedPlanData) {
+    return (
+      <MobileContainer background="light">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-slate-800 text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowPaymentForm(false)}
+              className="text-white p-2"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Pagamento</h1>
+          </div>
+
+          <div className="p-6 flex-1 flex items-center justify-center">
+            <PaymentForm
+              amount={selectedPlanData.price}
+              plan={selectedPlanData.name}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+            />
+          </div>
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
   return (
     <MobileContainer background="light">
@@ -362,7 +407,10 @@ const Subscriptions = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 shadow-lg">
+                <Button 
+                  onClick={handleSubscribe}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 shadow-lg"
+                >
                   <span>ASSINAR AGORA</span>
                   <Award size={20} />
                 </Button>

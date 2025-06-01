@@ -1,116 +1,183 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import TeacherContent from '@/components/TeacherContent';
-import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Search, Users, Play, BookOpen, Award, Crown, Star, Lock, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Send, Users, MessageSquare, User, Crown } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+
+interface Message {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: string;
+  isTeacher: boolean;
+  avatar?: string;
+}
+
+interface ClassRoom {
+  id: string;
+  name: string;
+  subject: string;
+  teacher: string;
+  studentCount: number;
+  description: string;
+}
 
 const Classes = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null);
-  const [enrolledClasses, setEnrolledClasses] = useState<string[]>([]);
-  const [showContent, setShowContent] = useState(false);
-  const [completedContent, setCompletedContent] = useState<string[]>([]);
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Simular status de assinatura
-  const isPremiumUser = false; // Mudar para true para testar como usuário premium
-
-  const teachers = [
-    { 
-      id: 'marcia-math',
-      name: 'Márcia Leal', 
-      subject: 'Matemática', 
-      avatar: '👩‍🏫',
-      specialties: ['Álgebra', 'Geometria', 'Trigonometria'],
-      students: 1250,
-      rating: 4.9,
-      modules: 12,
-      contentType: 'video' as const,
-      freeContent: 2
+  const classRooms: ClassRoom[] = [
+    {
+      id: '1',
+      name: 'Matemática - 2º Ano',
+      subject: 'Matemática',
+      teacher: 'Prof. Ana Silva',
+      studentCount: 32,
+      description: 'Álgebra e Geometria para ENEM'
     },
-    { 
-      id: 'fabio-physics',
-      name: 'Fábio Souza', 
-      subject: 'Física', 
-      avatar: '👨‍💼',
-      specialties: ['Mecânica', 'Eletromagnetismo', 'Óptica'],
-      students: 980,
-      rating: 4.8,
-      modules: 15,
-      contentType: 'slides' as const,
-      freeContent: 1
+    {
+      id: '2',
+      name: 'Português - Literatura',
+      subject: 'Português',
+      teacher: 'Prof. Carlos Santos',
+      studentCount: 28,
+      description: 'Literatura Brasileira e Redação'
     },
-    { 
-      id: 'akita-chemistry',
-      name: 'Akita Yang', 
-      subject: 'Química', 
-      avatar: '👩‍🔬',
-      specialties: ['Química Orgânica', 'Físico-Química', 'Química Geral'],
-      students: 756,
-      rating: 4.7,
-      modules: 10,
-      contentType: 'video' as const,
-      freeContent: 1
+    {
+      id: '3',
+      name: 'Física - Mecânica',
+      subject: 'Física',
+      teacher: 'Prof. Maria Oliveira',
+      studentCount: 25,
+      description: 'Mecânica Clássica e Cinemática'
+    },
+    {
+      id: '4',
+      name: 'Química Orgânica',
+      subject: 'Química',
+      teacher: 'Prof. João Costa',
+      studentCount: 30,
+      description: 'Compostos Orgânicos e Reações'
     }
   ];
 
-  const handleEnroll = (teacherId: string) => {
-    if (!enrolledClasses.includes(teacherId)) {
-      setEnrolledClasses([...enrolledClasses, teacherId]);
+  const messages: Message[] = [
+    {
+      id: '1',
+      sender: 'Prof. Ana Silva',
+      message: 'Boa tarde, turma! Hoje vamos revisar equações do segundo grau. Alguém tem dúvidas sobre a aula anterior?',
+      timestamp: '14:30',
+      isTeacher: true
+    },
+    {
+      id: '2',
+      sender: 'João Pedro',
+      message: 'Professor, eu não entendi muito bem o delta negativo. Pode explicar novamente?',
+      timestamp: '14:32',
+      isTeacher: false
+    },
+    {
+      id: '3',
+      sender: 'Prof. Ana Silva',
+      message: 'Claro, João! Quando o delta é negativo, significa que a equação não tem raízes reais. Vou fazer um exemplo no quadro virtual.',
+      timestamp: '14:35',
+      isTeacher: true
+    },
+    {
+      id: '4',
+      sender: 'Maria Clara',
+      message: 'Obrigada pela explicação! Agora ficou mais claro.',
+      timestamp: '14:40',
+      isTeacher: false
     }
-    setSelectedTeacher(teacherId);
-    setShowContent(true);
+  ];
+
+  const handleSendMessage = () => {
+    if (newMessage.trim()) {
+      toast({
+        title: "Mensagem enviada",
+        description: "Sua mensagem foi enviada para a turma!",
+      });
+      setNewMessage('');
+    }
   };
 
-  const handleContentComplete = () => {
-    if (selectedTeacher && !completedContent.includes(selectedTeacher)) {
-      setCompletedContent([...completedContent, selectedTeacher]);
-    }
-    setShowContent(false);
-  };
+  const filteredClasses = classRooms.filter(classRoom =>
+    classRoom.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    classRoom.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    classRoom.teacher.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const selectedTeacherData = teachers.find(t => t.id === selectedTeacher);
-
-  if (showContent && selectedTeacherData) {
+  if (selectedClass) {
+    const currentClass = classRooms.find(c => c.id === selectedClass);
+    
     return (
-      <MobileContainer background="light">
+      <MobileContainer background="gradient">
         <div className="flex flex-col h-full pb-20">
           {/* Header */}
-          <div className="bg-slate-800 text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+          <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setShowContent(false)}
+              onClick={() => setSelectedClass(null)}
               className="text-white p-2"
             >
               <ArrowLeft size={20} />
             </Button>
-            <Logo size="sm" />
-            <h1 className="text-lg font-semibold">Aula - {selectedTeacherData.subject}</h1>
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold">{currentClass?.name}</h1>
+              <p className="text-white/80 text-sm">{currentClass?.teacher} • {currentClass?.studentCount} alunos</p>
+            </div>
+            <Users size={20} className="text-white/80" />
           </div>
 
-          <div className="p-6">
-            <TeacherContent
-              teacher={selectedTeacherData.name}
-              subject={selectedTeacherData.subject}
-              contentType={selectedTeacherData.contentType}
-              isPremium={isPremiumUser}
-              onContentComplete={handleContentComplete}
-            />
+          {/* Messages */}
+          <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.sender === profile?.full_name ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-2xl ${
+                  message.isTeacher 
+                    ? 'bg-yellow-500 text-black' 
+                    : message.sender === profile?.full_name
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-gray-800'
+                }`}>
+                  <div className="flex items-center space-x-2 mb-1">
+                    {message.isTeacher && <Crown size={14} className="text-yellow-800" />}
+                    <span className="font-semibold text-sm">{message.sender}</span>
+                    <span className="text-xs opacity-70">{message.timestamp}</span>
+                  </div>
+                  <p className="text-sm">{message.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-            {/* Activity Button */}
-            <div className="mt-6">
-              <Button
-                onClick={() => navigate('/exercises')}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2"
+          {/* Message Input */}
+          <div className="p-4 bg-white/10 backdrop-blur-md">
+            <div className="flex space-x-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Digite sua mensagem..."
+                className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              />
+              <Button 
+                onClick={handleSendMessage}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4"
               >
-                <Award size={20} />
-                <span>Fazer Atividade da Aula</span>
+                <Send size={18} />
               </Button>
             </div>
           </div>
@@ -122,10 +189,10 @@ const Classes = () => {
   }
 
   return (
-    <MobileContainer background="light">
+    <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
         {/* Header */}
-        <div className="bg-slate-800 text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+        <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
           <Button 
             variant="ghost" 
             size="sm"
@@ -134,170 +201,54 @@ const Classes = () => {
           >
             <ArrowLeft size={20} />
           </Button>
-          <Logo size="sm" />
-          <h1 className="text-lg font-semibold">Mural dos Professores</h1>
+          <h1 className="text-lg font-semibold flex items-center space-x-2">
+            <span>Turmas</span>
+            <Users size={20} />
+          </h1>
         </div>
 
-        {/* Hero Section */}
-        <div className="p-6">
-          <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
-            <div className="absolute top-4 right-4 text-yellow-300 text-3xl">🎓</div>
-            <div className="relative z-10">
-              <h2 className="text-xl font-bold mb-2">Aprenda com os Melhores Professores</h2>
-              <p className="text-white/80 text-sm mb-4">
-                Inscreva-se nas salas de aula dos professores especialistas e tenha acesso a conteúdo exclusivo
-              </p>
-              
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold">{teachers.length}</div>
-                  <div className="text-xs opacity-80">Professores</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{teachers.reduce((acc, t) => acc + t.modules, 0)}</div>
-                  <div className="text-xs opacity-80">Módulos</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{teachers.reduce((acc, t) => acc + t.students, 0)}</div>
-                  <div className="text-xs opacity-80">Alunos</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Buscar professor ou matéria..."
-              className="w-full bg-gray-100 rounded-2xl py-3 pl-10 pr-4 text-gray-800"
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {/* Search */}
+          <div className="space-y-2">
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar turmas..."
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
             />
           </div>
 
-          {/* Subscription Status */}
-          {!isPremiumUser && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="bg-orange-500 rounded-full p-2">
-                  <Crown className="text-white" size={16} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-orange-800">Plano Gratuito</h3>
-                  <p className="text-orange-600 text-sm">Acesso limitado ao conteúdo dos professores</p>
-                </div>
-                <Button
-                  onClick={() => navigate('/subscriptions')}
-                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-4 py-2"
-                >
-                  Upgrade
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Teachers list */}
+          {/* Class Rooms */}
           <div className="space-y-4">
-            <h3 className="font-bold text-gray-800 flex items-center space-x-2">
-              <Users size={20} />
-              <span>Professores Disponíveis</span>
-            </h3>
-            
-            {teachers.map((teacher) => {
-              const isEnrolled = enrolledClasses.includes(teacher.id);
-              const isCompleted = completedContent.includes(teacher.id);
-              
-              return (
-                <div key={teacher.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center text-2xl relative">
-                      {teacher.avatar}
-                      {isCompleted && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
-                          <CheckCircle size={12} className="text-white" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-gray-800">{teacher.name}</h3>
-                        <div className="flex items-center space-x-1">
-                          <Star className="text-yellow-500 fill-current" size={14} />
-                          <span className="text-sm font-medium">{teacher.rating}</span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-gray-600 text-sm mb-2">{teacher.subject}</p>
-                      
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {teacher.specialties.slice(0, 2).map((specialty, index) => (
-                          <span key={index} className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
-                            {specialty}
-                          </span>
-                        ))}
-                        {teacher.specialties.length > 2 && (
-                          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                            +{teacher.specialties.length - 2}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                        <span>{teacher.students} alunos</span>
-                        <span>{teacher.modules} módulos</span>
-                        <span>
-                          {isPremiumUser ? 'Acesso completo' : `${teacher.freeContent} aula${teacher.freeContent > 1 ? 's' : ''} grátis`}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        {isEnrolled ? (
-                          <Button
-                            onClick={() => handleEnroll(teacher.id)}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 rounded-xl"
-                          >
-                            <Play size={14} className="mr-1" />
-                            Continuar Aula
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => handleEnroll(teacher.id)}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-2 rounded-xl"
-                          >
-                            Inscrever-se
-                          </Button>
-                        )}
-                        
-                        {!isPremiumUser && (
-                          <div className="flex items-center space-x-1 bg-orange-100 px-2 py-1 rounded-full">
-                            <Lock size={10} className="text-orange-600" />
-                            <span className="text-orange-600 text-xs">Premium</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+            {filteredClasses.map((classRoom) => (
+              <div
+                key={classRoom.id}
+                onClick={() => setSelectedClass(classRoom.id)}
+                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/20 transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white text-lg mb-1">{classRoom.name}</h3>
+                    <p className="text-white/80 text-sm">{classRoom.description}</p>
+                  </div>
+                  <div className="bg-white/20 rounded-full p-2">
+                    <MessageSquare size={20} className="text-white" />
                   </div>
                 </div>
-              );
-            })}
+                
+                <div className="flex items-center justify-between text-sm text-white/80">
+                  <div className="flex items-center space-x-2">
+                    <User size={16} />
+                    <span>{classRoom.teacher}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users size={16} />
+                    <span>{classRoom.studentCount} alunos</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {/* Call to action */}
-          {!isPremiumUser && (
-            <div className="mt-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white text-center">
-              <h3 className="font-bold text-lg mb-2">Desbloqueie Todo o Conteúdo</h3>
-              <p className="text-white/80 text-sm mb-4">
-                Acesse todas as aulas dos professores, exercícios ilimitados e muito mais!
-              </p>
-              <Button
-                onClick={() => navigate('/subscriptions')}
-                className="bg-white text-purple-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-xl"
-              >
-                Ver Planos Premium
-              </Button>
-            </div>
-          )}
         </div>
       </div>
       

@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { EmailValidationProvider } from "@/contexts/EmailValidationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SoundProvider } from "@/contexts/SoundContext";
@@ -36,29 +36,31 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <AuthProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/verification" element={<Verification />} />
-                  <Route path="/welcome" element={<Welcome />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/progress" element={<Progress />} />
-                  <Route path="/ranking" element={<Ranking />} />
-                  <Route path="/subjects" element={<Subjects />} />
-                  <Route path="/exercises" element={<Exercises />} />
-                  <Route path="/recommendations" element={<StudyRecommendations />} />
-                  <Route path="/classes" element={<Classes />} />
-                  <Route path="/subscriptions" element={<Subscriptions />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </AuthProvider>
+            <EmailValidationProvider>
+              <AuthProvider>
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/verification" element={<Verification />} />
+                    <Route path="/welcome" element={<Welcome />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/progress" element={<Progress />} />
+                    <Route path="/ranking" element={<Ranking />} />
+                    <Route path="/subjects" element={<Subjects />} />
+                    <Route path="/exercises" element={<Exercises />} />
+                    <Route path="/recommendations" element={<StudyRecommendations />} />
+                    <Route path="/classes" element={<Classes />} />
+                    <Route path="/subscriptions" element={<Subscriptions />} />
+                    <Route path="/support" element={<Support />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </AuthProvider>
+            </EmailValidationProvider>
           </TooltipProvider>
         </SoundProvider>
       </LanguageProvider>

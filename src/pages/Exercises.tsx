@@ -1,168 +1,210 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import EducationalGame from '@/components/EducationalGame';
 import SubjectQuiz from '@/components/SubjectQuiz';
-import Logo from '@/components/Logo';
+import ContentSlides from '@/components/ContentSlides';
+import VirtualTeacher from '@/components/VirtualTeacher';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileText, Gamepad2, Trophy, Target, Clock, Star, Brain, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, Target, Trophy, Clock, Play } from 'lucide-react';
+
+type ExerciseMode = 'selection' | 'slides' | 'teacher' | 'quiz';
 
 const Exercises = () => {
   const navigate = useNavigate();
-  const { playSound } = useSound();
-  const [showGame, setShowGame] = useState(false);
-  const [showSubjectQuiz, setShowSubjectQuiz] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-
-  const handleGameComplete = (score: number, timeSpent: number) => {
-    console.log(`Jogo concluído! Pontos: ${score}, Tempo: ${timeSpent}s`);
-    playSound('success');
-    setShowGame(false);
-    setShowSubjectQuiz(false);
-  };
-
-  const handleSubjectSelect = (subject: string) => {
-    setSelectedSubject(subject);
-    setShowSubjectQuiz(true);
-    playSound('click');
-  };
+  const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
 
   const subjects = [
     {
+      id: 'matematica',
       name: 'Matemática',
-      icon: '🧮',
-      color: 'from-blue-400 to-blue-600',
-      bgColor: 'bg-blue-100',
-      topics: [
-        { name: 'Funções Quadráticas', difficulty: 'Médio', questions: 15, time: '20 min' },
-        { name: 'Geometria Analítica', difficulty: 'Difícil', questions: 20, time: '25 min' },
-        { name: 'Trigonometria', difficulty: 'Médio', questions: 18, time: '22 min' },
-        { name: 'Logaritmos', difficulty: 'Difícil', questions: 16, time: '20 min' },
-        { name: 'Progressões Aritméticas', difficulty: 'Médio', questions: 14, time: '18 min' },
-        { name: 'Análise Combinatória', difficulty: 'Difícil', questions: 22, time: '30 min' }
-      ]
+      description: 'Álgebra, Geometria e Funções',
+      color: 'from-blue-500 to-blue-700',
+      icon: '📐',
+      difficulty: 'Médio',
+      exercises: 45
     },
     {
+      id: 'portugues',
       name: 'Português',
+      description: 'Interpretação, Gramática e Literatura',
+      color: 'from-green-500 to-green-700',
       icon: '📚',
-      color: 'from-purple-400 to-purple-600',
-      bgColor: 'bg-purple-100',
-      topics: [
-        { name: 'Interpretação de Textos', difficulty: 'Médio', questions: 12, time: '18 min' },
-        { name: 'Figuras de Linguagem', difficulty: 'Fácil', questions: 10, time: '12 min' },
-        { name: 'Sintaxe e Semântica', difficulty: 'Difícil', questions: 15, time: '20 min' },
-        { name: 'Literatura Brasileira', difficulty: 'Médio', questions: 14, time: '17 min' },
-        { name: 'Gêneros Textuais', difficulty: 'Fácil', questions: 8, time: '10 min' },
-        { name: 'Morfologia', difficulty: 'Médio', questions: 11, time: '15 min' }
-      ]
+      difficulty: 'Fácil',
+      exercises: 52
     },
     {
-      name: 'Ciências da Natureza',
+      id: 'fisica',
+      name: 'Física',
+      description: 'Mecânica, Eletricidade e Óptica',
+      color: 'from-purple-500 to-purple-700',
+      icon: '⚡',
+      difficulty: 'Difícil',
+      exercises: 38
+    },
+    {
+      id: 'quimica',
+      name: 'Química',
+      description: 'Orgânica, Inorgânica e Físico-química',
+      color: 'from-orange-500 to-orange-700',
       icon: '🧪',
-      color: 'from-green-400 to-green-600',
-      bgColor: 'bg-green-100',
-      topics: [
-        { name: 'Mecânica Clássica', difficulty: 'Difícil', questions: 18, time: '25 min' },
-        { name: 'Química Orgânica', difficulty: 'Médio', questions: 16, time: '22 min' },
-        { name: 'Genética e Hereditariedade', difficulty: 'Médio', questions: 14, time: '18 min' },
-        { name: 'Eletromagnetismo', difficulty: 'Difícil', questions: 20, time: '28 min' },
-        { name: 'Ecologia e Meio Ambiente', difficulty: 'Fácil', questions: 12, time: '15 min' },
-        { name: 'Termoquímica', difficulty: 'Médio', questions: 15, time: '20 min' }
-      ]
+      difficulty: 'Médio',
+      exercises: 41
     },
     {
+      id: 'biologia',
+      name: 'Biologia',
+      description: 'Ecologia, Genética e Citologia',
+      color: 'from-teal-500 to-teal-700',
+      icon: '🧬',
+      difficulty: 'Médio',
+      exercises: 47
+    },
+    {
+      id: 'historia',
       name: 'História',
+      description: 'Brasil, Mundo e Atualidades',
+      color: 'from-amber-500 to-amber-700',
       icon: '🏛️',
-      color: 'from-orange-400 to-orange-600',
-      bgColor: 'bg-orange-100',
-      topics: [
-        { name: 'História do Brasil República', difficulty: 'Médio', questions: 16, time: '20 min' },
-        { name: 'História Antiga e Medieval', difficulty: 'Fácil', questions: 11, time: '14 min' },
-        { name: 'Revolução Industrial', difficulty: 'Médio', questions: 13, time: '17 min' },
-        { name: 'Guerras Mundiais', difficulty: 'Difícil', questions: 18, time: '24 min' },
-        { name: 'Brasil Colonial', difficulty: 'Médio', questions: 15, time: '19 min' },
-        { name: 'Era Vargas', difficulty: 'Difícil', questions: 14, time: '18 min' }
-      ]
+      difficulty: 'Fácil',
+      exercises: 36
+    },
+    {
+      id: 'geografia',
+      name: 'Geografia',
+      description: 'Física, Humana e Cartografia',
+      color: 'from-emerald-500 to-emerald-700',
+      icon: '🌍',
+      difficulty: 'Fácil',
+      exercises: 33
+    },
+    {
+      id: 'filosofia',
+      name: 'Filosofia',
+      description: 'Ética, Política e Metafísica',
+      color: 'from-indigo-500 to-indigo-700',
+      icon: '🤔',
+      difficulty: 'Médio',
+      exercises: 24
+    },
+    {
+      id: 'sociologia',
+      name: 'Sociologia',
+      description: 'Sociedade, Cultura e Movimentos',
+      color: 'from-pink-500 to-pink-700',
+      icon: '👥',
+      difficulty: 'Fácil',
+      exercises: 28
     }
   ];
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Fácil': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
-      case 'Médio': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
-      case 'Difícil': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-900/30';
-    }
+  const handleSubjectSelect = (subjectId: string) => {
+    setSelectedSubject(subjectId);
+    setExerciseMode('slides');
   };
 
-  if (showSubjectQuiz && selectedSubject) {
+  const handleSlidesComplete = () => {
+    setExerciseMode('teacher');
+  };
+
+  const handleTeacherComplete = () => {
+    setExerciseMode('quiz');
+  };
+
+  const handleQuizComplete = () => {
+    setExerciseMode('selection');
+    setSelectedSubject(null);
+  };
+
+  const handleBackToSelection = () => {
+    setExerciseMode('selection');
+    setSelectedSubject(null);
+  };
+
+  const currentSubject = subjects.find(s => s.id === selectedSubject);
+
+  if (exerciseMode === 'slides' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
         <div className="flex flex-col h-full pb-20">
-          <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-            <div className="flex items-center justify-between mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowSubjectQuiz(false)}
-                className="text-white p-2"
-              >
-                <ArrowLeft size={20} />
-              </Button>
-              <Logo size="sm" showText={false} />
-              <div className="w-10" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Brain size={24} />
-              <h1 className="text-2xl font-bold">Quiz de {selectedSubject}</h1>
-            </div>
+          <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSelection}
+              className="text-white p-2"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Conteúdo - {currentSubject.name}</h1>
           </div>
-
-          <div className="p-6">
-            <SubjectQuiz 
-              subject={selectedSubject}
-              onComplete={handleGameComplete}
-              onBack={() => setShowSubjectQuiz(false)}
+          
+          <div className="p-6 flex-1 flex items-center justify-center">
+            <ContentSlides 
+              subject={currentSubject.name}
+              onComplete={handleSlidesComplete}
             />
           </div>
         </div>
-        
         <BottomNavigation />
       </MobileContainer>
     );
   }
 
-  if (showGame) {
+  if (exerciseMode === 'teacher' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
         <div className="flex flex-col h-full pb-20">
-          <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-            <div className="flex items-center justify-between mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowGame(false)}
-                className="text-white p-2"
-              >
-                <ArrowLeft size={20} />
-              </Button>
-              <Logo size="sm" showText={false} />
-              <div className="w-10" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Gamepad2 size={24} />
-              <h1 className="text-2xl font-bold">Quiz Interativo</h1>
-            </div>
+          <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSelection}
+              className="text-white p-2"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Professor Virtual - {currentSubject.name}</h1>
           </div>
-
-          <div className="p-6">
-            <EducationalGame onGameComplete={handleGameComplete} />
+          
+          <div className="p-6 flex-1 flex items-center justify-center">
+            <VirtualTeacher 
+              subject={currentSubject.name}
+              topic={currentSubject.description}
+              onComplete={handleTeacherComplete}
+            />
           </div>
         </div>
-        
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
+
+  if (exerciseMode === 'quiz' && selectedSubject && currentSubject) {
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSelection}
+              className="text-white p-2"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Quiz - {currentSubject.name}</h1>
+          </div>
+          
+          <div className="p-6 flex-1">
+            <SubjectQuiz 
+              subject={selectedSubject}
+              onComplete={handleQuizComplete}
+            />
+          </div>
+        </div>
         <BottomNavigation />
       </MobileContainer>
     );
@@ -170,178 +212,78 @@ const Exercises = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20 dark:text-white">
+      <div className="flex flex-col h-full pb-20">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-          <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="text-white p-2"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <Logo size="sm" showText={false} />
-            <div className="w-10" />
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
-              PRATICAR
-            </div>
-            <h1 className="text-2xl font-bold">Exercícios</h1>
-          </div>
-          <p className="text-white/80 text-sm mt-2">
-            Treine com questões no estilo ENEM
-          </p>
+        <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="text-white p-2"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className="text-lg font-semibold flex items-center space-x-2">
+            <span>Exercícios</span>
+            <Target size={20} />
+          </h1>
         </div>
 
-        {/* Quick Start Game Section */}
-        <div className="p-6">
-          <div className="bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl p-6 text-white relative overflow-hidden">
-            {/* Floating elements */}
-            <div className="absolute top-4 right-4 text-yellow-300 text-2xl animate-pulse">
-              <Brain />
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {/* Info Cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <BookOpen className="w-6 h-6 text-blue-400 mx-auto mb-1" />
+              <p className="text-white text-xs font-medium">Conteúdo</p>
+              <p className="text-white/80 text-xs">Slides</p>
             </div>
-            <div className="absolute bottom-4 left-4 text-cyan-300 text-lg animate-pulse">
-              <Zap />
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <Play className="w-6 h-6 text-green-400 mx-auto mb-1" />
+              <p className="text-white text-xs font-medium">Professor</p>
+              <p className="text-white/80 text-xs">IA Virtual</p>
             </div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-white/20 rounded-lg p-3">
-                  <Gamepad2 size={28} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Quiz Inteligente</h2>
-                  <p className="text-white/80 text-sm">Questões adaptadas ao seu nível</p>
-                </div>
-              </div>
-              
-              <div className="bg-white/10 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <Trophy className="mx-auto mb-1 text-yellow-300" size={20} />
-                    <div className="text-xs text-white/80">Pontos</div>
-                    <div className="font-bold">10-50</div>
-                  </div>
-                  <div>
-                    <Target className="mx-auto mb-1 text-green-300" size={20} />
-                    <div className="text-xs text-white/80">Precisão</div>
-                    <div className="font-bold">Tempo Real</div>
-                  </div>
-                  <div>
-                    <Brain className="mx-auto mb-1 text-blue-300" size={20} />
-                    <div className="text-xs text-white/80">Adaptativo</div>
-                    <div className="font-bold">IA</div>
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={() => {
-                  setShowGame(true);
-                  playSound('click');
-                }}
-                className="w-full bg-white text-purple-600 hover:bg-gray-100 font-bold py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg"
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center">
+              <Trophy className="w-6 h-6 text-yellow-400 mx-auto mb-1" />
+              <p className="text-white text-xs font-medium">Quiz</p>
+              <p className="text-white/80 text-xs">Atividades</p>
+            </div>
+          </div>
+
+          {/* Subjects Grid */}
+          <div className="grid grid-cols-1 gap-4">
+            {subjects.map((subject) => (
+              <div
+                key={subject.id}
+                onClick={() => handleSubjectSelect(subject.id)}
+                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/20 transition-all"
               >
-                <Gamepad2 size={20} />
-                <span>Iniciar Quiz Inteligente</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Subjects */}
-        <div className="px-6 flex-1 overflow-y-auto">
-          <h2 className="text-white text-lg font-semibold mb-4">Exercícios por Matéria</h2>
-          
-          <div className="space-y-6">
-            {subjects.map((subject, subjectIndex) => (
-              <div key={subjectIndex}>
-                {/* Subject header */}
-                <div className={`bg-gradient-to-r ${subject.color} text-white p-4 rounded-t-2xl flex items-center justify-between`}>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{subject.icon}</div>
-                    <div>
-                      <h3 className="font-bold text-lg">{subject.name}</h3>
-                      <p className="text-sm opacity-90">{subject.topics.length} simulados disponíveis</p>
-                    </div>
+                <div className="flex items-center space-x-4">
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
+                    {subject.icon}
                   </div>
-                  <Button
-                    onClick={() => handleSubjectSelect(subject.name)}
-                    className="bg-white/20 hover:bg-white/30 text-white border-none"
-                    size="sm"
-                  >
-                    Quiz Específico
-                  </Button>
-                </div>
-
-                {/* Topics */}
-                <div className="bg-white dark:bg-gray-800 rounded-b-2xl shadow-sm">
-                  {subject.topics.slice(0, 3).map((topic, topicIndex) => (
-                    <div
-                      key={topicIndex}
-                      className="p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <FileText size={16} className="text-gray-600 dark:text-gray-400" />
-                            <h4 className="font-medium text-gray-800 dark:text-gray-200">{topic.name}</h4>
-                          </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(topic.difficulty)}`}>
-                              {topic.difficulty}
-                            </span>
-                            <div className="flex items-center space-x-1">
-                              <FileText size={12} />
-                              <span>{topic.questions} questões</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Clock size={12} />
-                              <span>{topic.time}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleSubjectSelect(subject.name)}
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg font-medium"
-                          size="sm"
-                        >
-                          Praticar
-                        </Button>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white text-lg mb-1">{subject.name}</h3>
+                    <p className="text-white/80 text-sm mb-2">{subject.description}</p>
+                    
+                    <div className="flex items-center space-x-4 text-xs">
+                      <div className="flex items-center space-x-1">
+                        <Target size={12} className="text-blue-400" />
+                        <span className="text-white/80">{subject.exercises} exercícios</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Clock size={12} className="text-green-400" />
+                        <span className="text-white/80">{subject.difficulty}</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
                   
-                  <div className="p-4 text-center">
-                    <Button
-                      onClick={() => handleSubjectSelect(subject.name)}
-                      variant="ghost"
-                      className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                      Ver todos os {subject.topics.length} simulados de {subject.name}
-                    </Button>
+                  <div className="text-white/60">
+                    →
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Study tip */}
-          <div className="mt-6 mb-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-white">
-              <h3 className="font-bold text-lg mb-3 flex items-center">
-                <Star className="mr-2 text-yellow-400" size={20} />
-                Dica do Professor
-              </h3>
-              <p className="text-sm opacity-90 leading-relaxed">
-                Pratique regularmente! Fazer exercícios diariamente é mais eficaz 
-                que estudar por longas horas esporadicamente. Comece com 15-20 
-                minutos por dia em cada matéria.
-              </p>
-            </div>
           </div>
         </div>
       </div>
