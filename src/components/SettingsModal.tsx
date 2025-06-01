@@ -21,9 +21,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const handleThemeToggle = (checked: boolean) => {
+    toggleTheme();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto transition-colors duration-300">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold dark:text-white">Configurações</h3>
           <Button variant="ghost" size="sm" onClick={onClose} className="dark:text-white">
@@ -38,9 +42,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               {theme === 'dark' ? <Moon className="mr-2" size={18} /> : <Sun className="mr-2" size={18} />}
               Tema
             </h4>
-            <div className="flex items-center justify-between">
-              <span className="text-sm dark:text-gray-300">Modo escuro</span>
-              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
+              <div>
+                <span className="text-sm font-medium dark:text-gray-300">Modo escuro</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {theme === 'dark' ? 'Ativado' : 'Desativado'}
+                </p>
+              </div>
+              <Switch 
+                checked={theme === 'dark'} 
+                onCheckedChange={handleThemeToggle}
+              />
             </div>
           </div>
 
@@ -51,7 +63,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               Idioma
             </h4>
             <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="dark:bg-gray-700 dark:text-white">
+              <SelectTrigger className="dark:bg-gray-700 dark:text-white transition-colors duration-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -73,12 +85,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               {isMuted ? <VolumeX className="mr-2" size={18} /> : <Volume2 className="mr-2" size={18} />}
               Som
             </h4>
-            <div className="flex items-center justify-between">
-              <span className="text-sm dark:text-gray-300">Modo silencioso</span>
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
+              <div>
+                <span className="text-sm font-medium dark:text-gray-300">Modo silencioso</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isMuted ? 'Ativado' : 'Desativado'}
+                </p>
+              </div>
               <Switch checked={isMuted} onCheckedChange={toggleMute} />
             </div>
             {!isMuted && (
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
                 <span className="text-sm dark:text-gray-300">Volume: {Math.round(volume * 100)}%</span>
                 <Slider
                   value={[volume]}
@@ -95,7 +112,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         <Button
           onClick={onClose}
-          className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white"
+          className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-300"
         >
           Salvar Configurações
         </Button>

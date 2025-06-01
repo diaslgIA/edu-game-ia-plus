@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, Lock } from 'lucide-react';
+import { CreditCard, Lock, Copy, Download, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PaymentFormProps {
@@ -16,16 +16,21 @@ interface PaymentFormProps {
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCancel }) => {
   const { toast } = useToast();
+  const [paymentMethod, setPaymentMethod] = useState('credit');
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     cardName: '',
     expiryDate: '',
     cvv: '',
-    cardType: 'credit', // credit or debit
+    cardType: 'credit',
     installments: '1'
   });
 
   const [cardBrand, setCardBrand] = useState('');
+  const [pixCode, setPixCode] = useState('');
+  const [boletoCode, setBoletoCode] = useState('');
+  const [showPixQR, setShowPixQR] = useState(false);
+  const [showBoleto, setShowBoleto] = useState(false);
 
   const detectCardBrand = (number: string) => {
     const cleanNumber = number.replace(/\s/g, '');
@@ -80,19 +85,59 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
     setPaymentData({...paymentData, expiryDate: formatted});
   };
 
+  const generatePixCode = () => {
+    const randomCode = Math.random().toString(36).substring(2, 15);
+    const pixKey = `00020101021226580014BR.GOV.BCB.PIX0136${randomCode}52040000530398654${amount.replace('R$ ', '').replace(',', '.')}5802BR5925EduGame6009SAO PAULO62070503***6304`;
+    setPixCode(pixKey);
+    setShowPixQR(true);
+  };
+
+  const generateBoleto = () => {
+    const randomBarcode = Math.random().toString().substring(2, 50);
+    setBoletoCode(randomBarcode);
+    setShowBoleto(true);
+  };
+
+  const copyPixCode = () => {
+    navigator.clipboard.writeText(pixCode);
+    toast({
+      title: "PIX copiado!",
+      description: "O código PIX foi copiado para a área de transferência.",
+    });
+  };
+
+  const downloadBoleto = () => {
+    toast({
+      title: "Download iniciado",
+      description: "O boleto será baixado em instantes.",
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!paymentData.cardNumber || !paymentData.cardName || !paymentData.expiryDate || !paymentData.cvv) {
-      toast({
-        title: "Dados incompletos",
-        description: "Por favor, preencha todos os campos do cartão.",
-        variant: "destructive",
-      });
+    if (paymentMethod === 'credit' || paymentMethod === 'debit') {
+      if (!paymentData.cardNumber || !paymentData.cardName || !paymentData.expiryDate || !paymentData.cvv) {
+        toast({
+          title: "Dados incompletos",
+          description: "Por favor, preencha todos os campos do cartão.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (paymentMethod === 'pix') {
+      generatePixCode();
       return;
     }
 
-    // Simular processamento do pagamento
+    if (paymentMethod === 'boleto') {
+      generateBoleto();
+      return;
+    }
+
+    // Simular processamento do pagamento para cartão
     toast({
       title: "Processando pagamento...",
       description: "Aguarde enquanto processamos seu pagamento.",
@@ -124,6 +169,98 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
     return options;
   };
 
+  if (showPixQR) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg transition-colors duration-300">
+        <div className="text-center">
+          <QrCode className="w-16 h-16 mx-auto mb-4 text-green-500" />
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            Pagamento PIX
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Escaneie o QR Code ou copie o código PIX
+          </p>
+          
+          <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
+            <div className="w-48 h-48 bg-white mx-auto mb-4 flex items-center justify-center rounded-lg">
+              <div className="text-8xl">📱</div>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
+              {pixCode}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Button 
+              onClick={copyPixCode}
+              className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center space-x-2"
+            >
+              <Copy size={20} />
+              <span>Copiar Código PIX</span>
+            </Button>
+            
+            <Button 
+              onClick={onCancel}
+              variant="outline"
+              className="w-full"
+            >
+              Voltar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showBoleto) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg transition-colors duration-300">
+        <div className="text-center">
+          <Download className="w-16 h-16 mx-auto mb-4 text-blue-500" />
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            Boleto Bancário
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Seu boleto foi gerado com sucesso
+          </p>
+          
+          <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-2">📄</div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Valor: {amount}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Vencimento: {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 break-all">
+              Código de barras: {boletoCode}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Button 
+              onClick={downloadBoleto}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center space-x-2"
+            >
+              <Download size={20} />
+              <span>Baixar Boleto</span>
+            </Button>
+            
+            <Button 
+              onClick={onCancel}
+              variant="outline"
+              className="w-full"
+            >
+              Voltar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg transition-colors duration-300">
       <div className="flex items-center space-x-2 mb-6">
@@ -145,95 +282,112 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Tipo do Cartão */}
+        {/* Método de Pagamento */}
         <div>
-          <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Tipo do Cartão</Label>
-          <Select value={paymentData.cardType} onValueChange={(value) => setPaymentData({...paymentData, cardType: value})}>
+          <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Método de Pagamento</Label>
+          <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value)}>
             <SelectTrigger className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="credit">Cartão de Crédito</SelectItem>
               <SelectItem value="debit">Cartão de Débito</SelectItem>
+              <SelectItem value="pix">PIX</SelectItem>
+              <SelectItem value="boleto">Boleto Bancário</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Número do Cartão */}
-        <div>
-          <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Número do Cartão</Label>
-          <div className="relative">
-            <Input
-              value={paymentData.cardNumber}
-              onChange={handleCardNumberChange}
-              placeholder="0000 0000 0000 0000"
-              maxLength={19}
-              className="bg-gray-50 dark:bg-gray-700 pr-20 transition-colors duration-300"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-              {cardBrand && (
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded transition-colors duration-300">
-                  {cardBrand}
-                </span>
-              )}
-              <CreditCard className="text-gray-400" size={20} />
+        {(paymentMethod === 'credit' || paymentMethod === 'debit') && (
+          <>
+            {/* Número do Cartão */}
+            <div>
+              <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Número do Cartão</Label>
+              <div className="relative">
+                <Input
+                  value={paymentData.cardNumber}
+                  onChange={handleCardNumberChange}
+                  placeholder="0000 0000 0000 0000"
+                  maxLength={19}
+                  className="bg-gray-50 dark:bg-gray-700 pr-20 transition-colors duration-300"
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                  {cardBrand && (
+                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded transition-colors duration-300">
+                      {cardBrand}
+                    </span>
+                  )}
+                  <CreditCard className="text-gray-400" size={20} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Nome no Cartão */}
-        <div>
-          <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Nome no Cartão</Label>
-          <Input
-            value={paymentData.cardName}
-            onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value.toUpperCase()})}
-            placeholder="NOME COMO ESTÁ NO CARTÃO"
-            className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
-          />
-        </div>
+            {/* Nome no Cartão */}
+            <div>
+              <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Nome no Cartão</Label>
+              <Input
+                value={paymentData.cardName}
+                onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value.toUpperCase()})}
+                placeholder="NOME COMO ESTÁ NO CARTÃO"
+                className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
+              />
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Data de Validade */}
-          <div>
-            <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Validade</Label>
-            <Input
-              value={paymentData.expiryDate}
-              onChange={handleExpiryChange}
-              placeholder="MM/AA"
-              maxLength={5}
-              className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Data de Validade */}
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Validade</Label>
+                <Input
+                  value={paymentData.expiryDate}
+                  onChange={handleExpiryChange}
+                  placeholder="MM/AA"
+                  maxLength={5}
+                  className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
+                />
+              </div>
 
-          {/* CVV */}
-          <div>
-            <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">CVV</Label>
-            <Input
-              value={paymentData.cvv}
-              onChange={(e) => setPaymentData({...paymentData, cvv: e.target.value.replace(/\D/g, '')})}
-              placeholder="000"
-              maxLength={4}
-              className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
-            />
-          </div>
-        </div>
+              {/* CVV */}
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">CVV</Label>
+                <Input
+                  value={paymentData.cvv}
+                  onChange={(e) => setPaymentData({...paymentData, cvv: e.target.value.replace(/\D/g, '')})}
+                  placeholder="000"
+                  maxLength={4}
+                  className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300"
+                />
+              </div>
+            </div>
 
-        {/* Parcelas (apenas para crédito) */}
-        {paymentData.cardType === 'credit' && (
-          <div>
-            <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Parcelas</Label>
-            <Select value={paymentData.installments} onValueChange={(value) => setPaymentData({...paymentData, installments: value})}>
-              <SelectTrigger className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {getInstallmentOptions().map((option, index) => (
-                  <SelectItem key={index} value={(index + 1).toString()}>
-                    {typeof option === 'string' ? option : option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Parcelas (apenas para crédito) */}
+            {paymentMethod === 'credit' && (
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300 transition-colors duration-300">Parcelas</Label>
+                <Select value={paymentData.installments} onValueChange={(value) => setPaymentData({...paymentData, installments: value})}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-700 transition-colors duration-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getInstallmentOptions().map((option, index) => (
+                      <SelectItem key={index} value={(index + 1).toString()}>
+                        {typeof option === 'string' ? option : option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </>
+        )}
+
+        {(paymentMethod === 'pix' || paymentMethod === 'boleto') && (
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg transition-colors duration-300">
+            <p className="text-green-800 dark:text-green-200 text-sm transition-colors duration-300">
+              {paymentMethod === 'pix' 
+                ? 'Clique em confirmar para gerar o código PIX' 
+                : 'Clique em confirmar para gerar o boleto bancário'
+              }
+            </p>
           </div>
         )}
 
@@ -250,7 +404,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
             type="submit"
             className="flex-1 bg-green-500 hover:bg-green-600 text-white"
           >
-            Confirmar Pagamento
+            {paymentMethod === 'pix' ? 'Gerar PIX' : 
+             paymentMethod === 'boleto' ? 'Gerar Boleto' : 
+             'Confirmar Pagamento'}
           </Button>
         </div>
       </form>

@@ -9,6 +9,7 @@ interface EmailValidationContextType {
   validateEmail: (email: string) => Promise<boolean>;
   completeGoogleSignup: () => Promise<void>;
   sendValidationEmail: (email: string) => Promise<void>;
+  setEmailValidated: (validated: boolean) => void;
 }
 
 const EmailValidationContext = createContext<EmailValidationContextType | undefined>(undefined);
@@ -44,7 +45,7 @@ export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = 
     // Simular envio de email de validação
     toast({
       title: "Email de validação enviado",
-      description: `Um email de validação foi enviado para ${email}`,
+      description: `Um email de validação foi enviado para ${email}. Verifique sua caixa de entrada e clique no link para confirmar.`,
     });
   };
 
@@ -58,13 +59,18 @@ export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = 
     }
   };
 
+  const setEmailValidated = (validated: boolean) => {
+    setIsEmailValidated(validated);
+  };
+
   return (
     <EmailValidationContext.Provider value={{
       isEmailValidated,
       pendingGoogleAuth,
       validateEmail,
       completeGoogleSignup,
-      sendValidationEmail
+      sendValidationEmail,
+      setEmailValidated
     }}>
       {children}
     </EmailValidationContext.Provider>
