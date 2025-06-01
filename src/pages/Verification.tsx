@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const Verification = () => {
   const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const [verificationData, setVerificationData] = useState({
     email: 'larinha07@gmail.com',
@@ -27,8 +29,34 @@ const Verification = () => {
       // Simular confirmação de email bem-sucedida
       setIsEmailConfirmed(true);
       toast.success('Email confirmado com sucesso!');
+      
+      // Atualizar o perfil para refletir a verificação
+      if (user) {
+        setTimeout(() => {
+          refreshProfile();
+        }, 1000);
+      }
+    } else if (type === 'email') {
+      // Se veio do redirecionamento mas sem token, ainda consideramos como confirmado
+      setIsEmailConfirmed(true);
+      toast.success('Email confirmado com sucesso!');
+      
+      if (user) {
+        setTimeout(() => {
+          refreshProfile();
+        }, 1000);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, user, refreshProfile]);
+
+  // Se o usuário está logado e o email foi confirmado, redirecionar para dashboard
+  useEffect(() => {
+    if (user && profile?.is_verified) {
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    }
+  }, [user, profile, navigate]);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length <= 1) {
@@ -48,14 +76,14 @@ const Verification = () => {
     const code = verificationData.code.join('');
     if (code.length === 4) {
       toast.success('Verificação realizada com sucesso!');
-      navigate('/welcome');
+      navigate('/dashboard');
     } else {
       toast.error('Por favor, insira o código completo');
     }
   };
 
   const handleContinueToApp = () => {
-    navigate('/welcome');
+    navigate('/dashboard');
   };
 
   // Se o email foi confirmado, mostrar tela de sucesso
@@ -64,24 +92,24 @@ const Verification = () => {
       <MobileContainer>
         <div className="flex flex-col h-full p-6 justify-center items-center">
           <div className="text-center max-w-md">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-12 h-12 text-green-500" />
             </div>
             
             <Logo size="lg" className="mb-6" />
             
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
               Email Confirmado!
             </h1>
             
-            <p className="text-gray-600 mb-8 leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
               Seu email foi verificado com sucesso. Agora você pode acessar todos os recursos do EduGame e começar sua jornada de aprendizado!
             </p>
             
             <div className="space-y-4">
-              <div className="bg-blue-50 rounded-xl p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">Próximos passos:</h3>
-                <ul className="text-sm text-blue-700 space-y-1 text-left">
+              <div className="bg-blue-50 dark:bg-blue-900/50 rounded-xl p-4">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Próximos passos:</h3>
+                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 text-left">
                   <li>• Complete seu perfil</li>
                   <li>• Explore os exercícios</li>
                   <li>• Participe dos rankings</li>

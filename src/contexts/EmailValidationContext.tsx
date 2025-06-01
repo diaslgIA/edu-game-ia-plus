@@ -17,18 +17,35 @@ const EmailValidationContext = createContext<EmailValidationContextType | undefi
 export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isEmailValidated, setIsEmailValidated] = useState(false);
   const [pendingGoogleAuth, setPendingGoogleAuth] = useState(false);
+  const { profile } = useAuth();
   const { toast } = useToast();
 
+  // Sincronizar com o status de verificação do perfil
+  React.useEffect(() => {
+    if (profile?.is_verified) {
+      setIsEmailValidated(true);
+    }
+  }, [profile]);
+
   const validateEmail = async (email: string): Promise<boolean> => {
-    // Simular validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValid = emailRegex.test(email);
-    
-    if (isValid) {
+    // Verificar com o status real do Supabase
+    if (profile?.is_verified) {
       setIsEmailValidated(true);
       toast({
         title: "Email válido",
         description: "Seu email foi validado com sucesso!",
+      });
+      return true;
+    }
+
+    // Validação local como fallback
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    if (isValid) {
+      toast({
+        title: "Email válido",
+        description: "Por favor, verifique sua caixa de entrada para confirmar seu email.",
       });
     } else {
       toast({
@@ -42,7 +59,7 @@ export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = 
   };
 
   const sendValidationEmail = async (email: string): Promise<void> => {
-    // Simular envio de email de validação
+    // Integração real com Supabase seria feita aqui
     toast({
       title: "Email de validação enviado",
       description: `Um email de validação foi enviado para ${email}. Verifique sua caixa de entrada e clique no link para confirmar.`,
@@ -50,7 +67,7 @@ export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = 
   };
 
   const completeGoogleSignup = async (): Promise<void> => {
-    if (isEmailValidated) {
+    if (isEmailValidated || profile?.is_verified) {
       setPendingGoogleAuth(false);
       toast({
         title: "Cadastro concluído",
@@ -65,7 +82,7 @@ export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = 
 
   return (
     <EmailValidationContext.Provider value={{
-      isEmailValidated,
+      isEmailValidated: isEmailValidated || !!profile?.is_verified,
       pendingGoogleAuth,
       validateEmail,
       completeGoogleSignup,
