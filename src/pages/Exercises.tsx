@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -202,6 +201,7 @@ const Exercises = () => {
             <SubjectQuiz 
               subject={selectedSubject}
               onComplete={handleQuizComplete}
+              onBack={handleBackToSelection}
             />
           </div>
         </div>

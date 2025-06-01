@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star, ArrowLeft } from 'lucide-react';
@@ -14,6 +13,7 @@ interface SubjectQuizProps {
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
   const { generateQuiz } = useSubjectQuestions();
   const { playSound } = useSound();
+  
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);

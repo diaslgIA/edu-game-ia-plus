@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX, User } from 'lucide-react';
-import { useSounds } from '@/contexts/SoundContext';
+import { useSound } from '@/contexts/SoundContext';
 
 interface VirtualTeacherProps {
   subject: string;
@@ -16,7 +15,7 @@ const VirtualTeacher: React.FC<VirtualTeacherProps> = ({ subject, topic, onCompl
   const [progress, setProgress] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { soundEnabled } = useSounds();
+  const { isMuted } = useSound();
 
   const teacherContent = {
     Matemática: {
@@ -40,7 +39,7 @@ const VirtualTeacher: React.FC<VirtualTeacherProps> = ({ subject, topic, onCompl
   const currentContent = teacherContent[subject as keyof typeof teacherContent] || teacherContent.Matemática;
 
   useEffect(() => {
-    if (isPlaying && soundEnabled) {
+    if (isPlaying && !isMuted) {
       const interval = setInterval(() => {
         setCurrentTime(prev => {
           const newTime = prev + 1;
@@ -66,10 +65,10 @@ const VirtualTeacher: React.FC<VirtualTeacherProps> = ({ subject, topic, onCompl
 
       return () => clearInterval(interval);
     }
-  }, [isPlaying, soundEnabled, currentContent, onComplete]);
+  }, [isPlaying, isMuted, currentContent, onComplete]);
 
   const handlePlayPause = () => {
-    if (!soundEnabled) {
+    if (isMuted) {
       onComplete();
       return;
     }
@@ -118,7 +117,7 @@ const VirtualTeacher: React.FC<VirtualTeacherProps> = ({ subject, topic, onCompl
           </div>
           <div className="flex items-center justify-between text-white text-sm">
             <div className="flex items-center space-x-2">
-              {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              {!isMuted ? <Volume2 size={16} /> : <VolumeX size={16} />}
               <span>{formatTime(currentTime)} / {formatTime(currentContent.duration)}</span>
             </div>
             <span>{Math.round(progress)}%</span>
@@ -138,7 +137,7 @@ const VirtualTeacher: React.FC<VirtualTeacherProps> = ({ subject, topic, onCompl
           </p>
         </div>
 
-        {!soundEnabled && (
+        {isMuted && (
           <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg transition-colors duration-300">
             <p className="text-yellow-800 dark:text-yellow-200 text-sm transition-colors duration-300">
               Som desabilitado. Clique em "Play" para pular para a atividade.
