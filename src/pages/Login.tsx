@@ -100,7 +100,6 @@ const Login = () => {
             <div className="text-center">
               <Button
                 variant="ghost"
-                onClick={handleGoogleLogin}
                 className="text-white/80 hover:text-white"
                 disabled={loading}
               >

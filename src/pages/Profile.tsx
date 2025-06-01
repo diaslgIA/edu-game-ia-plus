@@ -45,7 +45,7 @@ const Profile = () => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     await signOut();
     playSound('click');
   };
@@ -116,7 +116,7 @@ const Profile = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={handleLogout}
+                onClick={handleSignOut}
                 className="text-white/80 hover:text-white text-sm"
               >
                 Sair

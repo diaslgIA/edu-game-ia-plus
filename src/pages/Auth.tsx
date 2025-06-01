@@ -14,7 +14,7 @@ import { Eye, EyeOff, Mail } from 'lucide-react';
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, signInWithGmail, resetPassword, isAuthenticated, loading } = useAuth();
+  const { signIn, signUp, signInWithGmail, isAuthenticated, loading } = useAuth();
   
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +31,6 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [schoolYear, setSchoolYear] = useState('');
   
-  // Reset password state
-  const [resetEmail, setResetEmail] = useState('');
-  const [showResetForm, setShowResetForm] = useState(false);
-
   const activeTab = searchParams.get('tab') || 'login';
 
   useEffect(() => {
@@ -79,7 +75,7 @@ const Auth = () => {
     }
 
     setFormLoading(true);
-    const success = await signUp(registerEmail, registerPassword, fullName.trim(), schoolYear);
+    const success = await signUp(registerEmail, registerPassword, { full_name: fullName.trim(), school_year: schoolYear });
     if (success) {
       setIsLoginMode(true);
     }
@@ -93,32 +89,12 @@ const Auth = () => {
     setFormLoading(false);
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formLoading) return;
-
-    setFormLoading(true);
-    const success = await resetPassword(resetEmail);
-    if (success) {
-      setShowResetForm(false);
-      setResetEmail('');
-    }
-    setFormLoading(false);
-  };
-
   const schoolYears = [
-    '1º Ano - Ensino Fundamental',
-    '2º Ano - Ensino Fundamental',
-    '3º Ano - Ensino Fundamental',
-    '4º Ano - Ensino Fundamental',
-    '5º Ano - Ensino Fundamental',
-    '6º Ano - Ensino Fundamental',
-    '7º Ano - Ensino Fundamental',
-    '8º Ano - Ensino Fundamental',
-    '9º Ano - Ensino Fundamental',
     '1º Ano - Ensino Médio',
     '2º Ano - Ensino Médio',
     '3º Ano - Ensino Médio',
+    'Ensino Médio Concluído',
+    'Cursinho Pré-Vestibular'
   ];
 
   if (loading) {
@@ -173,41 +149,7 @@ const Auth = () => {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {showResetForm ? (
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email" className="text-white">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      placeholder="Digite seu email"
-                      required
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      type="submit" 
-                      className="w-full btn-primary"
-                      disabled={formLoading}
-                    >
-                      {formLoading ? 'Enviando...' : 'Enviar link de recuperação'}
-                    </Button>
-                    
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      className="w-full text-white hover:bg-white/10"
-                      onClick={() => setShowResetForm(false)}
-                    >
-                      Voltar ao login
-                    </Button>
-                  </div>
-                </form>
-              ) : isLoginMode ? (
+              {isLoginMode ? (
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email" className="text-white">Email</Label>
@@ -266,15 +208,6 @@ const Auth = () => {
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
                       Entrar com Google
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full text-white hover:bg-white/10"
-                      onClick={() => setShowResetForm(true)}
-                    >
-                      Esqueci minha senha
                     </Button>
                   </div>
                 </form>

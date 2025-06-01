@@ -47,8 +47,10 @@ const Register = () => {
     const success = await signUp(
       formData.email, 
       formData.password, 
-      formData.fullName, 
-      formData.schoolYear
+      {
+        full_name: formData.fullName,
+        school_year: formData.schoolYear
+      }
     );
     
     if (success) {
