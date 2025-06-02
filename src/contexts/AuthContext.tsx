@@ -118,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, userData: { full_name: string; school_year: string; phone_number?: string }): Promise<boolean> => {
     try {
       setLoading(true);
+      
+      console.log('Iniciando cadastro com:', { email, userData });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -128,27 +131,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Erro no cadastro:', error);
+        let errorMessage = 'Ocorreu um erro no cadastro.';
+        
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'Este email já está cadastrado. Tente fazer login ou use outro email.';
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'Email inválido. Verifique se o email está correto.';
+        } else if (error.message.includes('Password')) {
+          errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        }
+        
         toast({
           title: "Erro no cadastro",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
         return false;
       }
 
+      console.log('Cadastro realizado com sucesso:', data);
+
       if (data.user && !data.user.email_confirmed_at) {
         toast({
-          title: "Verifique seu email",
-          description: "Enviamos um link de confirmação para seu email.",
+          title: "Cadastro realizado!",
+          description: "Enviamos um link de confirmação para seu email. Verifique sua caixa de entrada.",
+        });
+      } else if (data.user) {
+        toast({
+          title: "Cadastro realizado!",
+          description: "Bem-vindo ao EduGame!",
         });
       }
 
       return true;
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Erro inesperado no cadastro:', error);
       toast({
         title: "Erro no cadastro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        description: "Ocorreu um erro inesperado. Tente novamente em alguns instantes.",
         variant: "destructive",
       });
       return false;
@@ -160,20 +181,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
+      
+      console.log('Iniciando login para:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Erro no login:', error);
+        let errorMessage = 'Credenciais inválidas.';
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Email não confirmado. Verifique sua caixa de entrada.';
+        }
+        
         toast({
           title: "Erro no login",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
         return false;
       }
 
+      console.log('Login realizado com sucesso para:', data.user?.email);
+      
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo de volta!",
@@ -181,7 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return true;
     } catch (error) {
-      console.error('Signin error:', error);
+      console.error('Erro inesperado no login:', error);
       toast({
         title: "Erro no login",
         description: "Ocorreu um erro inesperado. Tente novamente.",
@@ -204,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Erro no login com Google:', error);
         toast({
           title: "Erro no login com Google",
           description: error.message,
@@ -214,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return true;
     } catch (error) {
-      console.error('Google signin error:', error);
+      console.error('Erro inesperado no login com Google:', error);
       toast({
         title: "Erro no login com Google",
         description: "Ocorreu um erro inesperado. Tente novamente.",
@@ -275,6 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id);
 
       if (error) {
+        console.error('Erro ao atualizar perfil:', error);
         toast({
           title: "Erro ao atualizar perfil",
           description: error.message,
@@ -293,7 +330,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return true;
     } catch (error) {
-      console.error('Update profile error:', error);
+      console.error('Erro inesperado ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: "Ocorreu um erro inesperado. Tente novamente.",
