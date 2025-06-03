@@ -16,6 +16,7 @@ interface Profile {
   level: number;
   is_verified: boolean;
   subscription_type: string;
+  first_login: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +33,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
+  markFirstLoginComplete: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,6 +69,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       const profileData = await fetchProfile(user.id);
       setProfile(profileData);
+    }
+  };
+
+  const markFirstLoginComplete = async () => {
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ first_login: false })
+          .eq('id', user.id);
+
+        if (!error) {
+          await refreshProfile();
+        }
+      } catch (error) {
+        console.error('Erro ao marcar primeiro login como completo:', error);
+      }
     }
   };
 
@@ -356,7 +375,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signInWithGmail,
       signOut,
       updateProfile,
-      refreshProfile
+      refreshProfile,
+      markFirstLoginComplete
     }}>
       {children}
     </AuthContext.Provider>

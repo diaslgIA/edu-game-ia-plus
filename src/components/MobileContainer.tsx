@@ -1,30 +1,25 @@
 
 import React from 'react';
-import InteractiveBackground from './InteractiveBackground';
 
 interface MobileContainerProps {
   children: React.ReactNode;
-  className?: string;
-  background?: 'gradient' | 'light' | 'white';
-  isDark?: boolean;
+  background?: 'default' | 'gradient';
 }
 
 const MobileContainer: React.FC<MobileContainerProps> = ({ 
   children, 
-  className = '', 
-  background = 'gradient',
-  isDark = false
+  background = 'default' 
 }) => {
-  const backgroundClass = {
-    gradient: 'relative',
-    light: isDark ? 'bg-gradient-to-br from-gray-800 to-slate-800' : 'bg-gradient-to-br from-blue-50 to-purple-50',
-    white: isDark ? 'bg-gray-900' : 'bg-white'
+  const getBackgroundClass = () => {
+    if (background === 'gradient') {
+      return 'bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 dark:from-gray-900 dark:via-gray-800 dark:to-black';
+    }
+    return 'bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 dark:bg-gray-900';
   };
 
   return (
-    <div className={`mobile-container ${backgroundClass[background]} ${className} transition-colors duration-500`}>
-      {background === 'gradient' && <InteractiveBackground isDark={isDark} />}
-      <div className="relative z-10 h-full">
+    <div className={`min-h-screen ${getBackgroundClass()} transition-colors duration-300`}>
+      <div className="max-w-md mx-auto h-screen overflow-hidden">
         {children}
       </div>
     </div>

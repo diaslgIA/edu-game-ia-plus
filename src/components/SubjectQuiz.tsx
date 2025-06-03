@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star, ArrowLeft } from 'lucide-react';
-import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
+import { useExpandedQuestions } from '@/hooks/useExpandedQuestions';
+import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
 
 interface SubjectQuizProps {
@@ -11,7 +13,8 @@ interface SubjectQuizProps {
 }
 
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
-  const { generateQuiz } = useSubjectQuestions();
+  const { generateQuiz } = useExpandedQuestions();
+  const { saveQuizScore, saving } = useQuizScore();
   const { playSound } = useSound();
   
   const [questions, setQuestions] = useState<any[]>([]);
@@ -19,13 +22,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(45); // Aumentado para 45 segundos
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
 
   useEffect(() => {
-    const quizQuestions = generateQuiz(subject, 5);
+    const quizQuestions = generateQuiz(subject, 10); // 10 questões
     setQuestions(quizQuestions);
   }, [subject, generateQuiz]);
 
@@ -41,7 +44,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const startGame = () => {
     setGameStarted(true);
     setStartTime(Date.now());
-    setTimeLeft(30);
+    setTimeLeft(45);
     playSound('click');
   };
 
@@ -56,8 +59,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     if (selectedAnswer !== null) {
       setShowResult(true);
       const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
+      const questionScore = isCorrect ? 10 : 0;
+      
       if (isCorrect) {
-        setScore(score + 10);
+        setScore(score + questionScore);
         playSound('success');
       } else {
         playSound('error');
@@ -65,16 +70,20 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
-      setTimeLeft(30);
+      setTimeLeft(45);
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 10 : 0);
+      
+      // Salvar pontuação no banco de dados
+      await saveQuizScore(subject, finalScore, questions.length, timeSpent);
+      
       onComplete(finalScore, timeSpent);
       playSound('success');
     }
@@ -84,12 +93,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
         <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-          Nenhuma questão disponível para {subject}
+          Carregando questões de {subject}...
         </h3>
-        <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600 text-white">
-          <ArrowLeft className="mr-2" size={16} />
-          Voltar
-        </Button>
       </div>
     );
   }
@@ -110,9 +115,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
           <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Informações:</h4>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>• {questions.length} questões específicas de {subject}</li>
-            <li>• 30 segundos por questão</li>
+            <li>• 45 segundos por questão</li>
             <li>• 10 pontos por resposta correta</li>
             <li>• Explicações detalhadas</li>
+            <li>• Pontos salvos automaticamente</li>
           </ul>
         </div>
         <div className="flex space-x-3">
@@ -149,7 +155,23 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-lg p-4 mb-6">
           <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{finalScore} pontos</div>
           <div className="text-lg text-orange-700 dark:text-orange-300">{percentage}% de acertos em {subject}</div>
+          <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+            {saving ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
+          </div>
         </div>
+        
+        {/* Informações adicionais sobre desempenho */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{finalScore}/{questions.length * 10}</div>
+            <div className="text-sm text-blue-700 dark:text-blue-300">Pontuação</div>
+          </div>
+          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round(finalScore / 10)}/{questions.length}</div>
+            <div className="text-sm text-green-700 dark:text-green-300">Acertos</div>
+          </div>
+        </div>
+        
         <Button 
           onClick={onBack}
           className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
@@ -193,7 +215,18 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       </div>
 
       {/* Pergunta */}
-      <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6">{question.question}</h3>
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white flex-1">{question.question}</h3>
+          <span className={`px-2 py-1 rounded text-xs font-medium ${
+            question.difficulty === 'Fácil' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+            question.difficulty === 'Médio' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+          }`}>
+            {question.difficulty}
+          </span>
+        </div>
+      </div>
 
       {/* Opções de Resposta */}
       <div className="space-y-3 mb-6">
@@ -252,6 +285,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         ) : (
           <Button 
             onClick={handleNextQuestion}
+            disabled={saving}
             className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
           >
             {currentQuestion < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}

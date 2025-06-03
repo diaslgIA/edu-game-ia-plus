@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star } from 'lucide-react';
+import { useQuizScore } from '@/hooks/useQuizScore';
 
 interface Question {
   id: number;
@@ -44,6 +44,8 @@ interface EducationalGameProps {
 }
 
 const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => {
+  const { saveQuizScore, saving } = useQuizScore();
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -83,7 +85,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestion < sampleQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
@@ -92,7 +94,12 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
-      onGameComplete(score + (selectedAnswer === sampleQuestions[currentQuestion].correctAnswer ? 10 : 0), timeSpent);
+      const finalScore = score + (selectedAnswer === sampleQuestions[currentQuestion].correctAnswer ? 10 : 0);
+      
+      // Salvar pontuação no banco de dados
+      await saveQuizScore('Quiz Geral', finalScore, sampleQuestions.length, timeSpent);
+      
+      onGameComplete(finalScore, timeSpent);
     }
   };
 
@@ -139,19 +146,22 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     const percentage = Math.round((finalScore / (sampleQuestions.length * 10)) * 100);
     
     return (
-      <div className="bg-white rounded-2xl p-6 text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
         <Trophy className="mx-auto mb-4 text-yellow-500" size={64} />
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Concluído!</h3>
-        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-4 mb-6">
-          <div className="text-3xl font-bold text-orange-600 mb-2">{finalScore} pontos</div>
-          <div className="text-lg text-orange-700">{percentage}% de acertos</div>
+        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Quiz Concluído!</h3>
+        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-lg p-4 mb-6">
+          <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{finalScore} pontos</div>
+          <div className="text-lg text-orange-700 dark:text-orange-300">{percentage}% de acertos</div>
+          <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+            {saving ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
+          </div>
         </div>
         <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-center space-x-2 text-green-600">
+          <div className="flex items-center justify-center space-x-2 text-green-600 dark:text-green-400">
             <CheckCircle size={20} />
             <span>+{finalScore} pontos ganhos</span>
           </div>
-          <div className="flex items-center justify-center space-x-2 text-blue-600">
+          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
             <Star size={20} />
             <span>Conquista desbloqueada: "Estudante Dedicado"</span>
           </div>

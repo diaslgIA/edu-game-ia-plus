@@ -85,6 +85,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          first_login: boolean | null
           full_name: string
           id: string
           is_verified: boolean | null
@@ -99,6 +100,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email: string
+          first_login?: boolean | null
           full_name: string
           id: string
           is_verified?: boolean | null
@@ -113,6 +115,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string
+          first_login?: boolean | null
           full_name?: string
           id?: string
           is_verified?: boolean | null
@@ -123,6 +126,36 @@ export type Database = {
           school_year?: string
           subscription_type?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quiz_scores: {
+        Row: {
+          completed_at: string | null
+          id: string
+          score: number
+          subject: string
+          time_spent: number | null
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          score: number
+          subject: string
+          time_spent?: number | null
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          score?: number
+          subject?: string
+          time_spent?: number | null
+          total_questions?: number
+          user_id?: string
         }
         Relationships: []
       }
