@@ -3,7 +3,7 @@ import React from 'react';
 
 interface MobileContainerProps {
   children: React.ReactNode;
-  background?: 'default' | 'gradient' | 'light';
+  background?: 'default' | 'gradient';
 }
 
 const MobileContainer: React.FC<MobileContainerProps> = ({ 
@@ -13,9 +13,6 @@ const MobileContainer: React.FC<MobileContainerProps> = ({
   const getBackgroundClass = () => {
     if (background === 'gradient') {
       return 'bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 dark:from-gray-900 dark:via-gray-800 dark:to-black';
-    }
-    if (background === 'light') {
-      return 'bg-gray-50 dark:bg-gray-900';
     }
     return 'bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 dark:bg-gray-900';
   };
