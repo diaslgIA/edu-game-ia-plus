@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Trophy, Clock, Star, ArrowLeft } from 'lucide-react';
 import { useExpandedQuestions } from '@/hooks/useExpandedQuestions';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
+import QuizHeader from './quiz/QuizHeader';
+import QuizQuestion from './quiz/QuizQuestion';
+import QuizExplanation from './quiz/QuizExplanation';
+import QuizIntro from './quiz/QuizIntro';
+import QuizResults from './quiz/QuizResults';
 
 interface SubjectQuizProps {
   subject: string;
@@ -22,13 +26,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(45); // Aumentado para 45 segundos
+  const [timeLeft, setTimeLeft] = useState(45);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
 
   useEffect(() => {
-    const quizQuestions = generateQuiz(subject, 10); // 10 questões
+    const quizQuestions = generateQuiz(subject, 10);
     setQuestions(quizQuestions);
   }, [subject, generateQuiz]);
 
@@ -81,9 +85,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 10 : 0);
       
-      // Salvar pontuação no banco de dados
       await saveQuizScore(subject, finalScore, questions.length, timeSpent);
-      
       onComplete(finalScore, timeSpent);
       playSound('success');
     }
@@ -101,84 +103,26 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   if (!gameStarted) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
-        <div className="mb-6">
-          <Trophy className="mx-auto mb-4 text-yellow-500" size={48} />
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
-            Quiz de {subject}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Teste seus conhecimentos específicos em {subject}!
-          </p>
-        </div>
-        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Informações:</h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-            <li>• {questions.length} questões específicas de {subject}</li>
-            <li>• 45 segundos por questão</li>
-            <li>• 10 pontos por resposta correta</li>
-            <li>• Explicações detalhadas</li>
-            <li>• Pontos salvos automaticamente</li>
-          </ul>
-        </div>
-        <div className="flex space-x-3">
-          <Button 
-            onClick={onBack}
-            variant="outline"
-            className="flex-1"
-          >
-            <ArrowLeft className="mr-2" size={16} />
-            Voltar
-          </Button>
-          <Button 
-            onClick={startGame}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold"
-          >
-            <Star className="mr-2" size={20} />
-            Começar
-          </Button>
-        </div>
-      </div>
+      <QuizIntro 
+        subject={subject}
+        totalQuestions={questions.length}
+        onStart={startGame}
+        onBack={onBack}
+      />
     );
   }
 
   if (gameCompleted) {
     const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 10 : 0);
-    const percentage = Math.round((finalScore / (questions.length * 10)) * 100);
     
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
-        <Trophy className="mx-auto mb-4 text-yellow-500" size={64} />
-        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-          Quiz de {subject} Concluído!
-        </h3>
-        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-lg p-4 mb-6">
-          <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{finalScore} pontos</div>
-          <div className="text-lg text-orange-700 dark:text-orange-300">{percentage}% de acertos em {subject}</div>
-          <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-            {saving ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
-          </div>
-        </div>
-        
-        {/* Informações adicionais sobre desempenho */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{finalScore}/{questions.length * 10}</div>
-            <div className="text-sm text-blue-700 dark:text-blue-300">Pontuação</div>
-          </div>
-          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round(finalScore / 10)}/{questions.length}</div>
-            <div className="text-sm text-green-700 dark:text-green-300">Acertos</div>
-          </div>
-        </div>
-        
-        <Button 
-          onClick={onBack}
-          className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
-        >
-          Voltar aos Exercícios
-        </Button>
-      </div>
+      <QuizResults 
+        subject={subject}
+        score={finalScore}
+        totalQuestions={questions.length}
+        saving={saving}
+        onBack={onBack}
+      />
     );
   }
 
@@ -187,89 +131,27 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6">
-      {/* Header do Quiz */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={onBack} className="dark:text-white">
-            <ArrowLeft size={16} />
-          </Button>
-          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium">
-            {subject} - {question.topic}
-          </span>
-          <span className="text-gray-500 dark:text-gray-400 text-sm">
-            {currentQuestion + 1}/{questions.length}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2 text-orange-600 dark:text-orange-400">
-          <Clock size={18} />
-          <span className="font-bold">{timeLeft}s</span>
-        </div>
-      </div>
+      <QuizHeader 
+        subject={subject}
+        topic={question.topic}
+        currentQuestion={currentQuestion}
+        totalQuestions={questions.length}
+        timeLeft={timeLeft}
+        onBack={onBack}
+      />
 
-      {/* Barra de Progresso */}
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6">
-        <div 
-          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-        ></div>
-      </div>
+      <QuizQuestion 
+        question={question}
+        selectedAnswer={selectedAnswer}
+        showResult={showResult}
+        onAnswerSelect={handleAnswerSelect}
+      />
 
-      {/* Pergunta */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white flex-1">{question.question}</h3>
-          <span className={`px-2 py-1 rounded text-xs font-medium ${
-            question.difficulty === 'Fácil' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-            question.difficulty === 'Médio' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-          }`}>
-            {question.difficulty}
-          </span>
-        </div>
-      </div>
-
-      {/* Opções de Resposta */}
-      <div className="space-y-3 mb-6">
-        {question.options.map((option: string, index: number) => (
-          <button
-            key={index}
-            onClick={() => handleAnswerSelect(index)}
-            disabled={showResult}
-            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
-              selectedAnswer === index
-                ? showResult
-                  ? isCorrect && selectedAnswer === index
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                    : selectedAnswer === index && !isCorrect
-                    ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                    : 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                  : 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                : showResult && index === question.correctAnswer
-                ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span>{option}</span>
-              {showResult && (
-                <>
-                  {index === question.correctAnswer && <CheckCircle className="text-green-500" size={20} />}
-                  {selectedAnswer === index && selectedAnswer !== question.correctAnswer && <XCircle className="text-red-500" size={20} />}
-                </>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Explicação */}
       {showResult && (
-        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-            {isCorrect ? '🎉 Correto!' : '📚 Explicação:'}
-          </h4>
-          <p className="text-blue-700 dark:text-blue-300 text-sm">{question.explanation}</p>
-        </div>
+        <QuizExplanation 
+          explanation={question.explanation}
+          isCorrect={isCorrect}
+        />
       )}
 
       {/* Botões de Ação */}
