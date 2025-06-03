@@ -67,125 +67,128 @@ const Dashboard = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-6 rounded-b-3xl shadow-xl">
-          <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col h-full">
+        {/* Header - Fixo */}
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 rounded-b-3xl shadow-xl flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
             <Logo size="lg" showText={true} animated className="flex-1" />
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setShowSettings(true)}
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl"
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl p-2"
               >
-                <Settings size={18} />
+                <Settings size={16} />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl"
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl px-3 py-2 text-xs"
               >
                 Sair
               </Button>
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-lg font-bold">
               Olá, {profile?.full_name || 'Estudante'}! 👋
             </h1>
-            <p className="text-white/90 text-sm">
+            <p className="text-white/90 text-xs">
               {profile?.school_year} • Pronto para aprender hoje?
             </p>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg border border-white/10">
-                <div className="flex items-center space-x-3">
-                  <stat.icon className={`${stat.color} w-6 h-6`} />
-                  <div>
-                    <p className="text-xs opacity-80">{stat.label}</p>
-                    <p className="text-lg font-bold">{stat.value}</p>
+        {/* Content Scrollable */}
+        <div className="flex-1 overflow-y-auto pb-20">
+          {/* Stats Cards */}
+          <div className="px-4 py-3">
+            <div className="grid grid-cols-2 gap-3">
+              {stats.map((stat, index) => (
+                <div key={index} className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white shadow-lg border border-white/10">
+                  <div className="flex items-center space-x-2">
+                    <stat.icon className={`${stat.color} w-5 h-5`} />
+                    <div>
+                      <p className="text-xs opacity-80">{stat.label}</p>
+                      <p className="text-sm font-bold">{stat.value}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="px-6 py-2">
-          <h2 className="text-white text-lg font-semibold mb-4 flex items-center">
-            <Brain className="mr-2" size={20} />
-            Área de Estudos
-          </h2>
-          <div className="grid grid-cols-2 gap-4">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                onClick={() => handleNavigation(action.path)}
-                className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">{action.icon}</div>
-                  <h3 className="font-bold text-sm">{action.title}</h3>
-                  <p className="text-xs opacity-90">{action.description}</p>
-                </div>
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Study Streak */}
-        <div className="px-6 py-4">
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white shadow-lg border border-white/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg">Sequência de Estudos</h3>
-                <p className="text-sm opacity-80">Mantenha o ritmo!</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">7</div>
-                <div className="text-xs opacity-80">dias</div>
-              </div>
-            </div>
-            <div className="flex space-x-2 mt-4">
-              {[...Array(7)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`flex-1 h-3 rounded-full ${
-                    i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
-                  }`}
-                />
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="px-6 py-2 flex-1">
-          <h2 className="text-white text-lg font-semibold mb-4">Atividade Recente</h2>
-          <div className="space-y-3">
+          {/* Quick Actions */}
+          <div className="px-4 py-2">
+            <h2 className="text-white text-base font-semibold mb-3 flex items-center">
+              <Brain className="mr-2" size={18} />
+              Área de Estudos
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  onClick={() => handleNavigation(action.path)}
+                  className={`bg-gradient-to-br ${action.color} text-white p-4 rounded-xl h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">{action.icon}</div>
+                    <h3 className="font-bold text-xs">{action.title}</h3>
+                    <p className="text-[10px] opacity-90">{action.description}</p>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Study Streak */}
+          <div className="px-4 py-2">
             <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 text-white shadow-lg border border-white/10">
-              <div className="flex items-center space-x-3">
-                <Star className="text-yellow-400" size={20} />
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Matemática - Função Quadrática</p>
-                  <p className="text-xs opacity-80">Concluído • 85 pontos</p>
+                  <h3 className="font-bold text-sm">Sequência de Estudos</h3>
+                  <p className="text-xs opacity-80">Mantenha o ritmo!</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold">7</div>
+                  <div className="text-[10px] opacity-80">dias</div>
                 </div>
               </div>
+              <div className="flex space-x-1 mt-3">
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 h-2 rounded-full ${
+                      i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 text-white shadow-lg border border-white/10">
-              <div className="flex items-center space-x-3">
-                <Star className="text-blue-400" size={20} />
-                <div>
-                  <p className="font-medium">Português - Interpretação de Texto</p>
-                  <p className="text-xs opacity-80">Em progresso • 42 pontos</p>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="px-4 py-2 mb-4">
+            <h2 className="text-white text-base font-semibold mb-3">Atividade Recente</h2>
+            <div className="space-y-2">
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white shadow-lg border border-white/10">
+                <div className="flex items-center space-x-3">
+                  <Star className="text-yellow-400" size={16} />
+                  <div>
+                    <p className="font-medium text-xs">Matemática - Função Quadrática</p>
+                    <p className="text-[10px] opacity-80">Concluído • 85 pontos</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white shadow-lg border border-white/10">
+                <div className="flex items-center space-x-3">
+                  <Star className="text-blue-400" size={16} />
+                  <div>
+                    <p className="font-medium text-xs">Português - Interpretação de Texto</p>
+                    <p className="text-[10px] opacity-80">Em progresso • 42 pontos</p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -29,7 +29,6 @@ const Support = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui você implementaria o envio do ticket de suporte
     alert('Mensagem enviada! Responderemos em breve.');
     setFormData({ subject: '', message: '', type: 'question' });
   };
@@ -37,121 +36,124 @@ const Support = () => {
   const faqItems = [
     {
       question: 'Como funciona o sistema de pontos?',
-      answer: 'Você ganha pontos completando atividades, assistindo vídeos e participando de simulados. Os pontos ajudam a subir de nível e desbloquear conteúdos.'
+      answer: 'Você ganha pontos completando atividades, assistindo vídeos e participando de simulados.'
     },
     {
       question: 'Posso estudar offline?',
-      answer: 'Alguns conteúdos podem ser baixados para estudo offline. Verifique o ícone de download nas atividades disponíveis.'
+      answer: 'Alguns conteúdos podem ser baixados para estudo offline.'
     },
     {
       question: 'Como funciona a assinatura premium?',
-      answer: 'A assinatura premium oferece acesso ilimitado a todos os conteúdos, simulados exclusivos e suporte prioritário.'
+      answer: 'A assinatura premium oferece acesso ilimitado a todos os conteúdos.'
     }
   ];
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-          <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col h-full">
+        {/* Header - Fixo */}
+        <div className="bg-white/10 backdrop-blur-sm text-white p-4 rounded-b-3xl flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => navigate('/dashboard')}
               className="text-white p-2"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </Button>
             <Logo size="sm" showText={false} />
             <div className="w-10" />
           </div>
-          <h1 className="text-2xl font-bold">Suporte</h1>
-          <p className="text-white/80">Como podemos ajudar você, {profile?.full_name || 'estudante'}?</p>
+          <h1 className="text-lg font-bold">Suporte</h1>
+          <p className="text-white/80 text-xs">Como podemos ajudar você, {profile?.full_name || 'estudante'}?</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          {/* FAQ Section */}
-          <div>
-            <h2 className="text-white text-lg font-semibold mb-4">Perguntas Frequentes</h2>
-            <div className="space-y-3">
-              {faqItems.map((item, index) => (
-                <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
-                  <h3 className="font-semibold mb-2">{item.question}</h3>
-                  <p className="text-sm text-white/80">{item.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <div>
-            <h2 className="text-white text-lg font-semibold mb-4">Entre em Contato</h2>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label className="text-white">Tipo de Solicitação</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {supportTypes.map((type) => (
-                      <Button
-                        key={type.id}
-                        type="button"
-                        variant={formData.type === type.id ? "default" : "outline"}
-                        className={`h-auto p-3 ${
-                          formData.type === type.id 
-                            ? 'bg-white text-purple-600' 
-                            : 'bg-white/10 text-white border-white/30 hover:bg-white/20'
-                        }`}
-                        onClick={() => setFormData({...formData, type: type.id})}
-                      >
-                        <type.icon size={16} className="mr-2" />
-                        <span className="text-xs">{type.label}</span>
-                      </Button>
-                    ))}
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto pb-20">
+          <div className="px-4 py-3 space-y-4">
+            {/* FAQ Section */}
+            <div>
+              <h2 className="text-white text-sm font-semibold mb-3">Perguntas Frequentes</h2>
+              <div className="space-y-2">
+                {faqItems.map((item, index) => (
+                  <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
+                    <h3 className="font-semibold mb-1 text-xs">{item.question}</h3>
+                    <p className="text-[11px] text-white/80">{item.answer}</p>
                   </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="subject" className="text-white">Assunto</Label>
-                  <Input
-                    id="subject"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                    placeholder="Descreva brevemente sua solicitação"
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="message" className="text-white">Mensagem</Label>
-                  <Textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    placeholder="Descreva sua dúvida ou problema em detalhes"
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[100px]"
-                    required
-                  />
-                </div>
-
-                <Button 
-                  type="submit"
-                  className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold"
-                >
-                  Enviar Mensagem
-                </Button>
-              </form>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Contact Info */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
-            <h3 className="font-semibold mb-2">Outras formas de contato</h3>
-            <div className="space-y-1 text-sm text-white/80">
-              <p>📧 suporte@edugameia.com</p>
-              <p>📱 WhatsApp: (11) 99999-9999</p>
-              <p>🕒 Atendimento: Seg-Sex, 9h às 18h</p>
+            {/* Contact Form */}
+            <div>
+              <h2 className="text-white text-sm font-semibold mb-3">Entre em Contato</h2>
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div>
+                    <Label className="text-white text-xs">Tipo de Solicitação</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      {supportTypes.map((type) => (
+                        <Button
+                          key={type.id}
+                          type="button"
+                          variant={formData.type === type.id ? "default" : "outline"}
+                          className={`h-auto p-2 text-[10px] ${
+                            formData.type === type.id 
+                              ? 'bg-white text-purple-600' 
+                              : 'bg-white/10 text-white border-white/30 hover:bg-white/20'
+                          }`}
+                          onClick={() => setFormData({...formData, type: type.id})}
+                        >
+                          <type.icon size={12} className="mr-1" />
+                          <span>{type.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="subject" className="text-white text-xs">Assunto</Label>
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      placeholder="Descreva brevemente sua solicitação"
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="message" className="text-white text-xs">Mensagem</Label>
+                    <Textarea
+                      id="message"
+                      value={formData.message}
+                      onChange={(e) => setFormData({...formData, message: e.target.value})}
+                      placeholder="Descreva sua dúvida ou problema em detalhes"
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px] text-xs"
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit"
+                    className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold text-sm"
+                  >
+                    Enviar Mensagem
+                  </Button>
+                </form>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
+              <h3 className="font-semibold mb-2 text-xs">Outras formas de contato</h3>
+              <div className="space-y-1 text-[10px] text-white/80">
+                <p>📧 suporte@edugameia.com</p>
+                <p>📱 WhatsApp: (11) 99999-9999</p>
+                <p>🕒 Atendimento: Seg-Sex, 9h às 18h</p>
+              </div>
             </div>
           </div>
         </div>

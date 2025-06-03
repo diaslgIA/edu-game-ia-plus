@@ -5,7 +5,6 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Send, Users, MessageSquare, User, Crown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -123,61 +122,61 @@ const Classes = () => {
     
     return (
       <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20">
-          {/* Header */}
-          <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+        <div className="flex flex-col h-full">
+          {/* Header - Fixo */}
+          <div className="bg-white/10 backdrop-blur-md text-white p-3 flex items-center space-x-3 rounded-b-3xl flex-shrink-0">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => setSelectedClass(null)}
               className="text-white p-2"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-semibold">{currentClass?.name}</h1>
-              <p className="text-white/80 text-sm">{currentClass?.teacher} • {currentClass?.studentCount} alunos</p>
+              <h1 className="text-sm font-semibold">{currentClass?.name}</h1>
+              <p className="text-white/80 text-xs">{currentClass?.teacher} • {currentClass?.studentCount} alunos</p>
             </div>
-            <Users size={20} className="text-white/80" />
+            <Users size={18} className="text-white/80" />
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+          {/* Messages - Scrollable */}
+          <div className="flex-1 p-3 space-y-2 overflow-y-auto">
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === profile?.full_name ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-2xl ${
+                <div className={`max-w-[75%] p-2 rounded-xl text-xs ${
                   message.isTeacher 
                     ? 'bg-yellow-500 text-black' 
                     : message.sender === profile?.full_name
                     ? 'bg-blue-500 text-white'
                     : 'bg-white text-gray-800'
                 }`}>
-                  <div className="flex items-center space-x-2 mb-1">
-                    {message.isTeacher && <Crown size={14} className="text-yellow-800" />}
-                    <span className="font-semibold text-sm">{message.sender}</span>
-                    <span className="text-xs opacity-70">{message.timestamp}</span>
+                  <div className="flex items-center space-x-1 mb-1">
+                    {message.isTeacher && <Crown size={10} className="text-yellow-800" />}
+                    <span className="font-semibold text-[10px]">{message.sender}</span>
+                    <span className="text-[9px] opacity-70">{message.timestamp}</span>
                   </div>
-                  <p className="text-sm">{message.message}</p>
+                  <p className="text-[11px]">{message.message}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Message Input */}
-          <div className="p-4 bg-white/10 backdrop-blur-md">
+          {/* Message Input - Fixo */}
+          <div className="p-3 bg-white/10 backdrop-blur-md flex-shrink-0 pb-20">
             <div className="flex space-x-2">
               <Input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm"
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               />
               <Button 
                 onClick={handleSendMessage}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3"
               >
-                <Send size={18} />
+                <Send size={16} />
               </Button>
             </div>
           </div>
@@ -190,64 +189,67 @@ const Classes = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/10 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl">
+      <div className="flex flex-col h-full">
+        {/* Header - Fixo */}
+        <div className="bg-white/10 backdrop-blur-md text-white p-3 flex items-center space-x-3 rounded-b-3xl flex-shrink-0">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/dashboard')}
             className="text-white p-2"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </Button>
-          <h1 className="text-lg font-semibold flex items-center space-x-2">
+          <h1 className="text-base font-semibold flex items-center space-x-2">
             <span>Turmas</span>
-            <Users size={20} />
+            <Users size={18} />
           </h1>
         </div>
 
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-          {/* Search */}
-          <div className="space-y-2">
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar turmas..."
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-            />
-          </div>
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto pb-20">
+          <div className="p-4 space-y-4">
+            {/* Search */}
+            <div>
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar turmas..."
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm"
+              />
+            </div>
 
-          {/* Class Rooms */}
-          <div className="space-y-4">
-            {filteredClasses.map((classRoom) => (
-              <div
-                key={classRoom.id}
-                onClick={() => setSelectedClass(classRoom.id)}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/20 transition-all"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-white text-lg mb-1">{classRoom.name}</h3>
-                    <p className="text-white/80 text-sm">{classRoom.description}</p>
+            {/* Class Rooms */}
+            <div className="space-y-3">
+              {filteredClasses.map((classRoom) => (
+                <div
+                  key={classRoom.id}
+                  onClick={() => setSelectedClass(classRoom.id)}
+                  className="bg-white/10 backdrop-blur-md rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white text-sm mb-1">{classRoom.name}</h3>
+                      <p className="text-white/80 text-xs">{classRoom.description}</p>
+                    </div>
+                    <div className="bg-white/20 rounded-full p-2">
+                      <MessageSquare size={16} className="text-white" />
+                    </div>
                   </div>
-                  <div className="bg-white/20 rounded-full p-2">
-                    <MessageSquare size={20} className="text-white" />
+                  
+                  <div className="flex items-center justify-between text-xs text-white/80">
+                    <div className="flex items-center space-x-1">
+                      <User size={12} />
+                      <span>{classRoom.teacher}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Users size={12} />
+                      <span>{classRoom.studentCount} alunos</span>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="flex items-center justify-between text-sm text-white/80">
-                  <div className="flex items-center space-x-2">
-                    <User size={16} />
-                    <span>{classRoom.teacher}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Users size={16} />
-                    <span>{classRoom.studentCount} alunos</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
