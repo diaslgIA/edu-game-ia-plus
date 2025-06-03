@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useUserProgress } from '@/hooks/useUserProgress';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
@@ -16,6 +17,7 @@ const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { t } = useLanguage();
   const { playSound } = useSound();
+  const { getTotalProgress } = useUserProgress();
   const [showSettings, setShowSettings] = useState(false);
 
   const handleNavigation = (path: string) => {
@@ -23,10 +25,12 @@ const Dashboard = () => {
     navigate(path);
   };
 
+  const totalProgress = getTotalProgress();
+
   const stats = [
     { icon: Trophy, label: 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
     { icon: Target, label: 'Nível', value: profile?.level || 1, color: 'text-blue-500' },
-    { icon: BookOpen, label: 'Módulos', value: '12', color: 'text-green-500' },
+    { icon: BookOpen, label: 'Progresso', value: `${totalProgress}%`, color: 'text-green-500' },
     { icon: Users, label: 'Ranking', value: '#45', color: 'text-purple-500' },
   ];
 
@@ -65,15 +69,15 @@ const Dashboard = () => {
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-          <div className="flex items-center justify-between mb-4">
-            <Logo size="md" showText={false} animated />
+        <div className="bg-white/15 backdrop-blur-md text-white p-6 rounded-b-3xl shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <Logo size="lg" showText={true} animated className="flex-1" />
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setShowSettings(true)}
-                className="text-white/80 hover:text-white"
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl"
               >
                 <Settings size={18} />
               </Button>
@@ -81,7 +85,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={signOut}
-                className="text-white/80 hover:text-white"
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl"
               >
                 Sair
               </Button>
@@ -91,7 +95,7 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold">
               Olá, {profile?.full_name || 'Estudante'}! 👋
             </h1>
-            <p className="text-white/80 text-sm">
+            <p className="text-white/90 text-sm">
               {profile?.school_year} • Pronto para aprender hoje?
             </p>
           </div>
@@ -101,7 +105,7 @@ const Dashboard = () => {
         <div className="px-6 py-4">
           <div className="grid grid-cols-2 gap-4">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-white">
+              <div key={index} className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg border border-white/10">
                 <div className="flex items-center space-x-3">
                   <stat.icon className={`${stat.color} w-6 h-6`} />
                   <div>
@@ -125,7 +129,7 @@ const Dashboard = () => {
               <Button
                 key={index}
                 onClick={() => handleNavigation(action.path)}
-                className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl h-auto hover:scale-105 transition-all duration-200 shadow-lg`}
+                className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">{action.icon}</div>
@@ -139,7 +143,7 @@ const Dashboard = () => {
 
         {/* Study Streak */}
         <div className="px-6 py-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-white">
+          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white shadow-lg border border-white/10">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-lg">Sequência de Estudos</h3>
@@ -154,8 +158,8 @@ const Dashboard = () => {
               {[...Array(7)].map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-2 rounded-full ${
-                    i < 5 ? 'bg-yellow-400' : 'bg-white/20'
+                  className={`flex-1 h-3 rounded-full ${
+                    i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
                   }`}
                 />
               ))}
@@ -167,7 +171,7 @@ const Dashboard = () => {
         <div className="px-6 py-2 flex-1">
           <h2 className="text-white text-lg font-semibold mb-4">Atividade Recente</h2>
           <div className="space-y-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
+            <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 text-white shadow-lg border border-white/10">
               <div className="flex items-center space-x-3">
                 <Star className="text-yellow-400" size={20} />
                 <div>
@@ -176,7 +180,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
+            <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 text-white shadow-lg border border-white/10">
               <div className="flex items-center space-x-3">
                 <Star className="text-blue-400" size={20} />
                 <div>
