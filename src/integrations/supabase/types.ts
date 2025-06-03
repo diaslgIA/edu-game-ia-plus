@@ -159,6 +159,42 @@ export type Database = {
         }
         Relationships: []
       }
+      subject_progress: {
+        Row: {
+          completed_activities: number
+          created_at: string
+          id: string
+          last_activity_date: string
+          progress_percentage: number
+          subject: string
+          total_activities: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_activities?: number
+          created_at?: string
+          id?: string
+          last_activity_date?: string
+          progress_percentage?: number
+          subject: string
+          total_activities?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_activities?: number
+          created_at?: string
+          id?: string
+          last_activity_date?: string
+          progress_percentage?: number
+          subject?: string
+          total_activities?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed_at: string | null

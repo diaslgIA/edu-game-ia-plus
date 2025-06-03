@@ -28,9 +28,9 @@ export const useUserProgress = () => {
     try {
       setLoading(true);
       
-      // Buscar progresso do usuário
+      // Buscar progresso do usuário na nova tabela subject_progress
       const { data: progressData, error } = await supabase
-        .from('user_progress')
+        .from('subject_progress')
         .select('*')
         .eq('user_id', user.id);
 
@@ -40,7 +40,15 @@ export const useUserProgress = () => {
       }
 
       if (progressData && progressData.length > 0) {
-        setProgress(progressData);
+        // Mapear os dados da tabela para o formato esperado
+        const mappedProgress = progressData.map(item => ({
+          subject: item.subject,
+          completed_activities: item.completed_activities,
+          total_activities: item.total_activities,
+          progress_percentage: item.progress_percentage,
+          last_activity_date: item.last_activity_date
+        }));
+        setProgress(mappedProgress);
       } else {
         // Criar progresso inicial para novo usuário
         await initializeUserProgress();
@@ -78,7 +86,7 @@ export const useUserProgress = () => {
 
     try {
       const { data, error } = await supabase
-        .from('user_progress')
+        .from('subject_progress')
         .insert(initialProgress)
         .select();
 
@@ -88,7 +96,15 @@ export const useUserProgress = () => {
       }
 
       if (data) {
-        setProgress(data);
+        // Mapear os dados retornados para o formato esperado
+        const mappedProgress = data.map(item => ({
+          subject: item.subject,
+          completed_activities: item.completed_activities,
+          total_activities: item.total_activities,
+          progress_percentage: item.progress_percentage,
+          last_activity_date: item.last_activity_date
+        }));
+        setProgress(mappedProgress);
       }
     } catch (error) {
       console.error('Error initializing user progress:', error);
@@ -107,7 +123,7 @@ export const useUserProgress = () => {
       const newProgressPercentage = Math.round((newCompletedActivities / currentProgress.total_activities) * 100);
 
       const { data, error } = await supabase
-        .from('user_progress')
+        .from('subject_progress')
         .update({
           completed_activities: newCompletedActivities,
           progress_percentage: newProgressPercentage,
@@ -124,8 +140,17 @@ export const useUserProgress = () => {
       }
 
       if (data) {
+        // Mapear o dado retornado e atualizar o estado
+        const updatedProgress = {
+          subject: data.subject,
+          completed_activities: data.completed_activities,
+          total_activities: data.total_activities,
+          progress_percentage: data.progress_percentage,
+          last_activity_date: data.last_activity_date
+        };
+
         setProgress(prev => prev.map(p => 
-          p.subject === subject ? data : p
+          p.subject === subject ? updatedProgress : p
         ));
       }
     } catch (error) {
