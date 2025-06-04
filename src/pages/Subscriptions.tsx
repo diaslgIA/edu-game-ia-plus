@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -163,7 +164,7 @@ const Subscriptions = () => {
             <h1 className="text-lg font-semibold">Pagamento</h1>
           </div>
 
-          <div className="p-6 flex-1 flex items-center justify-center">
+          <div className="flex-1 overflow-y-auto p-4">
             <PaymentForm
               amount={selectedPlanData.price}
               plan={selectedPlanData.name}
@@ -196,8 +197,8 @@ const Subscriptions = () => {
           </h1>
         </div>
 
-        {/* Content - Scrollable with proper padding */}
-        <div className="flex-1 overflow-y-auto pb-24">
+        {/* Content - Scrollable with proper spacing */}
+        <div className="flex-1 overflow-y-auto pb-28">
           <div className="p-4 space-y-4">
             {/* Comparison Section */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -381,8 +382,8 @@ const Subscriptions = () => {
               </div>
             )}
 
-            {/* Subscribe Button */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            {/* Subscribe Button - Agora com espaçamento adequado */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm mb-8">
               {selectedPlan === 'free' ? (
                 <Button 
                   className="w-full bg-gray-500 text-white font-bold py-3 rounded-xl"
