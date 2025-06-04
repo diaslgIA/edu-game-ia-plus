@@ -2,268 +2,255 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import Logo from '@/components/Logo';
 import AvatarSelector from '@/components/AvatarSelector';
-import SettingsModal from '@/components/SettingsModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Camera, Trophy, Star, Target, BookOpen, Settings } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ArrowLeft, User, Trophy, Target, BookOpen, Star, Settings, Edit3, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, profile, updateProfile, signOut } = useAuth();
-  const { playSound } = useSound();
+  const { user, profile, updateProfile } = useAuth();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     school_year: profile?.school_year || '',
-    phone_number: profile?.phone_number || '',
-    profile_picture_url: profile?.profile_picture_url || ''
+    avatar_url: profile?.avatar_url || '👤'
   });
 
-  const schoolYearOptions = [
-    { value: '1º Ano Ensino Médio', label: '1º Ano do Ensino Médio' },
-    { value: '2º Ano Ensino Médio', label: '2º Ano do Ensino Médio' },
-    { value: '3º Ano Ensino Médio', label: '3º Ano do Ensino Médio' },
-    { value: 'Ensino Médio Concluído', label: 'Ensino Médio Concluído' },
-    { value: 'Cursinho Pré-Vestibular', label: 'Cursinho Pré-Vestibular' }
+  const stats = [
+    { icon: Trophy, label: 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
+    { icon: Target, label: 'Nível', value: profile?.level || 1, color: 'text-blue-500' },
+    { icon: BookOpen, label: 'Estudos', value: '12 dias', color: 'text-green-500' },
+    { icon: Star, label: 'Conquistas', value: '8', color: 'text-purple-500' },
+  ];
+
+  const achievements = [
+    { id: 1, name: 'Primeiro Quiz', description: 'Complete seu primeiro quiz', icon: '🎯', unlocked: true },
+    { id: 2, name: 'Estudante Dedicado', description: 'Estude 5 dias seguidos', icon: '📚', unlocked: true },
+    { id: 3, name: 'Matemático', description: 'Complete 10 quizzes de matemática', icon: '🧮', unlocked: true },
+    { id: 4, name: 'Escritor', description: 'Complete 10 quizzes de português', icon: '✍️', unlocked: false },
+    { id: 5, name: 'Cientista', description: 'Complete 10 quizzes de ciências', icon: '🔬', unlocked: false },
+    { id: 6, name: 'Historiador', description: 'Complete 10 quizzes de história', icon: '🏛️', unlocked: false },
+    { id: 7, name: 'Perfeccionista', description: 'Acerte 100% em um quiz', icon: '💯', unlocked: true },
+    { id: 8, name: 'Maratonista', description: 'Estude por 2 horas seguidas', icon: '🏃', unlocked: true },
+  ];
+
+  const languages = [
+    { code: 'pt', name: 'Português', flag: '🇧🇷' },
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
   ];
 
   const handleSave = async () => {
-    const success = await updateProfile(formData);
-    if (success) {
+    try {
+      await updateProfile(formData);
       setIsEditing(false);
-      playSound('success');
-    } else {
-      playSound('error');
+      toast({
+        title: "Perfil atualizado!",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive"
+      });
     }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    playSound('click');
   };
 
   const handleAvatarChange = (avatar: string) => {
-    setFormData({ ...formData, profile_picture_url: avatar });
-    playSound('click');
+    setFormData({ ...formData, avatar_url: avatar });
   };
 
-  const handlePhotoUpload = (file: File) => {
-    // In a real app, you would upload the file to storage
-    // For now, we'll just create a URL for preview
-    const url = URL.createObjectURL(file);
-    setFormData({ ...formData, profile_picture_url: url });
-    playSound('success');
+  const handlePhotoUpload = async (file: File) => {
+    // Aqui você implementaria o upload da foto para o Supabase Storage
+    // Por agora, vamos usar um placeholder
+    const imageUrl = URL.createObjectURL(file);
+    setFormData({ ...formData, avatar_url: imageUrl });
+    
+    toast({
+      title: "Foto carregada!",
+      description: "Sua foto de perfil foi atualizada.",
+    });
   };
-
-  const renderAvatar = () => {
-    if (profile?.profile_picture_url) {
-      if (profile.profile_picture_url.length === 2) {
-        // It's an emoji avatar
-        return <span className="text-4xl">{profile.profile_picture_url}</span>;
-      } else {
-        // It's a photo URL
-        return (
-          <img 
-            src={profile.profile_picture_url} 
-            alt="Profile" 
-            className="w-24 h-24 rounded-full object-cover"
-          />
-        );
-      }
-    }
-    return <span className="text-4xl font-bold">{profile?.full_name?.[0]?.toUpperCase() || 'U'}</span>;
-  };
-
-  const achievements = [
-    { icon: Trophy, label: 'Primeira Conquista', color: 'text-yellow-500' },
-    { icon: Star, label: 'Estudante Dedicado', color: 'text-blue-500' },
-    { icon: Target, label: 'Foco Total', color: 'text-green-500' },
-    { icon: BookOpen, label: 'Leitor Assíduo', color: 'text-purple-500' },
-  ];
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/10 backdrop-blur-sm text-white p-6 rounded-b-3xl">
-          <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col h-full">
+        {/* Header - Fixed */}
+        <div className="bg-white/10 backdrop-blur-md text-white p-4 rounded-b-3xl flex-shrink-0 z-10">
+          <div className="flex items-center justify-between mb-3">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => navigate('/dashboard')}
               className="text-white p-2"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </Button>
-            <Logo size="sm" showText={false} />
-            <div className="flex space-x-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowSettings(true)}
-                className="text-white/80 hover:text-white"
-              >
-                <Settings size={18} />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleSignOut}
-                className="text-white/80 hover:text-white text-sm"
-              >
-                Sair
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Profile Section */}
-        <div className="px-6 py-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-white">
-            {/* Profile Picture */}
-            <div className="flex flex-col items-center mb-6">
-              <div className="relative">
-                <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                  {renderAvatar()}
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 p-0"
-                >
-                  <Camera size={14} />
-                </Button>
-              </div>
-              <h2 className="text-xl font-bold mt-3">{profile?.full_name || 'Usuário'}</h2>
-              <p className="text-white/80 text-sm">{user?.email}</p>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{profile?.points || 0}</div>
-                <div className="text-xs opacity-80">Pontos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{profile?.level || 1}</div>
-                <div className="text-xs opacity-80">Nível</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">7</div>
-                <div className="text-xs opacity-80">Sequência</div>
-              </div>
-            </div>
-
-            {/* Edit Profile Button */}
-            <Button
-              onClick={() => setIsEditing(true)}
-              className="w-full bg-white/20 hover:bg-white/30 text-white border-none"
+            <h1 className="text-base font-semibold flex items-center space-x-2">
+              <User size={18} />
+              <span>Perfil</span>
+            </h1>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+              className="text-white p-2"
             >
-              Editar Perfil
+              {isEditing ? <Save size={16} /> : <Edit3 size={16} />}
             </Button>
           </div>
         </div>
 
-        {/* Achievements */}
-        <div className="px-6 py-2">
-          <h3 className="text-white text-lg font-semibold mb-4">Conquistas</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {achievements.map((achievement, index) => (
-              <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-white">
-                <achievement.icon className={`${achievement.color} w-8 h-8 mb-2`} />
-                <p className="text-sm font-medium">{achievement.label}</p>
+        {/* Content - Scrollable with proper padding */}
+        <div className="flex-1 overflow-y-auto pb-24">
+          <div className="p-4 space-y-4">
+            {/* Profile Info */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
+              <div className="text-center mb-4">
+                <AvatarSelector
+                  currentAvatar={formData.avatar_url}
+                  onAvatarChange={handleAvatarChange}
+                  onPhotoUpload={handlePhotoUpload}
+                />
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Edit Profile Modal */}
-        {isEditing && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
-              <h3 className="text-xl font-bold mb-4 dark:text-white">Editar Perfil</h3>
-              
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <Label htmlFor="avatar" className="dark:text-white">Avatar / Foto</Label>
-                  <AvatarSelector
-                    currentAvatar={formData.profile_picture_url}
-                    onAvatarChange={handleAvatarChange}
-                    onPhotoUpload={handlePhotoUpload}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="full_name" className="dark:text-white">Nome Completo</Label>
+                  <Label htmlFor="full_name" className="text-white text-sm">Nome Completo</Label>
                   <Input
                     id="full_name"
                     value={formData.full_name}
                     onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                    className="dark:bg-gray-700 dark:text-white"
+                    disabled={!isEditing}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 disabled:opacity-60"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="school_year" className="dark:text-white">Ano Escolar</Label>
-                  <Select 
-                    value={formData.school_year} 
-                    onValueChange={(value) => setFormData({...formData, school_year: value})}
-                  >
-                    <SelectTrigger className="dark:bg-gray-700 dark:text-white">
-                      <SelectValue placeholder="Selecione seu ano escolar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schoolYearOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="phone_number" className="dark:text-white">Telefone (Opcional)</Label>
+                  <Label htmlFor="school_year" className="text-white text-sm">Ano Escolar</Label>
                   <Input
-                    id="phone_number"
-                    value={formData.phone_number}
-                    onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
-                    placeholder="(11) 99999-9999"
-                    className="dark:bg-gray-700 dark:text-white"
+                    id="school_year"
+                    value={formData.school_year}
+                    onChange={(e) => setFormData({...formData, school_year: e.target.value})}
+                    disabled={!isEditing}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 disabled:opacity-60"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-white text-sm">Email</Label>
+                  <Input
+                    value={user?.email || ''}
+                    disabled
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 disabled:opacity-60"
                   />
                 </div>
               </div>
+            </Card>
 
-              <div className="flex space-x-3 mt-6">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              {stats.map((stat, index) => (
+                <Card key={index} className="bg-white/10 backdrop-blur-md border-white/20 p-3 text-white">
+                  <div className="flex items-center space-x-2">
+                    <stat.icon className={`${stat.color} w-5 h-5`} />
+                    <div>
+                      <p className="text-xs opacity-80">{stat.label}</p>
+                      <p className="text-sm font-bold">{stat.value}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Achievements - Now properly scrollable */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
+              <h3 className="text-white font-semibold mb-3 text-sm">Conquistas</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {achievements.map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className={`flex items-center space-x-3 p-2 rounded-lg ${
+                      achievement.unlocked 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}
+                  >
+                    <div className="text-xl">{achievement.icon}</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-xs">{achievement.name}</h4>
+                      <p className="text-[10px] opacity-80">{achievement.description}</p>
+                    </div>
+                    {achievement.unlocked && (
+                      <div className="text-yellow-400">
+                        <Trophy size={16} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Languages - Now properly visible */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
+              <h3 className="text-white font-semibold mb-3 text-sm">Idiomas</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {languages.map((language) => (
+                  <div
+                    key={language.code}
+                    className="flex items-center space-x-2 p-2 bg-white/20 rounded-lg text-white cursor-pointer hover:bg-white/30 transition-colors"
+                  >
+                    <span className="text-lg">{language.flag}</span>
+                    <span className="text-xs font-medium">{language.name}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Settings */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
+              <h3 className="text-white font-semibold mb-3 text-sm flex items-center space-x-2">
+                <Settings size={16} />
+                <span>Configurações</span>
+              </h3>
+              <div className="space-y-2">
                 <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 dark:border-gray-600 dark:text-white"
+                  variant="ghost"
+                  className="w-full justify-start text-white hover:bg-white/20 text-sm"
+                  onClick={() => navigate('/settings')}
                 >
-                  Cancelar
+                  Configurações do App
                 </Button>
                 <Button
-                  onClick={handleSave}
-                  className="flex-1"
+                  variant="ghost"
+                  className="w-full justify-start text-white hover:bg-white/20 text-sm"
+                  onClick={() => navigate('/privacy')}
                 >
-                  Salvar
+                  Privacidade
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-white hover:bg-white/20 text-sm"
+                  onClick={() => navigate('/help')}
+                >
+                  Ajuda e Suporte
                 </Button>
               </div>
-            </div>
+            </Card>
           </div>
-        )}
+        </div>
       </div>
       
       <BottomNavigation />
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </MobileContainer>
   );
 };

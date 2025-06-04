@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
-import WelcomeScreen from '@/components/WelcomeScreen';
+import WelcomeIntroScreen from '@/components/WelcomeIntroScreen';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const Welcome = () => {
 
   if (showWelcome && profile) {
     return (
-      <WelcomeScreen 
+      <WelcomeIntroScreen 
         onComplete={handleWelcomeComplete}
         userName={profile.full_name}
       />

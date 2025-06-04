@@ -26,7 +26,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(45);
+  const [timeLeft, setTimeLeft] = useState(180); // Alterado para 3 minutos (180 segundos)
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
@@ -48,7 +48,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const startGame = () => {
     setGameStarted(true);
     setStartTime(Date.now());
-    setTimeLeft(45);
+    setTimeLeft(180); // 3 minutos para cada questão
     playSound('click');
   };
 
@@ -79,7 +79,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
-      setTimeLeft(45);
+      setTimeLeft(180); // Resetar para 3 minutos
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -130,7 +130,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
       <QuizHeader 
         subject={subject}
         topic={question.topic}
@@ -154,31 +154,33 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         />
       )}
 
-      {/* Botões de Ação */}
-      <div className="flex space-x-3">
-        {!showResult ? (
-          <Button 
-            onClick={handleSubmitAnswer}
-            disabled={selectedAnswer === null}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl disabled:opacity-50"
-          >
-            Confirmar Resposta
-          </Button>
-        ) : (
-          <Button 
-            onClick={handleNextQuestion}
-            disabled={saving}
-            className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
-          >
-            {currentQuestion < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
-          </Button>
-        )}
-      </div>
+      {/* Botões de Ação - Sempre visíveis */}
+      <div className="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 border-t mt-4">
+        <div className="flex space-x-3">
+          {!showResult ? (
+            <Button 
+              onClick={handleSubmitAnswer}
+              disabled={selectedAnswer === null}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl disabled:opacity-50"
+            >
+              Confirmar Resposta
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleNextQuestion}
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
+            >
+              {currentQuestion < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
+            </Button>
+          )}
+        </div>
 
-      {/* Pontuação Atual */}
-      <div className="mt-4 text-center">
-        <span className="text-gray-600 dark:text-gray-400">Pontuação atual: </span>
-        <span className="font-bold text-blue-600 dark:text-blue-400">{score} pontos</span>
+        {/* Pontuação Atual */}
+        <div className="mt-3 text-center">
+          <span className="text-gray-600 dark:text-gray-400 text-sm">Pontuação atual: </span>
+          <span className="font-bold text-blue-600 dark:text-blue-400">{score} pontos</span>
+        </div>
       </div>
     </div>
   );
