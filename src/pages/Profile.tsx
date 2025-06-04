@@ -20,7 +20,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     school_year: profile?.school_year || '',
-    avatar_url: profile?.avatar_url || '👤'
+    profile_picture_url: profile?.profile_picture_url || '👤'
   });
 
   const stats = [
@@ -66,14 +66,14 @@ const Profile = () => {
   };
 
   const handleAvatarChange = (avatar: string) => {
-    setFormData({ ...formData, avatar_url: avatar });
+    setFormData({ ...formData, profile_picture_url: avatar });
   };
 
   const handlePhotoUpload = async (file: File) => {
     // Aqui você implementaria o upload da foto para o Supabase Storage
     // Por agora, vamos usar um placeholder
     const imageUrl = URL.createObjectURL(file);
-    setFormData({ ...formData, avatar_url: imageUrl });
+    setFormData({ ...formData, profile_picture_url: imageUrl });
     
     toast({
       title: "Foto carregada!",
@@ -117,7 +117,7 @@ const Profile = () => {
             <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
               <div className="text-center mb-4">
                 <AvatarSelector
-                  currentAvatar={formData.avatar_url}
+                  currentAvatar={formData.profile_picture_url}
                   onAvatarChange={handleAvatarChange}
                   onPhotoUpload={handlePhotoUpload}
                 />
