@@ -20,12 +20,15 @@ const Login = () => {
     e.preventDefault();
     const success = await signIn(email, password);
     if (success) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   };
 
   const handleGoogleLogin = async () => {
-    await signInWithGmail();
+    const success = await signInWithGmail();
+    if (success) {
+      navigate('/welcome');
+    }
   };
 
   return (
@@ -40,13 +43,27 @@ const Login = () => {
           >
             <ArrowLeft size={20} />
           </Button>
-          <Logo size="md" />
+        </div>
+
+        {/* Logo Destacada */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <Logo size="xl" animated={true} />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              EduGameIA
+            </h1>
+            <p className="text-lg text-white/90 font-medium">
+              Sua jornada rumo ao sucesso!
+            </p>
+          </div>
         </div>
 
         <div className="flex-1 flex flex-col justify-center">
           <div className="space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Bem-vindo de volta!</h1>
+              <h2 className="text-2xl font-bold mb-2">Bem-vindo de volta!</h2>
               <p className="text-white/80">Entre na sua conta para continuar aprendendo</p>
             </div>
 
@@ -90,7 +107,7 @@ const Login = () => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold"
+                className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 text-lg"
                 disabled={loading}
               >
                 {loading ? 'Entrando...' : 'Entrar'}
@@ -119,7 +136,7 @@ const Login = () => {
             <Button
               onClick={handleGoogleLogin}
               variant="outline"
-              className="w-full border-white/30 text-white hover:bg-white/10"
+              className="w-full border-white/30 text-white hover:bg-white/10 py-3"
               disabled={loading}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">

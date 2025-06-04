@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useExpandedQuestions } from '@/hooks/useExpandedQuestions';
@@ -154,8 +153,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         />
       )}
 
-      {/* Botões de Ação - Sempre visíveis */}
-      <div className="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 border-t mt-4">
+      {/* Pontuação Atual - Sempre visível */}
+      <div className="mt-4 p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-xl">
+        <div className="text-center">
+          <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pontuação atual: </span>
+          <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{score} pontos</span>
+        </div>
+      </div>
+
+      {/* Botões de Ação - Sempre visíveis no final */}
+      <div className="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 mt-4">
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
@@ -174,12 +181,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
               {currentQuestion < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
             </Button>
           )}
-        </div>
-
-        {/* Pontuação Atual */}
-        <div className="mt-3 text-center">
-          <span className="text-gray-600 dark:text-gray-400 text-sm">Pontuação atual: </span>
-          <span className="font-bold text-blue-600 dark:text-blue-400">{score} pontos</span>
         </div>
       </div>
     </div>

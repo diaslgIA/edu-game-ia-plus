@@ -7,21 +7,17 @@ import WelcomeIntroScreen from '@/components/WelcomeIntroScreen';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { profile, markFirstLoginComplete } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(false);
+  const { profile } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     if (profile) {
-      if (profile.first_login) {
-        setShowWelcome(true);
-      } else {
-        navigate('/dashboard');
-      }
+      // Sempre mostrar a tela de boas-vindas
+      setShowWelcome(true);
     }
-  }, [profile, navigate]);
+  }, [profile]);
 
-  const handleWelcomeComplete = async () => {
-    await markFirstLoginComplete();
+  const handleWelcomeComplete = () => {
     setShowWelcome(false);
     navigate('/dashboard');
   };
@@ -38,7 +34,6 @@ const Welcome = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full p-6">
-        {/* Loading state or redirect */}
         <div className="flex-1 flex flex-col items-center justify-center text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
           <p>Preparando sua experiência...</p>

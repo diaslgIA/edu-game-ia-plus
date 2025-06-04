@@ -21,13 +21,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleThemeToggle = (checked: boolean) => {
-    toggleTheme();
-  };
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto transition-colors duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto transition-colors duration-300 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold dark:text-white">Configurações</h3>
           <Button variant="ghost" size="sm" onClick={onClose} className="dark:text-white">
@@ -51,7 +47,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               </div>
               <Switch 
                 checked={theme === 'dark'} 
-                onCheckedChange={handleThemeToggle}
+                onCheckedChange={toggleTheme}
               />
             </div>
           </div>
@@ -63,12 +59,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               Idioma
             </h4>
             <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="dark:bg-gray-700 dark:text-white transition-colors duration-300">
+              <SelectTrigger className="dark:bg-gray-700 dark:text-white transition-colors duration-300 bg-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-lg max-h-60 overflow-y-auto z-[60]">
                 {languages.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
+                  <SelectItem 
+                    key={lang.code} 
+                    value={lang.code}
+                    className="dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                  >
                     <span className="flex items-center">
                       <span className="mr-2">{lang.flag}</span>
                       {lang.name}
@@ -107,6 +107,69 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 />
               </div>
             )}
+          </div>
+
+          {/* App Settings */}
+          <div className="space-y-3">
+            <h4 className="font-semibold dark:text-white">Configurações do App</h4>
+            <div className="space-y-2">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Notificações</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Receba lembretes para estudar diariamente
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Backup Automático</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Seus dados são salvos automaticamente na nuvem
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy Settings */}
+          <div className="space-y-3">
+            <h4 className="font-semibold dark:text-white">Privacidade</h4>
+            <div className="space-y-2">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Dados de Uso</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Coletamos dados para melhorar sua experiência de aprendizado
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Perfil Público</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Controle quais informações são visíveis para outros usuários
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Help & Support */}
+          <div className="space-y-3">
+            <h4 className="font-semibold dark:text-white">Ajuda e Suporte</h4>
+            <div className="space-y-2">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Central de Ajuda</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Acesse tutoriais e guias de uso do aplicativo
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Contato</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Entre em contato conosco via email: suporte@edugameia.com
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium dark:text-white">Reportar Problema</h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Relate bugs ou problemas técnicos
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

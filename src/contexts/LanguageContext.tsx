@@ -123,6 +123,34 @@ const translations: Translations = {
     ar: 'الملف الشخصي',
     ru: 'Профиль',
     hi: 'प्रोफाइल'
+  },
+  'points': {
+    pt: 'Pontos',
+    en: 'Points',
+    es: 'Puntos',
+    fr: 'Points',
+    de: 'Punkte',
+    it: 'Punti',
+    ja: 'ポイント',
+    ko: '포인트',
+    zh: '分数',
+    ar: 'النقاط',
+    ru: 'Очки',
+    hi: 'अंक'
+  },
+  'level': {
+    pt: 'Nível',
+    en: 'Level',
+    es: 'Nivel',
+    fr: 'Niveau',
+    de: 'Level',
+    it: 'Livello',
+    ja: 'レベル',
+    ko: '레벨',
+    zh: '等级',
+    ar: 'المستوى',
+    ru: 'Уровень',
+    hi: 'स्तर'
   }
 };
 
@@ -158,6 +186,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('language', language);
+    // Disparar evento para atualizar a interface
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: language }));
   }, [language]);
 
   const setLanguage = (lang: Language) => {
