@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import MobileContainer from '@/components/MobileContainer';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 const Register = () => {
   const navigate = useNavigate();
   const { signUp, loading } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -60,64 +62,69 @@ const Register = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full p-6 text-white">
-        <div className="flex items-center mb-6">
+      <div className="flex flex-col h-full">
+        {/* Header fixo e compacto */}
+        <div className="flex-shrink-0 flex items-center p-4 pb-2">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/')}
-            className="text-white p-2 mr-4"
+            className="text-white p-2 mr-2"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </Button>
-          <Logo size="md" />
+          <div className="flex-1 flex justify-center">
+            <Logo size="sm" />
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Criar Conta</h1>
-              <p className="text-white/80">Comece sua jornada rumo ao ENEM!</p>
+        {/* Conteúdo scrollável */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="space-y-4">
+            {/* Título compacto */}
+            <div className="text-center py-2">
+              <h1 className="text-2xl font-bold text-white mb-1">Criar Conta</h1>
+              <p className="text-white/80 text-sm">Comece sua jornada rumo ao ENEM!</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <Label htmlFor="fullName" className="text-white">Nome Completo</Label>
+                <Label htmlFor="fullName" className="text-white text-sm">Nome Completo</Label>
                 <Input
                   id="fullName"
                   type="text"
                   value={formData.fullName}
                   onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                   placeholder="Seu nome completo"
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-10"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="email" className="text-white">Email</Label>
+                <Label htmlFor="email" className="text-white text-sm">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="seu@email.com"
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-10"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="schoolYear" className="text-white">Ano Escolar</Label>
+                <Label htmlFor="schoolYear" className="text-white text-sm">Ano Escolar</Label>
                 <Select 
                   value={formData.schoolYear} 
                   onValueChange={(value) => setFormData({...formData, schoolYear: value})}
                   required
                 >
-                  <SelectTrigger className="bg-white/20 border-white/30 text-white">
+                  <SelectTrigger className="bg-white/20 border-white/30 text-white h-10">
                     <SelectValue placeholder="Selecione seu ano escolar" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-48 overflow-y-auto">
                     {schoolYearOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -128,7 +135,7 @@ const Register = () => {
               </div>
 
               <div>
-                <Label htmlFor="password" className="text-white">Senha</Label>
+                <Label htmlFor="password" className="text-white text-sm">Senha</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -136,7 +143,7 @@ const Register = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     placeholder="Mínimo 8 caracteres"
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10"
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-10"
                     required
                   />
                   <Button
@@ -146,13 +153,13 @@ const Register = () => {
                     className="absolute right-0 top-0 h-full px-3 text-white/60 hover:text-white"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="confirmPassword" className="text-white">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword" className="text-white text-sm">Confirmar Senha</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -160,7 +167,7 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                     placeholder="Confirme sua senha"
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10"
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-10"
                     required
                   />
                   <Button
@@ -170,21 +177,22 @@ const Register = () => {
                     className="absolute right-0 top-0 h-full px-3 text-white/60 hover:text-white"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </Button>
                 </div>
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold"
+                className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 mt-4"
                 disabled={loading}
               >
                 {loading ? 'Criando conta...' : 'Criar conta'}
               </Button>
             </form>
 
-            <div className="text-center text-sm text-white/80">
+            {/* Termos e condições compacto */}
+            <div className="text-center text-xs text-white/80 py-2">
               <p>Ao criar uma conta, você concorda com nossos</p>
               <p>
                 <Link to="#" className="underline">Termos de Uso</Link> e{' '}
@@ -192,9 +200,10 @@ const Register = () => {
               </p>
             </div>
 
-            <div className="text-center">
-              <span className="text-white/80">Já tem uma conta? </span>
-              <Link to="/auth?tab=login" className="text-white font-semibold hover:underline">
+            {/* Link para login */}
+            <div className="text-center pb-4">
+              <span className="text-white/80 text-sm">Já tem uma conta? </span>
+              <Link to="/auth?tab=login" className="text-white font-semibold hover:underline text-sm">
                 Entrar
               </Link>
             </div>

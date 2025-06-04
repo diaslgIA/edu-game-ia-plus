@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import MobileContainer from '@/components/MobileContainer';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signInWithGmail, loading } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,31 +47,36 @@ const Login = () => {
           </Button>
         </div>
 
-        {/* Logo Destacada */}
+        {/* Logo Destacada e MAIOR */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Logo size="xl" animated={true} />
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <Logo size="xl" animated={true} />
+              {/* Efeito de brilho extra */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-xl opacity-30 animate-pulse"></div>
+            </div>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+          <div className="space-y-3">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-200 to-yellow-200 bg-clip-text text-transparent drop-shadow-lg">
               EduGameIA
             </h1>
-            <p className="text-lg text-white/90 font-medium">
-              Sua jornada rumo ao sucesso!
+            <p className="text-xl text-white/95 font-semibold drop-shadow-md">
+              {t('tagline')}
             </p>
+            <div className="h-1 w-32 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto"></div>
           </div>
         </div>
 
         <div className="flex-1 flex flex-col justify-center">
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Bem-vindo de volta!</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('welcome_back')}</h2>
               <p className="text-white/80">Entre na sua conta para continuar aprendendo</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="email" className="text-white">Email</Label>
+                <Label htmlFor="email" className="text-white">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -82,7 +89,7 @@ const Login = () => {
               </div>
 
               <div>
-                <Label htmlFor="password" className="text-white">Senha</Label>
+                <Label htmlFor="password" className="text-white">{t('password')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -110,7 +117,7 @@ const Login = () => {
                 className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 text-lg"
                 disabled={loading}
               >
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? 'Entrando...' : t('enter')}
               </Button>
             </form>
 

@@ -67,7 +67,6 @@ const translations: Translations = {
     ru: 'Создать бесплатный аккаунт',
     hi: 'मुफ्त खाता बनाएं'
   },
-  // Navigation
   'dashboard': {
     pt: 'Painel',
     en: 'Dashboard',
@@ -151,6 +150,104 @@ const translations: Translations = {
     ar: 'المستوى',
     ru: 'Уровень',
     hi: 'स्तर'
+  },
+  'welcome_back': {
+    pt: 'Bem-vindo de volta!',
+    en: 'Welcome back!',
+    es: '¡Bienvenido de vuelta!',
+    fr: 'Bon retour!',
+    de: 'Willkommen zurück!',
+    it: 'Bentornato!',
+    ja: 'おかえりなさい！',
+    ko: '다시 오신 것을 환영합니다!',
+    zh: '欢迎回来！',
+    ar: 'مرحبا بعودتك!',
+    ru: 'С возвращением!',
+    hi: 'वापसी पर स्वागत है!'
+  },
+  'email': {
+    pt: 'Email',
+    en: 'Email',
+    es: 'Correo',
+    fr: 'Email',
+    de: 'E-Mail',
+    it: 'Email',
+    ja: 'メール',
+    ko: '이메일',
+    zh: '电子邮件',
+    ar: 'البريد الإلكتروني',
+    ru: 'Электронная почта',
+    hi: 'ईमेल'
+  },
+  'password': {
+    pt: 'Senha',
+    en: 'Password',
+    es: 'Contraseña',
+    fr: 'Mot de passe',
+    de: 'Passwort',
+    it: 'Password',
+    ja: 'パスワード',
+    ko: '비밀번호',
+    zh: '密码',
+    ar: 'كلمة المرور',
+    ru: 'Пароль',
+    hi: 'पासवर्ड'
+  },
+  'enter': {
+    pt: 'Entrar',
+    en: 'Login',
+    es: 'Entrar',
+    fr: 'Connexion',
+    de: 'Anmelden',
+    it: 'Accedi',
+    ja: 'ログイン',
+    ko: '로그인',
+    zh: '登录',
+    ar: 'تسجيل الدخول',
+    ru: 'Войти',
+    hi: 'लॉगिन'
+  },
+  'full_name': {
+    pt: 'Nome Completo',
+    en: 'Full Name',
+    es: 'Nombre Completo',
+    fr: 'Nom Complet',
+    de: 'Vollständiger Name',
+    it: 'Nome Completo',
+    ja: '氏名',
+    ko: '전체 이름',
+    zh: '全名',
+    ar: 'الاسم الكامل',
+    ru: 'Полное имя',
+    hi: 'पूरा नाम'
+  },
+  'school_year': {
+    pt: 'Ano Escolar',
+    en: 'School Year',
+    es: 'Año Escolar',
+    fr: 'Année Scolaire',
+    de: 'Schuljahr',
+    it: 'Anno Scolastico',
+    ja: '学年',
+    ko: '학년',
+    zh: '学年',
+    ar: 'السنة الدراسية',
+    ru: 'Учебный год',
+    hi: 'स्कूल वर्ष'
+  },
+  'create_account': {
+    pt: 'Criar conta',
+    en: 'Create account',
+    es: 'Crear cuenta',
+    fr: 'Créer un compte',
+    de: 'Konto erstellen',
+    it: 'Crea account',
+    ja: 'アカウント作成',
+    ko: '계정 만들기',
+    zh: '创建账户',
+    ar: 'إنشاء حساب',
+    ru: 'Создать аккаунт',
+    hi: 'खाता बनाएं'
   }
 };
 
@@ -186,12 +283,19 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('language', language);
-    // Disparar evento para atualizar a interface
+    // Força re-render de todos os componentes quando o idioma muda
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: language }));
+    
+    // Atualiza o HTML lang attribute
+    document.documentElement.lang = language;
   }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
+    // Força atualização imediata
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const t = (key: string): string => {

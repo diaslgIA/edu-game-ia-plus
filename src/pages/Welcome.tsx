@@ -11,8 +11,8 @@ const Welcome = () => {
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
+    // Sempre mostrar a tela de boas-vindas quando o usuário estiver autenticado
     if (profile) {
-      // Sempre mostrar a tela de boas-vindas
       setShowWelcome(true);
     }
   }, [profile]);
@@ -22,11 +22,12 @@ const Welcome = () => {
     navigate('/dashboard');
   };
 
-  if (showWelcome && profile) {
+  // Sempre mostrar a tela de boas-vindas se o usuário estiver logado
+  if (profile && showWelcome) {
     return (
       <WelcomeIntroScreen 
         onComplete={handleWelcomeComplete}
-        userName={profile.full_name}
+        userName={profile.full_name || 'Estudante'}
       />
     );
   }
