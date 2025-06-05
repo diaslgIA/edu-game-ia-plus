@@ -11,9 +11,11 @@ const Register = () => {
       <div className="flex flex-col h-screen">
         <RegistrationHeader />
         
-        <div className="flex-1 overflow-y-auto px-4">
-          <RegistrationForm />
-          <RegistrationFooter />
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-4 pb-8">
+            <RegistrationForm />
+            <RegistrationFooter />
+          </div>
         </div>
       </div>
     </MobileContainer>
