@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +26,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, userData: { full_name: string; school_year: string; phone_number?: string }) => Promise<boolean>;
+  signUp: (email: string, password: string, userData: { full_name: string; school_year: string; phone_number?: string; profile_picture_url?: string }) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signInWithGmail: () => Promise<boolean>;
   signOut: () => Promise<void>;
@@ -134,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, userData: { full_name: string; school_year: string; phone_number?: string }): Promise<boolean> => {
+  const signUp = async (email: string, password: string, userData: { full_name: string; school_year: string; phone_number?: string; profile_picture_url?: string }): Promise<boolean> => {
     try {
       setLoading(true);
       
