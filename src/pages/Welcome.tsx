@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
-import WelcomeIntroScreen from '@/components/WelcomeIntroScreen';
+import WelcomeMessage from '@/components/WelcomeMessage';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -11,7 +11,6 @@ const Welcome = () => {
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
-    // Sempre mostrar a tela de boas-vindas quando o usuário estiver autenticado
     if (profile) {
       setShowWelcome(true);
     }
@@ -22,10 +21,9 @@ const Welcome = () => {
     navigate('/dashboard');
   };
 
-  // Sempre mostrar a tela de boas-vindas se o usuário estiver logado
   if (profile && showWelcome) {
     return (
-      <WelcomeIntroScreen 
+      <WelcomeMessage 
         onComplete={handleWelcomeComplete}
         userName={profile.full_name || 'Estudante'}
       />

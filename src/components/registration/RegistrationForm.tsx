@@ -61,7 +61,7 @@ const RegistrationForm: React.FC = () => {
     
     if (success) {
       playSound('success');
-      navigate('/verification');
+      navigate('/welcome');
     } else {
       playSound('error');
     }
@@ -73,25 +73,17 @@ const RegistrationForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto">
-      {/* Título */}
-      <div className="text-center py-4 mb-2">
-        <h1 className="text-xl font-bold text-white mb-1">Criar Conta</h1>
-        <p className="text-white/80 text-sm">Comece sua jornada rumo ao ENEM!</p>
-      </div>
-
+    <div className="w-full">
       {/* Avatar Selector */}
-      <div className="flex justify-center mb-4">
-        <div className="scale-90">
-          <AvatarSelector
-            currentAvatar={formData.avatar}
-            onAvatarChange={handleAvatarChange}
-          />
-        </div>
+      <div className="flex justify-center mb-6">
+        <AvatarSelector
+          currentAvatar={formData.avatar}
+          onAvatarChange={handleAvatarChange}
+        />
       </div>
 
       {/* Formulário */}
-      <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="fullName" className="text-white text-sm font-medium">Nome Completo *</Label>
           <Input
@@ -100,7 +92,7 @@ const RegistrationForm: React.FC = () => {
             value={formData.fullName}
             onChange={(e) => setFormData({...formData, fullName: e.target.value})}
             placeholder="Seu nome completo"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-11 text-sm mt-1"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-12 text-sm mt-1"
             required
           />
         </div>
@@ -115,10 +107,10 @@ const RegistrationForm: React.FC = () => {
             }}
             required
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white h-11 text-sm mt-1">
+            <SelectTrigger className="bg-white/20 border-white/30 text-white h-12 text-sm mt-1">
               <SelectValue placeholder="Selecione seu ano escolar" />
             </SelectTrigger>
-            <SelectContent className="bg-white border-gray-200 shadow-lg max-h-40 overflow-y-auto">
+            <SelectContent className="bg-white border-gray-200 shadow-lg max-h-40 overflow-y-auto z-50">
               {schoolYearOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value} className="text-sm text-gray-800 hover:bg-gray-100">
                   {option.label}
@@ -136,7 +128,7 @@ const RegistrationForm: React.FC = () => {
             value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
             placeholder="seu@email.com"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-11 text-sm mt-1"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-12 text-sm mt-1"
             required
           />
         </div>
@@ -150,7 +142,7 @@ const RegistrationForm: React.FC = () => {
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Mínimo 8 caracteres"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-11 text-sm"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-12 h-12 text-sm"
               required
             />
             <Button
@@ -177,7 +169,7 @@ const RegistrationForm: React.FC = () => {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
               placeholder="Confirme sua senha"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-11 text-sm"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-12 h-12 text-sm"
               required
             />
             <Button
@@ -195,10 +187,10 @@ const RegistrationForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-6">
           <Button 
             type="submit" 
-            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 text-sm h-12"
+            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 text-base h-12 rounded-xl"
             disabled={loading}
             onClick={() => playSound('click')}
           >
