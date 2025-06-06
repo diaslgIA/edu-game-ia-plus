@@ -7,7 +7,7 @@ const RegistrationFooter: React.FC = () => {
   const { playSound } = useSound();
 
   return (
-    <div className="text-center space-y-3 py-3">
+    <div className="text-center space-y-2 py-2">
       {/* Termos */}
       <div className="text-xs text-white/80">
         <p className="mb-1">Ao criar uma conta, você concorda com nossos</p>
@@ -19,10 +19,10 @@ const RegistrationFooter: React.FC = () => {
 
       {/* Link para login */}
       <div>
-        <span className="text-white/80 text-sm">Já tem uma conta? </span>
+        <span className="text-white/80 text-xs">Já tem uma conta? </span>
         <Link 
           to="/auth?tab=login" 
-          className="text-white font-semibold hover:underline text-sm"
+          className="text-white font-semibold hover:underline text-xs"
           onClick={() => playSound('click')}
         >
           Entrar

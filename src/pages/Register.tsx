@@ -9,19 +9,19 @@ const Register = () => {
   return (
     <MobileContainer background="gradient">
       <div className="min-h-screen flex flex-col">
-        {/* Header compacto */}
-        <div className="flex-shrink-0 pt-3 pb-2 px-4">
-          <div className="flex justify-center mb-1">
+        {/* Header ultra compacto */}
+        <div className="flex-shrink-0 pt-2 pb-1 px-4">
+          <div className="flex justify-center">
             <Logo size="sm" showText={true} />
           </div>
           <div className="text-center">
-            <h1 className="text-white text-sm font-medium">Crie sua conta gratuita</h1>
+            <h1 className="text-white text-xs font-medium">Crie sua conta gratuita</h1>
           </div>
         </div>
 
-        {/* Área scrollável com padding otimizado */}
+        {/* Área scrollável com padding mínimo */}
         <div className="flex-1 overflow-y-auto">
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-2">
             <div className="max-w-sm mx-auto">
               <RegistrationForm />
               <RegistrationFooter />

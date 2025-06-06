@@ -73,32 +73,32 @@ const RegistrationForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-4">
-      {/* Avatar Selector compacto */}
-      <div className="flex justify-center py-2">
+    <div className="w-full space-y-2">
+      {/* Avatar Selector ultra compacto */}
+      <div className="flex justify-center py-1">
         <AvatarSelector
           currentAvatar={formData.avatar}
           onAvatarChange={handleAvatarChange}
         />
       </div>
 
-      {/* Formulário com espaçamento otimizado */}
-      <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Formulário com espaçamento mínimo */}
+      <form onSubmit={handleSubmit} className="space-y-2">
         <div className="space-y-1">
-          <Label htmlFor="fullName" className="text-white text-sm font-medium">Nome Completo *</Label>
+          <Label htmlFor="fullName" className="text-white text-xs font-medium">Nome Completo *</Label>
           <Input
             id="fullName"
             type="text"
             value={formData.fullName}
             onChange={(e) => setFormData({...formData, fullName: e.target.value})}
             placeholder="Seu nome completo"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-10 text-sm"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-8 text-xs"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="schoolYear" className="text-white text-sm font-medium">Ano Escolar *</Label>
+          <Label htmlFor="schoolYear" className="text-white text-xs font-medium">Ano Escolar *</Label>
           <Select 
             value={formData.schoolYear} 
             onValueChange={(value) => {
@@ -107,7 +107,7 @@ const RegistrationForm: React.FC = () => {
             }}
             required
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white h-10 text-sm">
+            <SelectTrigger className="bg-white/20 border-white/30 text-white h-8 text-xs">
               <SelectValue placeholder="Selecione seu ano escolar" />
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-200 shadow-lg max-h-32 overflow-y-auto z-50">
@@ -121,20 +121,20 @@ const RegistrationForm: React.FC = () => {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="email" className="text-white text-sm font-medium">Email *</Label>
+          <Label htmlFor="email" className="text-white text-xs font-medium">Email *</Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
             placeholder="seu@email.com"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-10 text-sm"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-8 text-xs"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="password" className="text-white text-sm font-medium">Senha *</Label>
+          <Label htmlFor="password" className="text-white text-xs font-medium">Senha *</Label>
           <div className="relative">
             <Input
               id="password"
@@ -142,26 +142,26 @@ const RegistrationForm: React.FC = () => {
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Mínimo 8 caracteres"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-10 text-sm"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-8 h-8 text-xs"
               required
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-0 top-0 h-full px-3 text-white/60 hover:text-white"
+              className="absolute right-0 top-0 h-full px-2 text-white/60 hover:text-white"
               onClick={() => {
                 setShowPassword(!showPassword);
                 playSound('click');
               }}
             >
-              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showPassword ? <EyeOff size={12} /> : <Eye size={12} />}
             </Button>
           </div>
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="confirmPassword" className="text-white text-sm font-medium">Confirmar Senha *</Label>
+          <Label htmlFor="confirmPassword" className="text-white text-xs font-medium">Confirmar Senha *</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
@@ -169,28 +169,28 @@ const RegistrationForm: React.FC = () => {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
               placeholder="Confirme sua senha"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-10 h-10 text-sm"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-8 h-8 text-xs"
               required
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-0 top-0 h-full px-3 text-white/60 hover:text-white"
+              className="absolute right-0 top-0 h-full px-2 text-white/60 hover:text-white"
               onClick={() => {
                 setShowConfirmPassword(!showConfirmPassword);
                 playSound('click');
               }}
             >
-              {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showConfirmPassword ? <EyeOff size={12} /> : <Eye size={12} />}
             </Button>
           </div>
         </div>
 
-        <div className="pt-3">
+        <div className="pt-2">
           <Button 
             type="submit" 
-            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-2.5 text-sm h-10 rounded-xl"
+            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-2 text-xs h-8 rounded-xl"
             disabled={loading}
             onClick={() => playSound('click')}
           >
