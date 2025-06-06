@@ -7,21 +7,21 @@ import WelcomeMessage from '@/components/WelcomeMessage';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(true);
+  const { profile, isAuthenticated } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    if (profile) {
+    if (isAuthenticated && profile) {
       setShowWelcome(true);
     }
-  }, [profile]);
+  }, [isAuthenticated, profile]);
 
   const handleWelcomeComplete = () => {
     setShowWelcome(false);
     navigate('/dashboard');
   };
 
-  if (profile && showWelcome) {
+  if (isAuthenticated && profile && showWelcome) {
     return (
       <WelcomeMessage 
         onComplete={handleWelcomeComplete}

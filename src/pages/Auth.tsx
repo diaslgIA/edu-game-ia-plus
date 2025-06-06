@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +34,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   }, [isAuthenticated, navigate]);
 
@@ -50,7 +49,7 @@ const Auth = () => {
     setFormLoading(true);
     const success = await signIn(loginEmail, loginPassword);
     if (success) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
     setFormLoading(false);
   };
