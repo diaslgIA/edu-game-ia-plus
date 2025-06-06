@@ -8,20 +8,20 @@ import RegistrationFooter from '@/components/registration/RegistrationFooter';
 const Register = () => {
   return (
     <MobileContainer background="gradient">
-      <div className="h-screen flex flex-col">
-        {/* Header fixo */}
-        <div className="flex-shrink-0 pt-6 pb-4 px-4">
-          <div className="flex justify-center mb-3">
-            <Logo size="sm" showText={true} />
+      <div className="min-h-screen flex flex-col">
+        {/* Header compacto */}
+        <div className="flex-shrink-0 pt-4 pb-2 px-4">
+          <div className="flex justify-center mb-2">
+            <Logo size="xs" showText={true} />
           </div>
           <div className="text-center">
-            <h1 className="text-white text-lg font-medium">Crie sua conta gratuita</h1>
+            <h1 className="text-white text-base font-medium">Crie sua conta gratuita</h1>
           </div>
         </div>
 
-        {/* Área scrollável */}
+        {/* Área scrollável com padding otimizado */}
         <div className="flex-1 overflow-y-auto">
-          <div className="px-4 pb-8">
+          <div className="px-4 pb-4">
             <div className="max-w-sm mx-auto">
               <RegistrationForm />
               <RegistrationFooter />
