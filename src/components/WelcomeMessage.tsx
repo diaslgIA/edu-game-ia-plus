@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { GraduationCap, Users, Star, BookOpen } from 'lucide-react';
 
 interface WelcomeMessageProps {
   onComplete: () => void;
@@ -10,13 +9,6 @@ interface WelcomeMessageProps {
 }
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ onComplete, userName }) => {
-  const navigate = useNavigate();
-
-  const handleStart = () => {
-    onComplete();
-    navigate('/dashboard');
-  };
-
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center z-50">
       <div className="text-center text-white px-6 max-w-sm mx-auto">
@@ -43,14 +35,36 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ onComplete, userName })
           </div>
         </div>
 
-        {/* Mensagem de boas-vindas */}
-        <p className="text-lg mb-8 leading-relaxed">
-          Fico muito animado em fazer parte dessa iniciativa que busca transformar o futuro de tantos jovens talentosos
-        </p>
+        {/* Descrição do aplicativo */}
+        <div className="mb-8 space-y-4">
+          <p className="text-lg font-medium leading-relaxed">
+            Fico muito animado em fazer parte dessa iniciativa que busca transformar o futuro de tantos jovens talentosos
+          </p>
+          
+          {/* Objetivos principais */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-yellow-400" />
+              <span className="text-sm">Foco no ENEM e vestibulares</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-blue-400" />
+              <span className="text-sm">Educação acessível para todos</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Star className="w-5 h-5 text-purple-400" />
+              <span className="text-sm">Aprendizado gamificado</span>
+            </div>
+          </div>
+
+          <p className="text-sm opacity-90">
+            Material de estudo de alta qualidade que supera barreiras socioeconômicas
+          </p>
+        </div>
 
         {/* Botão de ação */}
         <Button
-          onClick={handleStart}
+          onClick={onComplete}
           className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-4 rounded-2xl text-lg shadow-lg flex items-center justify-center gap-2"
         >
           <Users className="w-5 h-5" />
