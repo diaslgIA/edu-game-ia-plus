@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -159,6 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           errorMessage = 'Email inválido. Verifique se o email está correto.';
         } else if (error.message.includes('Password')) {
           errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        } else if (error.message.includes('captcha verification process failed')) {
+          errorMessage = 'A verificação de segurança (Captcha) falhou. Por favor, desative a proteção de CAPTCHA nas configurações de autenticação do seu projeto Supabase. Isso é comum em ambiente de desenvolvimento.';
         }
         
         toast({
@@ -216,6 +217,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = 'Email não confirmado. Verifique sua caixa de entrada.';
+        } else if (error.message.includes('captcha verification process failed')) {
+            errorMessage = 'A verificação de segurança (Captcha) falhou. Por favor, desative a proteção de CAPTCHA nas configurações de autenticação do seu projeto Supabase. Isso é comum em ambiente de desenvolvimento.';
         }
         
         toast({
