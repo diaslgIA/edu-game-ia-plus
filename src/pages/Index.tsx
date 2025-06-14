@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
 import SoundControlPanel from '@/components/SoundControlPanel';
+import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -42,18 +43,9 @@ const Index = () => {
         </div>
 
         <div className="animate-scale-in">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-20 h-20 relative">
-              <img 
-                src="/lovable-uploads/08babff9-54df-4763-8eb1-122f7d168e73.png" 
-                alt="EdugameIA Logo" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="font-bold text-3xl">
-              <span className="text-blue-200">Edugame</span>
-              <span className="text-yellow-300">iA</span>
-            </div>
+          {/* Logo Destacada e Bem Visível */}
+          <div className="flex justify-center mb-8">
+            <Logo size="xl" showText={true} animated className="transform hover:scale-105 transition-transform duration-300" />
           </div>
         </div>
         
@@ -88,10 +80,10 @@ const Index = () => {
           </div>
 
           <div className="mt-8 text-sm opacity-75 space-y-2">
-            <p>✓ Conteúdo focado no ENEM</p>
-            <p>✓ Atividades gamificadas</p>
-            <p>✓ Simulados realistas</p>
-            <p>✓ Acompanhamento de progresso</p>
+            <p>🧠 Conteúdo focado no ENEM</p>
+            <p>🧩 Atividades gamificadas</p>
+            <p>🎯 Simulados realistas</p>
+            <p>📊 Acompanhamento de progresso</p>
             <p>🎵 Experiência sonora imersiva</p>
           </div>
         </div>
