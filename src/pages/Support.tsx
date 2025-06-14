@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,9 +49,9 @@ const Support = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full font-pixel">
         {/* Header - Fixo */}
-        <div className="bg-white/10 backdrop-blur-sm text-white p-4 rounded-b-3xl flex-shrink-0">
+        <div className="bg-purple-900/80 text-white p-4 flex-shrink-0 border-b-4 border-purple-400">
           <div className="flex items-center justify-between mb-3">
             <Button 
               variant="ghost" 
@@ -77,7 +76,7 @@ const Support = () => {
               <h2 className="text-white text-sm font-semibold mb-3">Perguntas Frequentes</h2>
               <div className="space-y-2">
                 {faqItems.map((item, index) => (
-                  <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
+                  <div key={index} className="bg-black/30 p-3 text-white border-2 border-white/50">
                     <h3 className="font-semibold mb-1 text-xs">{item.question}</h3>
                     <p className="text-[11px] text-white/80">{item.answer}</p>
                   </div>
@@ -88,7 +87,7 @@ const Support = () => {
             {/* Contact Form */}
             <div>
               <h2 className="text-white text-sm font-semibold mb-3">Entre em Contato</h2>
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+              <div className="bg-black/30 p-4 border-2 border-white/50">
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <div>
                     <Label className="text-white text-xs">Tipo de Solicitação</Label>
@@ -101,7 +100,7 @@ const Support = () => {
                           className={`h-auto p-2 text-[10px] ${
                             formData.type === type.id 
                               ? 'bg-white text-purple-600' 
-                              : 'bg-white/10 text-white border-white/30 hover:bg-white/20'
+                              : 'bg-black/20 text-white border-white/30 hover:bg-white/20'
                           }`}
                           onClick={() => setFormData({...formData, type: type.id})}
                         >
@@ -119,7 +118,7 @@ const Support = () => {
                       value={formData.subject}
                       onChange={(e) => setFormData({...formData, subject: e.target.value})}
                       placeholder="Descreva brevemente sua solicitação"
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-xs"
+                      className="bg-black/20 border-white/30 text-white placeholder:text-white/60 text-xs"
                       required
                     />
                   </div>
@@ -131,7 +130,7 @@ const Support = () => {
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
                       placeholder="Descreva sua dúvida ou problema em detalhes"
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px] text-xs"
+                      className="bg-black/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px] text-xs"
                       required
                     />
                   </div>
@@ -147,7 +146,7 @@ const Support = () => {
             </div>
 
             {/* Contact Info */}
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
+            <div className="bg-black/30 p-3 text-white border-2 border-white/50">
               <h3 className="font-semibold mb-2 text-xs">Outras formas de contato</h3>
               <div className="space-y-1 text-[10px] text-white/80">
                 <p>📧 suporte@edugameia.com</p>

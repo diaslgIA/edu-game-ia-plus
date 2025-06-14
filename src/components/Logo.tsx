@@ -38,37 +38,25 @@ const Logo: React.FC<LogoProps> = ({
       onClick={onClick}
     >
       <div className={`${sizeClasses[size]} relative group ${animated ? 'animate-float' : ''}`}>
-        {/* Efeito de brilho aprimorado */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-edu-purple via-edu-pink to-edu-yellow rounded-2xl blur-lg opacity-70 group-hover:opacity-100 transition-opacity duration-300 animate-pulse-glow"></div>
+        {/* Pixel-style border */}
+        <div className="absolute -inset-1 bg-edu-purple"></div>
         
         {/* Container da Logo */}
-        <div className="relative bg-black/40 backdrop-blur-md rounded-xl shadow-lg w-full h-full flex items-center justify-center p-2 group-hover:bg-black/50 transition-colors duration-300">
+        <div className="relative bg-black w-full h-full flex items-center justify-center p-2 border-2 border-black">
           <img 
             src="/lovable-uploads/200f2456-0066-4697-99f3-2260b38b409a.png" 
             alt="EdugameIA Logo - Cérebro com Quebra-cabeça" 
-            className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain pixelated group-hover:scale-105 transition-transform duration-300"
           />
         </div>
       </div>
       
       {showText && (
         <div className={`font-bold ${textSizeClasses[size]} ${animated ? 'animate-bounce' : ''} hover:scale-105 transition-transform duration-300`}>
-          <span 
-            className="bg-gradient-to-r from-purple-600 via-blue-700 to-cyan-600 bg-clip-text text-transparent hover:from-purple-500 hover:via-blue-600 hover:to-cyan-500 transition-all duration-300"
-            style={{
-              textShadow: '0 0 20px rgba(147, 51, 234, 0.5), 0 0 40px rgba(147, 51, 234, 0.3)',
-              filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-            }}
-          >
+          <span className="text-edu-purple">
             Edugame
           </span>
-          <span 
-            className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 bg-clip-text text-transparent hover:from-yellow-400 hover:via-orange-400 hover:to-red-400 transition-all duration-300"
-            style={{
-              textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.3)',
-              filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-            }}
-          >
+          <span className="text-edu-yellow">
             iA
           </span>
         </div>
