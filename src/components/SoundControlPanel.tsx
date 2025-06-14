@@ -32,25 +32,42 @@ const SoundControlPanel: React.FC = () => {
   };
 
   const testSound = (type: 'success' | 'error' | 'click' | 'notification') => {
-    // Só toca se não estiver silenciado
+    // VERIFICAÇÃO DUPLA: Só testar som se não estiver silenciado
     if (!isMuted) {
       playSound(type);
+    } else {
+      console.log('Sistema silenciado - teste de som bloqueado');
     }
   };
 
   const handleToggleMute = () => {
+    const wasGroupWoRectiveMuted = isMuted;
     toggleMute();
-    // Tocar som de feedback apenas se estiver saindo do modo mudo
-    if (isMuted) {
-      setTimeout(() => playSound('click'), 100);
+    
+    // Som de feedback apenas quando SAINDO do modo silencioso
+    if (wasGroupWoRectiveMuted) {
+      // Pequeno delay para garantir que o estado foi atualizado
+      setTimeout(() => {
+        if (!isMuted) { // Verificar novamente se não está mais silenciado
+          playSound('click');
+        }
+      }, 100);
     }
   };
 
   const handleToggleMusic = () => {
+    // Som de feedback apenas se não estiver silenciado
     if (!isMuted) {
       playSound('click');
     }
     toggleMusic();
+  };
+
+  const handleOpenPopover = () => {
+    // Som de abertura apenas se não estiver silenciado
+    if (!isMuted) {
+      playSound('click');
+    }
   };
 
   return (
@@ -60,7 +77,7 @@ const SoundControlPanel: React.FC = () => {
           variant="ghost" 
           size="sm" 
           className="text-white hover:bg-white/10"
-          onClick={() => !isMuted && playSound('click')}
+          onClick={handleOpenPopover}
         >
           {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </Button>
@@ -72,6 +89,19 @@ const SoundControlPanel: React.FC = () => {
             <Music className="text-blue-500" size={20} />
           </div>
           
+          {/* Alerta de Modo Silencioso */}
+          {isMuted && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600 font-medium flex items-center">
+                <VolumeX size={16} className="mr-2" />
+                MODO SILENCIOSO ATIVO
+              </p>
+              <p className="text-xs text-red-500 mt-1">
+                Todos os sons estão desabilitados
+              </p>
+            </div>
+          )}
+          
           {/* Controle Principal */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -80,9 +110,9 @@ const SoundControlPanel: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleToggleMute}
-                className="h-8 w-8 p-0"
+                className={`h-8 w-8 p-0 ${isMuted ? 'bg-red-50 border-red-200' : ''}`}
               >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                {isMuted ? <VolumeX size={16} className="text-red-500" /> : <Volume2 size={16} />}
               </Button>
             </div>
             
@@ -92,13 +122,13 @@ const SoundControlPanel: React.FC = () => {
                 onValueChange={handleVolumeChange}
                 max={1}
                 min={0}
-                step={0.1}
+                step={0.05}
                 disabled={isMuted}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>0%</span>
-                <span>{Math.round(volume * 100)}%</span>
+                <span className={isMuted ? 'text-red-500' : ''}>{Math.round(volume * 100)}%</span>
                 <span>100%</span>
               </div>
             </div>
@@ -115,7 +145,7 @@ const SoundControlPanel: React.FC = () => {
                 className="h-8 w-8 p-0"
                 disabled={isMuted}
               >
-                {isMusicPlaying ? <Pause size={16} /> : <Play size={16} />}
+                {isMusicPlaying && !isMuted ? <Pause size={16} className="text-green-500" /> : <Play size={16} />}
               </Button>
             </div>
             
@@ -125,13 +155,13 @@ const SoundControlPanel: React.FC = () => {
                 onValueChange={handleMusicVolumeChange}
                 max={1}
                 min={0}
-                step={0.1}
+                step={0.05}
                 disabled={isMuted || !isMusicPlaying}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>0%</span>
-                <span>{Math.round(musicVolume * 100)}%</span>
+                <span className={isMuted ? 'text-red-500' : ''}>{Math.round(musicVolume * 100)}%</span>
                 <span>100%</span>
               </div>
             </div>
@@ -178,17 +208,22 @@ const SoundControlPanel: React.FC = () => {
                 🔔 Notificação
               </Button>
             </div>
+            {isMuted && (
+              <p className="text-xs text-red-500 text-center mt-2">
+                Desative o modo silencioso para testar os sons
+              </p>
+            )}
           </div>
 
           {/* Status */}
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
             <p className="flex items-center justify-between">
-              <span>🎵 Música ambiente: Piano</span>
-              <span className={`font-medium ${isMuted ? 'text-red-500' : 'text-green-500'}`}>
-                {isMuted ? 'SILENCIADO' : 'ATIVO'}
+              <span>🎵 Música ambiente: Piano Suave</span>
+              <span className={`font-medium ${isMuted ? 'text-red-500' : isMusicPlaying ? 'text-green-500' : 'text-gray-500'}`}>
+                {isMuted ? 'SILENCIADO' : isMusicPlaying ? 'TOCANDO' : 'PAUSADO'}
               </span>
             </p>
-            <p>💡 Sons melhoram a experiência interativa!</p>
+            <p>💡 Sons otimizados para uma experiência agradável!</p>
           </div>
         </div>
       </PopoverContent>

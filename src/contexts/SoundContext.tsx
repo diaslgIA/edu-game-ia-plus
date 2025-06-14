@@ -23,7 +23,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const [volume, setVolumeState] = useState(() => {
     const saved = localStorage.getItem('soundVolume');
-    return saved ? parseFloat(saved) : 0.7;
+    return saved ? parseFloat(saved) : 0.5; // Volume mais baixo por padrão
   });
 
   const [isMusicPlaying, setIsMusicPlaying] = useState(() => {
@@ -34,7 +34,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [musicVolume, setMusicVolumeState] = useState(() => {
     const saved = localStorage.getItem('musicVolume');
-    return saved ? parseFloat(saved) : 0.3;
+    return saved ? parseFloat(saved) : 0.2; // Volume de música mais baixo
   });
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -42,40 +42,22 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const musicSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const musicGainRef = useRef<GainNode | null>(null);
 
-  useEffect(() => {
-    localStorage.setItem('soundMuted', isMuted.toString());
-  }, [isMuted]);
-
-  useEffect(() => {
-    localStorage.setItem('soundVolume', volume.toString());
-  }, [volume]);
-
-  useEffect(() => {
-    localStorage.setItem('musicPlaying', isMusicPlaying.toString());
-  }, [isMusicPlaying]);
-
-  useEffect(() => {
-    localStorage.setItem('musicVolume', musicVolume.toString());
-  }, [musicVolume]);
-
   const createBackgroundMusic = async () => {
     if (!backgroundMusicRef.current) {
       backgroundMusicRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
 
     const audioContext = backgroundMusicRef.current;
+    const musicBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 60, audioContext.sampleRate);
     
-    // Criar música de piano ambiente programaticamente
-    const musicBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 120, audioContext.sampleRate);
-    
-    // Notas de piano em Hz (escala de Dó maior e acordes)
-    const pianoChords = [
+    // Acordes mais suaves e agradáveis (progressão em Dó maior)
+    const gentleChords = [
       [261.63, 329.63, 392.00], // C Major (C-E-G)
-      [293.66, 369.99, 440.00], // D Minor (D-F-A)
-      [329.63, 415.30, 493.88], // E Minor (E-G-B)
-      [349.23, 440.00, 523.25], // F Major (F-A-C)
-      [392.00, 493.88, 587.33], // G Major (G-B-D)
-      [440.00, 523.25, 659.25], // A Minor (A-C-E)
+      [220.00, 277.18, 329.63], // A Minor (A-C-E)
+      [349.23, 415.30, 493.88], // F Major (F-A-C)
+      [392.00, 466.16, 554.37], // G Major (G-B-D)
+      [246.94, 311.13, 369.99], // B Diminished (B-D-F)
+      [261.63, 329.63, 392.00], // C Major (C-E-G) - volta ao início
     ];
     
     for (let channel = 0; channel < musicBuffer.numberOfChannels; channel++) {
@@ -85,45 +67,42 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const time = i / audioContext.sampleRate;
         let sample = 0;
         
-        // Progressão de acordes mais complexa
-        const chordIndex = Math.floor((time * 0.2) % pianoChords.length);
-        const currentChord = pianoChords[chordIndex];
+        // Progressão mais lenta e suave
+        const chordIndex = Math.floor((time * 0.15) % gentleChords.length);
+        const currentChord = gentleChords[chordIndex];
         
-        // Envelope ADSR para simular piano
-        const noteTime = (time * 0.2) % 5;
-        let envelope = 1;
-        if (noteTime < 0.1) {
-          envelope = noteTime / 0.1; // Attack
-        } else if (noteTime < 0.5) {
-          envelope = 1 - (noteTime - 0.1) / 0.4 * 0.4; // Decay
-        } else if (noteTime < 4.0) {
-          envelope = 0.6; // Sustain
+        // Envelope mais suave para som ambiente
+        const noteTime = (time * 0.15) % 6.67; // ~6.67 segundos por acorde
+        let envelope = 0.3; // Volume base mais baixo
+        
+        if (noteTime < 1.0) {
+          envelope = (noteTime / 1.0) * 0.3; // Attack mais lento
+        } else if (noteTime < 5.0) {
+          envelope = 0.3; // Sustain constante
         } else {
-          envelope = 0.6 * (1 - (noteTime - 4.0) / 1.0); // Release
+          envelope = 0.3 * (1 - (noteTime - 5.0) / 1.67); // Release suave
         }
         
-        // Tocar o acorde completo
+        // Tocar acordes com volume mais baixo
         currentChord.forEach((freq, index) => {
-          const harmonicWeight = [0.4, 0.25, 0.15][index] || 0.1;
-          sample += Math.sin(2 * Math.PI * freq * time) * harmonicWeight * envelope;
+          const harmonicWeight = [0.2, 0.15, 0.1][index] || 0.05; // Volumes muito mais baixos
           
-          // Adicionar harmônicos para enriquecer o som
-          sample += Math.sin(2 * Math.PI * freq * 2 * time) * harmonicWeight * 0.1 * envelope;
+          // Usar ondas mais suaves
+          const wave1 = Math.sin(2 * Math.PI * freq * time);
+          const wave2 = Math.sin(2 * Math.PI * freq * time * 1.005) * 0.3; // Ligeiro detuning para riqueza
+          
+          sample += (wave1 + wave2) * harmonicWeight * envelope;
         });
         
-        // Adicionar reverb simples
-        const delayTime = 0.15;
-        const delaySamples = Math.floor(delayTime * audioContext.sampleRate);
-        if (i > delaySamples) {
-          sample += channelData[i - delaySamples] * 0.3;
+        // Filtro passa-baixa mais forte para som mais suave
+        if (i > 1) {
+          sample = sample * 0.4 + channelData[i - 1] * 0.4 + channelData[i - 2] * 0.2;
         }
         
-        // Filtro passa-baixa suave para ambiente
-        if (i > 0) {
-          sample = sample * 0.7 + channelData[i - 1] * 0.3;
-        }
+        // Limitador suave para evitar distorção
+        sample = Math.tanh(sample * 0.8) * 0.15; // Volume final muito baixo
         
-        channelData[i] = sample * 0.25; // Volume geral mais baixo
+        channelData[i] = sample;
       }
     }
 
@@ -131,8 +110,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startBackgroundMusic = async () => {
-    // Verificar se está silenciado antes de iniciar
-    if (isMuted) return;
+    // VERIFICAÇÃO CRÍTICA: Não iniciar música se estiver silenciado
+    if (isMuted) {
+      console.log('Sistema silenciado - música não será iniciada');
+      return;
+    }
     
     try {
       if (!backgroundMusicRef.current) {
@@ -145,9 +127,13 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await audioContext.resume();
       }
 
-      // Parar música anterior se estiver tocando
+      // Parar música anterior
       if (musicSourceRef.current) {
-        musicSourceRef.current.stop();
+        try {
+          musicSourceRef.current.stop();
+        } catch (e) {
+          // Ignorar erros ao parar
+        }
       }
 
       const musicBuffer = await createBackgroundMusic();
@@ -158,14 +144,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      gainNode.gain.setValueAtTime(musicVolume * 0.4, audioContext.currentTime);
+      // Volume final muito baixo
+      gainNode.gain.setValueAtTime(musicVolume * 0.2, audioContext.currentTime);
       source.loop = true;
       source.start();
 
       musicSourceRef.current = source;
       musicGainRef.current = gainNode;
     } catch (error) {
-      console.warn('Não foi possível iniciar a música de fundo:', error);
+      console.warn('Erro ao iniciar música de fundo:', error);
     }
   };
 
@@ -174,23 +161,30 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         musicSourceRef.current.stop();
       } catch (error) {
-        // Ignorar erros ao parar a música
+        // Ignorar erros
       }
       musicSourceRef.current = null;
     }
+    if (musicGainRef.current) {
+      musicGainRef.current = null;
+    }
   };
 
+  // Efeito para controlar música quando mudo/desmudo
   useEffect(() => {
     localStorage.setItem('soundMuted', isMuted.toString());
     
-    // Parar música imediatamente quando silenciado
     if (isMuted) {
+      // PARAR TUDO quando silenciado
       stopBackgroundMusic();
+      console.log('Sistema silenciado - todos os sons parados');
     } else if (isMusicPlaying) {
+      // Só iniciar música se não estiver silenciado E música estiver ativada
       startBackgroundMusic();
     }
   }, [isMuted]);
 
+  // Outros useEffects para salvar configurações
   useEffect(() => {
     localStorage.setItem('soundVolume', volume.toString());
   }, [volume]);
@@ -203,8 +197,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('musicVolume', musicVolume.toString());
   }, [musicVolume]);
 
+  // Controlar música baseado no estado
   useEffect(() => {
-    if (isMusicPlaying && !isMuted) {
+    if (!isMuted && isMusicPlaying) {
       startBackgroundMusic();
     } else {
       stopBackgroundMusic();
@@ -215,14 +210,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [isMusicPlaying, isMuted]);
 
+  // Ajustar volume da música
   useEffect(() => {
-    if (musicGainRef.current && !isMuted) {
+    if (musicGainRef.current && !isMuted && isMusicPlaying) {
       musicGainRef.current.gain.setValueAtTime(
-        musicVolume * 0.4, 
+        musicVolume * 0.2, 
         backgroundMusicRef.current?.currentTime || 0
       );
     }
-  }, [musicVolume, isMuted]);
+  }, [musicVolume, isMuted, isMusicPlaying]);
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
@@ -241,8 +237,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const playSound = (soundType: 'success' | 'error' | 'click' | 'notification') => {
-    // VERIFICAÇÃO CRÍTICA: Não tocar som se estiver silenciado
-    if (isMuted) return;
+    // VERIFICAÇÃO ABSOLUTA: Não tocar NENHUM som se estiver silenciado
+    if (isMuted) {
+      console.log('Sistema silenciado - som bloqueado:', soundType);
+      return;
+    }
 
     try {
       if (!audioContextRef.current) {
@@ -250,42 +249,50 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const audioContext = audioContextRef.current;
+      
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Sons de piano melhorados para diferentes tipos
-      const pianoSounds = {
-        success: [523.25, 659.25, 783.99, 1046.50], // C5, E5, G5, C6 (acorde maior arpejado)
-        error: [220, 207.65, 196, 185], // A3 descendente
-        click: [440, 554.37], // A4, C#5 (quinta aumentada)
-        notification: [523.25, 659.25, 523.25] // C5, E5, C5 (padrão)
+      // Sons mais suaves e agradáveis
+      const gentleSounds = {
+        success: [523.25, 659.25, 783.99], // C5, E5, G5 (acorde maior suave)
+        error: [349.23, 329.63, 311.13], // F4 para E4 para Eb4 (descida suave)
+        click: [440.00, 493.88], // A4, B4 (intervalo suave)
+        notification: [523.25, 587.33, 659.25] // C5, D5, E5 (melodia ascendente)
       };
 
-      const frequencies = pianoSounds[soundType];
+      const frequencies = gentleSounds[soundType];
       
-      oscillator.type = 'sine';
+      oscillator.type = 'sine'; // Onda senoidal mais suave
       oscillator.frequency.setValueAtTime(frequencies[0], audioContext.currentTime);
       
-      // Sequência melódica
+      // Transições suaves entre notas
       frequencies.forEach((freq, index) => {
         if (index > 0) {
-          oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (index * 0.1));
+          oscillator.frequency.exponentialRampToValueAtTime(
+            freq, 
+            audioContext.currentTime + (index * 0.15)
+          );
         }
       });
 
-      // Envelope tipo piano melhorado
+      // Envelope muito mais suave
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(volume * 0.05, audioContext.currentTime + 0.3);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
+      gainNode.gain.linearRampToValueAtTime(volume * 0.15, audioContext.currentTime + 0.05); // Volume muito baixo
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.03, audioContext.currentTime + 0.4);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
 
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 1.0);
+      oscillator.stop(audioContext.currentTime + 0.8);
     } catch (error) {
-      console.warn('Não foi possível reproduzir o som:', error);
+      console.warn('Erro ao reproduzir som:', error);
     }
   };
 
