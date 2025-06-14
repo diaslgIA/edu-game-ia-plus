@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -261,13 +262,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Verificar se é erro de provedor não habilitado
         if (error.message.includes('provider is not enabled') || 
-            error.message.includes('Unsupported provider')) {
+            error.message.includes('Unsupported provider') ||
+            error.message.includes('validation_failed')) {
           throw new Error('provider is not enabled');
         }
         
         toast({
           title: "Erro no login com Google",
-          description: error.message,
+          description: "Serviço temporariamente indisponível. Tente usar o cadastro por email.",
           variant: "destructive",
         });
         return false;
@@ -279,7 +281,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Re-throw provider errors para serem tratados no componente
       if (error.message?.includes('provider is not enabled') || 
-          error.message?.includes('Unsupported provider')) {
+          error.message?.includes('Unsupported provider') ||
+          error.message?.includes('validation_failed')) {
         throw error;
       }
       

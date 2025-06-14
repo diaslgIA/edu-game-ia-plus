@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import { toast } from 'sonner';
 
@@ -86,7 +86,8 @@ const RegistrationForm: React.FC = () => {
       
       // Verificar se é erro de provedor não habilitado
       if (error.message?.includes('provider is not enabled') || 
-          error.message?.includes('Unsupported provider')) {
+          error.message?.includes('Unsupported provider') ||
+          error.message?.includes('validation_failed')) {
         setGoogleAuthEnabled(false);
         toast.error('Login com Google não está disponível no momento. Use o cadastro por email.');
       } else {
@@ -126,10 +127,13 @@ const RegistrationForm: React.FC = () => {
 
       {/* Aviso se Google Auth não estiver disponível */}
       {!googleAuthEnabled && (
-        <div className="mb-2 p-2 bg-yellow-500/20 rounded-lg">
-          <p className="text-yellow-200 text-xs text-center">
-            Login com Google temporariamente indisponível
-          </p>
+        <div className="mb-2 p-2 bg-yellow-500/20 rounded-lg border border-yellow-400/30">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-200" />
+            <p className="text-yellow-200 text-xs">
+              Login com Google temporariamente indisponível
+            </p>
+          </div>
         </div>
       )}
 

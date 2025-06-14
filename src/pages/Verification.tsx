@@ -1,229 +1,171 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import MobileContainer from '@/components/MobileContainer';
-import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const Verification = () => {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
-  const [verificationData, setVerificationData] = useState({
-    email: 'usuario@email.com',
-    phone: '71-996894503',
-    code: ['', '', '', '']
-  });
-  const [isEmailConfirmed, setIsEmailConfirmed] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
 
   useEffect(() => {
-    // Verificar se é um redirecionamento de confirmação de email
-    const type = searchParams.get('type');
-    const tokenHash = searchParams.get('token_hash');
-    const token = searchParams.get('token');
-    
-    if (type === 'email' && (tokenHash || token)) {
-      setIsVerifying(true);
+    const handleEmailConfirmation = async () => {
+      const type = searchParams.get('type');
       
-      // Processar a verificação do token
-      supabase.auth.verifyOtp({
-        token_hash: tokenHash || '',
-        type: 'email'
-      }).then(({ data, error }) => {
-        if (!error && data.user) {
-          setIsEmailConfirmed(true);
-          toast.success('Email confirmado com sucesso!');
+      if (type === 'email') {
+        try {
+          // Verificar se há tokens de confirmação na URL
+          const token_hash = searchParams.get('token_hash');
+          const verification_type = searchParams.get('type');
           
-          // Atualizar o perfil para refletir a verificação
-          setTimeout(() => {
-            refreshProfile();
-          }, 1000);
-        } else {
-          console.error('Erro na verificação:', error);
-          // Mesmo com erro, consideramos como confirmado para UX
-          setIsEmailConfirmed(true);
-          toast.success('Email confirmado com sucesso!');
+          if (token_hash) {
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash,
+              type: 'email'
+            });
+
+            if (error) {
+              console.error('Erro na verificação:', error);
+              setVerificationStatus('error');
+              toast.error('Erro ao confirmar email. Link pode ter expirado.');
+            } else if (data.user) {
+              console.log('Email confirmado com sucesso:', data.user.email);
+              setVerificationStatus('success');
+              toast.success('Email confirmado com sucesso!');
+              
+              // Redirecionar para tela de boas-vindas após 2 segundos
+              setTimeout(() => {
+                navigate('/welcome');
+              }, 2000);
+            }
+          } else {
+            // Se não há token, mostrar status pendente
+            setVerificationStatus('pending');
+          }
+        } catch (error) {
+          console.error('Erro inesperado na verificação:', error);
+          setVerificationStatus('error');
+          toast.error('Erro inesperado ao confirmar email.');
         }
-        setIsVerifying(false);
-      });
-    }
-  }, [searchParams, refreshProfile]);
-
-  // Se o usuário está logado e o email foi confirmado, redirecionar para welcome
-  useEffect(() => {
-    if (isEmailConfirmed && !isVerifying) {
-      setTimeout(() => {
-        navigate('/welcome');
-      }, 2000);
-    }
-  }, [isEmailConfirmed, isVerifying, navigate]);
-
-  const handleCodeChange = (index: number, value: string) => {
-    if (value.length <= 1) {
-      const newCode = [...verificationData.code];
-      newCode[index] = value;
-      setVerificationData({ ...verificationData, code: newCode });
-      
-      // Auto-focus next input
-      if (value && index < 3) {
-        const nextInput = document.getElementById(`code-${index + 1}`);
-        nextInput?.focus();
+      } else {
+        setVerificationStatus('pending');
       }
-    }
-  };
+    };
 
-  const handleVerify = () => {
-    const code = verificationData.code.join('');
-    if (code.length === 4) {
-      toast.success('Verificação realizada com sucesso!');
+    // Se o usuário já está autenticado, redirecionar
+    if (isAuthenticated) {
       navigate('/welcome');
-    } else {
-      toast.error('Por favor, insira o código completo');
+      return;
     }
+
+    handleEmailConfirmation();
+  }, [searchParams, navigate, isAuthenticated]);
+
+  const handleResendEmail = async () => {
+    toast.info('Funcionalidade de reenvio em desenvolvimento');
   };
 
-  const handleContinueToApp = () => {
-    navigate('/welcome');
-  };
-
-  // Mostrar loading durante verificação
-  if (isVerifying) {
-    return (
-      <MobileContainer>
-        <div className="flex flex-col h-full p-6 justify-center items-center">
-          <div className="text-center max-w-md">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
-              Verificando email...
+  const renderContent = () => {
+    switch (verificationStatus) {
+      case 'loading':
+        return (
+          <div className="text-center">
+            <Loader2 className="w-16 h-16 text-blue-400 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              Verificando seu email...
             </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Aguarde enquanto confirmamos seu email.
+            <p className="text-white/80">
+              Aguarde enquanto confirmamos sua conta.
             </p>
           </div>
-        </div>
-      </MobileContainer>
-    );
-  }
+        );
 
-  // Se o email foi confirmado, mostrar tela de sucesso
-  if (isEmailConfirmed) {
-    return (
-      <MobileContainer>
-        <div className="flex flex-col h-full p-6 justify-center items-center">
-          <div className="text-center max-w-md">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12 text-green-500" />
-            </div>
-            
-            <Logo size="lg" className="mb-6" />
-            
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-              Email Confirmado!
-            </h1>
-            
-            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              Seu email foi verificado com sucesso. Agora você pode acessar todos os recursos do EduGame e começar sua jornada de aprendizado!
+      case 'success':
+        return (
+          <div className="text-center">
+            <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              Email confirmado!
+            </h2>
+            <p className="text-white/80 mb-4">
+              Sua conta foi verificada com sucesso. Redirecionando...
             </p>
-            
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/50 rounded-xl p-4">
-                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Próximos passos:</h3>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 text-left">
-                  <li>• Complete seu perfil</li>
-                  <li>• Explore os exercícios</li>
-                  <li>• Participe dos rankings</li>
-                  <li>• Conecte-se com outros estudantes</li>
-                </ul>
-              </div>
-              
+            <div className="animate-pulse">
+              <Loader2 className="w-6 h-6 text-white/60 animate-spin mx-auto" />
+            </div>
+          </div>
+        );
+
+      case 'error':
+        return (
+          <div className="text-center">
+            <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              Erro na verificação
+            </h2>
+            <p className="text-white/80 mb-6">
+              Não foi possível confirmar seu email. O link pode ter expirado ou ser inválido.
+            </p>
+            <div className="space-y-3">
               <Button
-                onClick={handleContinueToApp}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-4 rounded-xl text-lg"
+                onClick={handleResendEmail}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Começar a Usar o EduGame
+                Reenviar email de confirmação
+              </Button>
+              <Button
+                onClick={() => navigate('/auth?tab=register')}
+                variant="outline"
+                className="w-full border-white/30 text-white hover:bg-white/10"
+              >
+                Voltar ao cadastro
               </Button>
             </div>
           </div>
-        </div>
-      </MobileContainer>
-    );
-  }
+        );
+
+      case 'pending':
+      default:
+        return (
+          <div className="text-center">
+            <Mail className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              Confirme seu email
+            </h2>
+            <p className="text-white/80 mb-6">
+              Enviamos um link de confirmação para seu email. Clique no link para ativar sua conta.
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={handleResendEmail}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Reenviar email
+              </Button>
+              <Button
+                onClick={() => navigate('/auth?tab=login')}
+                variant="outline"
+                className="w-full border-white/30 text-white hover:bg-white/10"
+              >
+                Já confirmei, fazer login
+              </Button>
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
-    <MobileContainer>
-      <div className="flex flex-col h-full p-6">
-        {/* Header */}
-        <div className="flex flex-col items-center pt-8 pb-8">
-          <Logo size="lg" className="mb-6" />
-          
-          <h1 className="text-xl font-bold text-black dark:text-white mb-8">
-            verificar o e-mail
-          </h1>
-
-          {/* Email verification */}
-          <div className="w-full bg-white dark:bg-gray-800 rounded-xl p-4 mb-4 flex items-center justify-between shadow-sm transition-colors duration-300">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 text-gray-600 dark:text-gray-300">
-                ✉️
-              </div>
-              <span className="text-gray-800 dark:text-white font-medium">{verificationData.email}</span>
-            </div>
-            <div className="text-gray-600 dark:text-gray-400">
-              ▶️
-            </div>
-          </div>
-
-          <h2 className="text-xl font-bold text-black dark:text-white mb-6">
-            verificar o número de telefone
-          </h2>
-
-          {/* Phone verification */}
-          <div className="w-full bg-white dark:bg-gray-800 rounded-xl p-4 mb-6 flex items-center justify-between shadow-sm transition-colors duration-300">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 text-gray-600 dark:text-gray-300">
-                📱
-              </div>
-              <span className="text-gray-800 dark:text-white font-medium">{verificationData.phone}</span>
-            </div>
-            <div className="text-gray-600 dark:text-gray-400">
-              ▶️
-            </div>
-          </div>
-
-          {/* Code input */}
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 text-gray-600 dark:text-gray-300 flex items-center justify-center">
-              💬
-            </div>
-            {verificationData.code.map((digit, index) => (
-              <Input
-                key={index}
-                id={`code-${index}`}
-                type="text"
-                value={digit}
-                onChange={(e) => handleCodeChange(index, e.target.value)}
-                className="w-12 h-12 text-center text-xl font-bold bg-gray-100 dark:bg-gray-700 border-0 rounded-lg transition-colors duration-300"
-                maxLength={1}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Verify button */}
-        <div className="flex-1 flex flex-col justify-end pb-8">
-          <Button
-            onClick={handleVerify}
-            className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black text-white font-semibold py-4 rounded-xl text-lg flex items-center justify-center space-x-2 transition-colors duration-300"
-          >
-            <span>verificar</span>
-            <span className="text-2xl">✓</span>
-          </Button>
+    <MobileContainer background="gradient">
+      <div className="flex flex-col items-center justify-center min-h-full p-6">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
+          {renderContent()}
         </div>
       </div>
     </MobileContainer>
