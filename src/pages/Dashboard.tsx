@@ -79,26 +79,26 @@ const Dashboard = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
-        {/* Header Compacto e Balanceado */}
-        <div className="bg-white/20 backdrop-blur-lg text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
-          <div className="flex items-center justify-between mb-3">
-            {/* Logo menor no lado esquerdo */}
+        {/* Header Super Compacto */}
+        <div className="bg-white/20 backdrop-blur-lg text-white p-2 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            {/* Logo e saudação */}
             <div className="flex items-center gap-2">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-white/20">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
                 <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
               </div>
-              <div className="flex-1">
-                <h1 className="text-base font-bold">
-                  Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}! 👋
+              <div>
+                <h1 className="text-sm font-bold">
+                  Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}!
                 </h1>
                 <p className="text-white/90 text-xs">
-                  {profile?.school_year} • Pronto para aprender?
+                  Vamos aprender?
                 </p>
               </div>
             </div>
             
             {/* Controles no lado direito */}
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-1">
               <SoundControlPanel />
               <Button 
                 variant="ghost" 
