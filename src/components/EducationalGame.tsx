@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star } from 'lucide-react';
 import { useQuizScore } from '@/hooks/useQuizScore';
+import { useSound } from '@/contexts/SoundContext';
 
 interface Question {
   id: number;
@@ -46,6 +47,7 @@ interface EducationalGameProps {
 
 const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => {
   const { saveQuizScore, saving } = useQuizScore();
+  const { isMuted } = useSound();
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -64,6 +66,46 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
       handleNextQuestion();
     }
   }, [timeLeft, gameStarted, showResult, gameCompleted]);
+
+  useEffect(() => {
+    if (!gameCompleted || isMuted) return;
+
+    const finalScore = score + (selectedAnswer === sampleQuestions[currentQuestion].correctAnswer ? 10 : 0);
+    const correctAnswers = Math.round(finalScore / 10);
+    const totalQuestions = sampleQuestions.length;
+
+    const getResultMessage = () => {
+      const halfQuestions = totalQuestions / 2;
+      if (correctAnswers > halfQuestions) {
+        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você está indo muito bem! Estude só um pouco mais para ser nota 10.`;
+      } else {
+        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você precisa estudar muito para não perder os objetivos da vida, mas não desista! Com dedicação, você vai chegar lá. Continue firme!`;
+      }
+    };
+
+    const message = getResultMessage();
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'pt-BR';
+
+    const speak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const portugueseVoice = voices.find(voice => voice.lang.startsWith('pt-BR') || voice.lang.startsWith('pt'));
+      if (portugueseVoice) {
+        utterance.voice = portugueseVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = speak;
+    } else {
+      speak();
+    }
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, [gameCompleted, isMuted, score, selectedAnswer, currentQuestion]);
 
   const startGame = () => {
     setGameStarted(true);

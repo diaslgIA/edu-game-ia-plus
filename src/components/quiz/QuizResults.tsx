@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
+import { useSound } from '@/contexts/SoundContext';
 
 interface QuizResultsProps {
   subject: string;
@@ -18,7 +19,48 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   saving, 
   onBack 
 }) => {
+  const { isMuted } = useSound();
   const percentage = Math.round((score / (totalQuestions * 10)) * 100);
+  
+  useEffect(() => {
+    if (isMuted) return;
+
+    const correctAnswers = Math.round(score / 10);
+
+    const getResultMessage = () => {
+      const halfQuestions = totalQuestions / 2;
+      
+      if (correctAnswers > halfQuestions) {
+        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você está indo muito bem! Estude só um pouco mais para ser nota 10.`;
+      } else {
+        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você precisa estudar muito para não perder os objetivos da vida, mas não desista! Com dedicação, você vai chegar lá. Continue firme!`;
+      }
+    };
+    
+    const message = getResultMessage();
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'pt-BR';
+
+    const speak = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const portugueseVoice = voices.find(voice => voice.lang.startsWith('pt-BR') || voice.lang.startsWith('pt'));
+        if (portugueseVoice) {
+            utterance.voice = portugueseVoice;
+        }
+        window.speechSynthesis.speak(utterance);
+    };
+
+    // As vozes podem carregar de forma assíncrona
+    if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = speak;
+    } else {
+        speak();
+    }
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, [score, totalQuestions, isMuted]);
   
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
