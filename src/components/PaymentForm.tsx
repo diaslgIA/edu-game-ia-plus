@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, Lock, Copy, Download, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import QRCode from 'qrcode.react';
 
 interface PaymentFormProps {
   amount: string;
@@ -86,8 +87,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
   };
 
   const generatePixCode = () => {
-    const randomCode = Math.random().toString(36).substring(2, 15);
-    const pixKey = `00020101021226580014BR.GOV.BCB.PIX0136${randomCode}52040000530398654${amount.replace('R$ ', '').replace(',', '.')}5802BR5925EduGame6009SAO PAULO62070503***6304`;
+    const pixKey = "00020126580014BR.GOV.BCB.PIX0136822e172b-35a5-485f-8a96-7b46c91953045204000053039865802BR5925Luis Gabriel Dias Goncalv6009SAO PAULO62140510JdVNfh5c7G63043737";
     setPixCode(pixKey);
     setShowPixQR(true);
   };
@@ -183,8 +183,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
             </p>
             
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
-              <div className="w-48 h-48 bg-white mx-auto mb-4 flex items-center justify-center rounded-lg">
-                <div className="text-8xl">📱</div>
+              <div className="w-48 h-48 bg-white mx-auto mb-4 flex items-center justify-center rounded-lg p-2">
+                <QRCode value={pixCode} size={176} />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
                 {pixCode}
