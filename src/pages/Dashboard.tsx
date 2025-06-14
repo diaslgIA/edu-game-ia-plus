@@ -80,12 +80,12 @@ const Dashboard = () => {
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
         {/* Header Super Compacto */}
-        <div className="bg-white/20 backdrop-blur-lg text-white p-2 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
+        <div className="bg-white/20 backdrop-blur-lg text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
           <div className="flex items-center justify-between">
             {/* Logo e saudação */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
-                <Logo size="xs" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
+                <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
               </div>
               <div>
                 <h1 className="text-sm font-bold">

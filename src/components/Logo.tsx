@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface LogoProps {
@@ -32,6 +31,22 @@ const Logo: React.FC<LogoProps> = ({
     xl: 'text-6xl'
   };
 
+  const containerPaddingClasses = {
+    xs: 'p-1',
+    sm: 'p-1.5',
+    md: 'p-2',
+    lg: 'p-3',
+    xl: 'p-3'
+  };
+
+  const imageContainerPaddingClasses = {
+    xs: 'p-1',
+    sm: 'p-1',
+    md: 'p-1.5',
+    lg: 'p-2',
+    xl: 'p-2'
+  };
+
   return (
     <div 
       className={`flex items-center gap-4 ${className} ${onClick ? 'cursor-pointer' : ''}`}
@@ -43,8 +58,8 @@ const Logo: React.FC<LogoProps> = ({
         <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 rounded-xl blur-2xl opacity-30 animate-pulse animation-delay-1000"></div>
         
         {/* Container da Logo com melhor destaque visual */}
-        <div className="relative bg-white/20 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-white/30 hover:shadow-3xl transition-all duration-300 hover:bg-white/30">
-          <div className="bg-gradient-to-br from-white/90 to-white/70 rounded-lg p-2 hover:from-white hover:to-white/80 transition-all duration-300">
+        <div className={`relative bg-white/20 backdrop-blur-md rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl transition-all duration-300 hover:bg-white/30 ${containerPaddingClasses[size]}`}>
+          <div className={`bg-gradient-to-br from-white/90 to-white/70 rounded-lg hover:from-white hover:to-white/80 transition-all duration-300 ${imageContainerPaddingClasses[size]}`}>
             <img 
               src="/lovable-uploads/200f2456-0066-4697-99f3-2260b38b409a.png" 
               alt="EdugameIA Logo - Cérebro com Quebra-cabeça" 
