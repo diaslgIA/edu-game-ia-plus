@@ -17,18 +17,23 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { t } = useLanguage();
-  const { playSound } = useSound();
+  const { playSound, isMuted } = useSound();
   const { getTotalProgress } = useUserProgress();
   const [showSettings, setShowSettings] = useState(false);
 
   const handleNavigation = (path: string) => {
-    playSound('click');
+    if (!isMuted) playSound('click');
     navigate(path);
   };
 
   const handleSignOut = () => {
-    playSound('click');
+    if (!isMuted) playSound('click');
     signOut();
+  };
+
+  const handleSettingsClick = () => {
+    if (!isMuted) playSound('click');
+    setShowSettings(true);
   };
 
   const totalProgress = getTotalProgress();
@@ -74,52 +79,54 @@ const Dashboard = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
-        {/* Header - Compacto */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0">
+        {/* Header com Logo Maior */}
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 rounded-b-2xl shadow-xl flex-shrink-0">
+          {/* Logo Destacada - MUITO MAIOR */}
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" showText={true} animated className="transform hover:scale-110 transition-transform duration-300" />
+          </div>
+          
           <div className="flex items-center justify-between mb-2">
-            <Logo size="sm" showText={true} animated className="flex-1" />
-            <div className="flex space-x-1">
+            <div className="flex-1">
+              <h1 className="text-lg font-bold">
+                Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}! 👋
+              </h1>
+              <p className="text-white/90 text-sm">
+                {profile?.school_year} • Pronto para aprender?
+              </p>
+            </div>
+            <div className="flex space-x-2">
               <SoundControlPanel />
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => setShowSettings(true)}
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-1.5"
+                onClick={handleSettingsClick}
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2"
               >
-                <Settings size={14} />
+                <Settings size={16} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleSignOut}
+                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 rounded-lg px-3 py-2 text-sm font-medium shadow-md"
+              >
+                <LogOut size={14} className="mr-1" />
+                Sair
               </Button>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-base font-bold">
-                Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}! 👋
-              </h1>
-              <p className="text-white/90 text-xs">
-                {profile?.school_year} • Pronto para aprender?
-              </p>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleSignOut}
-              className="text-white bg-red-500/30 hover:bg-red-500/50 border border-red-300/40 rounded-lg px-2 py-1.5 text-xs font-medium shadow-md"
-            >
-              <LogOut size={12} className="mr-1" />
-              Sair
-            </Button>
-          </div>
         </div>
 
-        {/* Content Scrollable - Mais compacto */}
+        {/* Content Scrollable */}
         <div className="flex-1 overflow-y-auto pb-20">
-          {/* Stats Cards - Menor */}
-          <div className="px-3 py-2">
+          {/* Stats Cards */}
+          <div className="px-3 py-3">
             <div className="grid grid-cols-2 gap-2">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-white/20 backdrop-blur-md rounded-lg p-2.5 text-white shadow-lg border border-white/10">
+                <div key={index} className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                   <div className="flex items-center space-x-2">
-                    <stat.icon className={`${stat.color} w-4 h-4`} />
+                    <stat.icon className={`${stat.color} w-5 h-5`} />
                     <div>
                       <p className="text-xs opacity-80">{stat.label}</p>
                       <p className="text-sm font-bold">{stat.value}</p>
@@ -130,30 +137,30 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Quick Actions - Menor */}
+          {/* Quick Actions */}
           <div className="px-3 py-2">
-            <h2 className="text-white text-sm font-semibold mb-2 flex items-center">
+            <h2 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Brain className="mr-2" size={16} />
               Área de Estudos
             </h2>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-3">
               {quickActions.map((action, index) => (
                 <Button
                   key={index}
                   onClick={() => handleNavigation(action.path)}
-                  className={`bg-gradient-to-br ${action.color} text-white p-3 rounded-lg h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
+                  className={`bg-gradient-to-br ${action.color} text-white p-4 rounded-lg h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
                 >
                   <div className="text-center">
-                    <div className="text-xl mb-1">{action.icon}</div>
-                    <h3 className="font-bold text-xs">{action.title}</h3>
-                    <p className="text-[9px] opacity-90">{action.description}</p>
+                    <div className="text-2xl mb-2">{action.icon}</div>
+                    <h3 className="font-bold text-sm">{action.title}</h3>
+                    <p className="text-xs opacity-90">{action.description}</p>
                   </div>
                 </Button>
               ))}
             </div>
           </div>
 
-          {/* Study Streak - Menor */}
+          {/* Study Streak */}
           <div className="px-3 py-2">
             <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
               <div className="flex items-center justify-between">
@@ -163,14 +170,14 @@ const Dashboard = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">7</div>
-                  <div className="text-[9px] opacity-80">dias</div>
+                  <div className="text-xs opacity-80">dias</div>
                 </div>
               </div>
               <div className="flex space-x-1 mt-2">
                 {[...Array(7)].map((_, i) => (
                   <div
                     key={i}
-                    className={`flex-1 h-1.5 rounded-full ${
+                    className={`flex-1 h-2 rounded-full ${
                       i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
                     }`}
                   />
@@ -179,25 +186,25 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Recent Activity - Menor */}
+          {/* Recent Activity */}
           <div className="px-3 py-2 mb-3">
-            <h2 className="text-white text-sm font-semibold mb-2">Atividade Recente</h2>
+            <h2 className="text-white text-sm font-semibold mb-3">Atividade Recente</h2>
             <div className="space-y-2">
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2.5 text-white shadow-lg border border-white/10">
+              <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                 <div className="flex items-center space-x-2">
-                  <Star className="text-yellow-400" size={14} />
+                  <Star className="text-yellow-400" size={16} />
                   <div>
-                    <p className="font-medium text-xs">Matemática - Função Quadrática</p>
-                    <p className="text-[9px] opacity-80">Concluído • 85 pontos</p>
+                    <p className="font-medium text-sm">Matemática - Função Quadrática</p>
+                    <p className="text-xs opacity-80">Concluído • 85 pontos</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2.5 text-white shadow-lg border border-white/10">
+              <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                 <div className="flex items-center space-x-2">
-                  <Star className="text-blue-400" size={14} />
+                  <Star className="text-blue-400" size={16} />
                   <div>
-                    <p className="font-medium text-xs">Português - Interpretação de Texto</p>
-                    <p className="text-[9px] opacity-80">Em progresso • 42 pontos</p>
+                    <p className="font-medium text-sm">Português - Interpretação de Texto</p>
+                    <p className="text-xs opacity-80">Em progresso • 42 pontos</p>
                   </div>
                 </div>
               </div>

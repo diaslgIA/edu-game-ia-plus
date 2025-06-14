@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 interface SoundContextType {
@@ -26,6 +27,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [isMusicPlaying, setIsMusicPlaying] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const saved = localStorage.getItem('musicPlaying');
     return saved === 'true';
   });
@@ -66,8 +68,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Criar música de piano ambiente programaticamente
     const musicBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 120, audioContext.sampleRate);
     
-    // Notas de piano em Hz (escala de Dó maior)
-    const pianoNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C4 to C5
+    // Notas de piano em Hz (escala de Dó maior e acordes)
+    const pianoChords = [
+      [261.63, 329.63, 392.00], // C Major (C-E-G)
+      [293.66, 369.99, 440.00], // D Minor (D-F-A)
+      [329.63, 415.30, 493.88], // E Minor (E-G-B)
+      [349.23, 440.00, 523.25], // F Major (F-A-C)
+      [392.00, 493.88, 587.33], // G Major (G-B-D)
+      [440.00, 523.25, 659.25], // A Minor (A-C-E)
+    ];
     
     for (let channel = 0; channel < musicBuffer.numberOfChannels; channel++) {
       const channelData = musicBuffer.getChannelData(channel);
@@ -76,38 +85,45 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const time = i / audioContext.sampleRate;
         let sample = 0;
         
-        // Criar acordes de piano suaves com envelope ADSR
-        const noteIndex = Math.floor((time * 0.25) % pianoNotes.length);
-        const freq = pianoNotes[noteIndex];
-        const chordFreq1 = pianoNotes[(noteIndex + 2) % pianoNotes.length]; // Terça
-        const chordFreq2 = pianoNotes[(noteIndex + 4) % pianoNotes.length]; // Quinta
+        // Progressão de acordes mais complexa
+        const chordIndex = Math.floor((time * 0.2) % pianoChords.length);
+        const currentChord = pianoChords[chordIndex];
         
         // Envelope ADSR para simular piano
-        const noteTime = (time * 0.25) % 4;
+        const noteTime = (time * 0.2) % 5;
         let envelope = 1;
         if (noteTime < 0.1) {
           envelope = noteTime / 0.1; // Attack
-        } else if (noteTime < 0.3) {
-          envelope = 1 - (noteTime - 0.1) / 0.2 * 0.3; // Decay
-        } else if (noteTime < 3.5) {
-          envelope = 0.7; // Sustain
+        } else if (noteTime < 0.5) {
+          envelope = 1 - (noteTime - 0.1) / 0.4 * 0.4; // Decay
+        } else if (noteTime < 4.0) {
+          envelope = 0.6; // Sustain
         } else {
-          envelope = 0.7 * (1 - (noteTime - 3.5) / 0.5); // Release
+          envelope = 0.6 * (1 - (noteTime - 4.0) / 1.0); // Release
         }
         
-        // Misturar as frequências do acorde
-        sample += Math.sin(2 * Math.PI * freq * time) * 0.3 * envelope;
-        sample += Math.sin(2 * Math.PI * chordFreq1 * time) * 0.2 * envelope;
-        sample += Math.sin(2 * Math.PI * chordFreq2 * time) * 0.1 * envelope;
+        // Tocar o acorde completo
+        currentChord.forEach((freq, index) => {
+          const harmonicWeight = [0.4, 0.25, 0.15][index] || 0.1;
+          sample += Math.sin(2 * Math.PI * freq * time) * harmonicWeight * envelope;
+          
+          // Adicionar harmônicos para enriquecer o som
+          sample += Math.sin(2 * Math.PI * freq * 2 * time) * harmonicWeight * 0.1 * envelope;
+        });
         
         // Adicionar reverb simples
-        const delayTime = 0.1;
+        const delayTime = 0.15;
         const delaySamples = Math.floor(delayTime * audioContext.sampleRate);
         if (i > delaySamples) {
-          sample += channelData[i - delaySamples] * 0.2;
+          sample += channelData[i - delaySamples] * 0.3;
         }
         
-        channelData[i] = sample * 0.3; // Volume geral
+        // Filtro passa-baixa suave para ambiente
+        if (i > 0) {
+          sample = sample * 0.7 + channelData[i - 1] * 0.3;
+        }
+        
+        channelData[i] = sample * 0.25; // Volume geral mais baixo
       }
     }
 
@@ -115,6 +131,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startBackgroundMusic = async () => {
+    // Verificar se está silenciado antes de iniciar
+    if (isMuted) return;
+    
     try {
       if (!backgroundMusicRef.current) {
         backgroundMusicRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -139,7 +158,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      gainNode.gain.setValueAtTime(musicVolume * 0.5, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(musicVolume * 0.4, audioContext.currentTime);
       source.loop = true;
       source.start();
 
@@ -152,10 +171,37 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const stopBackgroundMusic = () => {
     if (musicSourceRef.current) {
-      musicSourceRef.current.stop();
+      try {
+        musicSourceRef.current.stop();
+      } catch (error) {
+        // Ignorar erros ao parar a música
+      }
       musicSourceRef.current = null;
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem('soundMuted', isMuted.toString());
+    
+    // Parar música imediatamente quando silenciado
+    if (isMuted) {
+      stopBackgroundMusic();
+    } else if (isMusicPlaying) {
+      startBackgroundMusic();
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    localStorage.setItem('soundVolume', volume.toString());
+  }, [volume]);
+
+  useEffect(() => {
+    localStorage.setItem('musicPlaying', isMusicPlaying.toString());
+  }, [isMusicPlaying]);
+
+  useEffect(() => {
+    localStorage.setItem('musicVolume', musicVolume.toString());
+  }, [musicVolume]);
 
   useEffect(() => {
     if (isMusicPlaying && !isMuted) {
@@ -170,13 +216,13 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isMusicPlaying, isMuted]);
 
   useEffect(() => {
-    if (musicGainRef.current) {
+    if (musicGainRef.current && !isMuted) {
       musicGainRef.current.gain.setValueAtTime(
-        musicVolume * 0.5, 
+        musicVolume * 0.4, 
         backgroundMusicRef.current?.currentTime || 0
       );
     }
-  }, [musicVolume]);
+  }, [musicVolume, isMuted]);
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
@@ -195,6 +241,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const playSound = (soundType: 'success' | 'error' | 'click' | 'notification') => {
+    // VERIFICAÇÃO CRÍTICA: Não tocar som se estiver silenciado
     if (isMuted) return;
 
     try {
@@ -209,35 +256,34 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Sons de piano para diferentes tipos
+      // Sons de piano melhorados para diferentes tipos
       const pianoSounds = {
-        success: [523.25, 659.25, 783.99], // C5, E5, G5 (acorde maior)
-        error: [220, 196, 174.61], // A3, G3, F3 (descendente)
-        click: [440], // A4 (nota única)
-        notification: [523.25, 659.25] // C5, E5
+        success: [523.25, 659.25, 783.99, 1046.50], // C5, E5, G5, C6 (acorde maior arpejado)
+        error: [220, 207.65, 196, 185], // A3 descendente
+        click: [440, 554.37], // A4, C#5 (quinta aumentada)
+        notification: [523.25, 659.25, 523.25] // C5, E5, C5 (padrão)
       };
 
       const frequencies = pianoSounds[soundType];
       
-      // Simular timbre de piano com ondas senoidais e envelope
       oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(frequencies[0], audioContext.currentTime);
       
-      if (frequencies.length > 1) {
-        oscillator.frequency.setValueAtTime(frequencies[1], audioContext.currentTime + 0.15);
-      }
-      if (frequencies.length > 2) {
-        oscillator.frequency.setValueAtTime(frequencies[2], audioContext.currentTime + 0.3);
-      }
+      // Sequência melódica
+      frequencies.forEach((freq, index) => {
+        if (index > 0) {
+          oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (index * 0.1));
+        }
+      });
 
-      // Envelope tipo piano (ataque rápido, decaimento)
+      // Envelope tipo piano melhorado
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume * 0.4, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(volume * 0.1, audioContext.currentTime + 0.2);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+      gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.05, audioContext.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
 
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.8);
+      oscillator.stop(audioContext.currentTime + 1.0);
     } catch (error) {
       console.warn('Não foi possível reproduzir o som:', error);
     }

@@ -32,7 +32,25 @@ const SoundControlPanel: React.FC = () => {
   };
 
   const testSound = (type: 'success' | 'error' | 'click' | 'notification') => {
-    playSound(type);
+    // Só toca se não estiver silenciado
+    if (!isMuted) {
+      playSound(type);
+    }
+  };
+
+  const handleToggleMute = () => {
+    toggleMute();
+    // Tocar som de feedback apenas se estiver saindo do modo mudo
+    if (isMuted) {
+      setTimeout(() => playSound('click'), 100);
+    }
+  };
+
+  const handleToggleMusic = () => {
+    if (!isMuted) {
+      playSound('click');
+    }
+    toggleMusic();
   };
 
   return (
@@ -42,6 +60,7 @@ const SoundControlPanel: React.FC = () => {
           variant="ghost" 
           size="sm" 
           className="text-white hover:bg-white/10"
+          onClick={() => !isMuted && playSound('click')}
         >
           {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </Button>
@@ -60,7 +79,7 @@ const SoundControlPanel: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={toggleMute}
+                onClick={handleToggleMute}
                 className="h-8 w-8 p-0"
               >
                 {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -92,7 +111,7 @@ const SoundControlPanel: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={toggleMusic}
+                onClick={handleToggleMusic}
                 className="h-8 w-8 p-0"
                 disabled={isMuted}
               >
@@ -161,10 +180,15 @@ const SoundControlPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Informações */}
+          {/* Status */}
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            <p>🎵 Música ambiente gerada de forma programática</p>
-            <p>💡 Sons ajudam a tornar sua experiência mais interativa!</p>
+            <p className="flex items-center justify-between">
+              <span>🎵 Música ambiente: Piano</span>
+              <span className={`font-medium ${isMuted ? 'text-red-500' : 'text-green-500'}`}>
+                {isMuted ? 'SILENCIADO' : 'ATIVO'}
+              </span>
+            </p>
+            <p>💡 Sons melhoram a experiência interativa!</p>
           </div>
         </div>
       </PopoverContent>
