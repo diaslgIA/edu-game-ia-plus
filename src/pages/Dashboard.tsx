@@ -10,7 +10,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
 import SoundControlPanel from '@/components/SoundControlPanel';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings } from 'lucide-react';
+import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 const Dashboard = () => {
@@ -24,6 +24,11 @@ const Dashboard = () => {
   const handleNavigation = (path: string) => {
     playSound('click');
     navigate(path);
+  };
+
+  const handleSignOut = () => {
+    playSound('click');
+    signOut();
   };
 
   const totalProgress = getTotalProgress();
@@ -86,9 +91,10 @@ const Dashboard = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-xl px-3 py-2 text-xs"
+                onClick={handleSignOut}
+                className="text-white hover:text-white hover:bg-white/20 rounded-xl px-3 py-2 text-xs bg-red-500/20 border border-red-300/30"
               >
+                <LogOut size={14} className="mr-1" />
                 Sair
               </Button>
             </div>
