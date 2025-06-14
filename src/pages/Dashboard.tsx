@@ -79,24 +79,25 @@ const Dashboard = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
-        {/* Header com Logo Maior e Mais Visível */}
-        <div className="bg-white/25 backdrop-blur-lg text-white p-4 rounded-b-2xl shadow-2xl flex-shrink-0 border-b border-white/20">
-          {/* Logo com fundo mais sólido para melhor visibilidade */}
-          <div className="flex justify-center mb-4">
-            <div className="bg-white/30 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-white/40">
-              <Logo size="lg" showText={true} animated className="transform hover:scale-110 transition-transform duration-300" />
+        {/* Header Compacto e Balanceado */}
+        <div className="bg-white/20 backdrop-blur-lg text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            {/* Logo menor no lado esquerdo */}
+            <div className="flex items-center gap-2">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-white/20">
+                <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-base font-bold">
+                  Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}! 👋
+                </h1>
+                <p className="text-white/90 text-xs">
+                  {profile?.school_year} • Pronto para aprender?
+                </p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex-1">
-              <h1 className="text-lg font-bold">
-                Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}! 👋
-              </h1>
-              <p className="text-white/90 text-sm">
-                {profile?.school_year} • Pronto para aprender?
-              </p>
-            </div>
+            
+            {/* Controles no lado direito */}
             <div className="flex space-x-2">
               <SoundControlPanel />
               <Button 
@@ -105,15 +106,15 @@ const Dashboard = () => {
                 onClick={handleSettingsClick}
                 className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2"
               >
-                <Settings size={16} />
+                <Settings size={14} />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleSignOut}
-                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 rounded-lg px-3 py-2 text-sm font-medium shadow-md"
+                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 rounded-lg px-2 py-1 text-xs font-medium shadow-md"
               >
-                <LogOut size={14} className="mr-1" />
+                <LogOut size={12} className="mr-1" />
                 Sair
               </Button>
             </div>
