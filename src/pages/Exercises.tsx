@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -171,7 +170,7 @@ const Exercises = () => {
             <h1 className="text-lg font-semibold">Conteúdo - {currentSubject.name}</h1>
           </div>
           
-          <div className="p-6 flex-1 flex items-center justify-center">
+          <div className="p-6 flex-1 flex items-center justify-center min-h-0">
             <ContentSlides 
               subject={currentSubject.name}
               onComplete={() => handleActivityComplete('slides')}
@@ -199,7 +198,7 @@ const Exercises = () => {
             <h1 className="text-lg font-semibold">Professor Virtual - {currentSubject.name}</h1>
           </div>
           
-          <div className="p-6 flex-1 flex items-center justify-center">
+          <div className="p-6 flex-1 flex items-center justify-center min-h-0">
             <VirtualTeacher 
               subject={currentSubject.name}
               topic={currentSubject.description}
@@ -228,7 +227,7 @@ const Exercises = () => {
             <h1 className="text-lg font-semibold">Quiz - {currentSubject.name}</h1>
           </div>
           
-          <div className="p-6 flex-1">
+          <div className="p-6 flex-1 min-h-0">
             <SubjectQuiz 
               subject={selectedSubject}
               onComplete={handleQuizComplete}
