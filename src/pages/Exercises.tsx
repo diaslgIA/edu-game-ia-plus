@@ -137,9 +137,9 @@ const Exercises = () => {
     } else if (activity === 'teacher') {
       setExerciseMode('quiz');
       setCurrentActivity('quiz');
-    } else {
-      handleBackToSelection();
-    }
+    } 
+    // Para 'quiz', não fazemos nada para evitar o redirecionamento automático.
+    // O usuário permanecerá na tela de resultados e navegará clicando no botão.
   };
 
   const handleQuizComplete = (score: number, timeSpent: number) => {
@@ -148,8 +148,9 @@ const Exercises = () => {
 
   const handleBackToSelection = () => {
     setExerciseMode('selection');
-    setSelectedSubject(null);
     setCurrentActivity(null);
+    // O `selectedSubject` não é limpo para que o usuário retorne
+    // à tela de seleção de atividades da matéria atual.
   };
 
   const currentSubject = subjects.find(s => s.name === selectedSubject);
