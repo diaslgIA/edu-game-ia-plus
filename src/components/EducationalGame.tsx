@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star } from 'lucide-react';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Question {
   id: number;
@@ -48,6 +48,7 @@ interface EducationalGameProps {
 const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => {
   const { saveQuizScore, saving } = useQuizScore();
   const { isMuted } = useSound();
+  const { t, language } = useLanguage();
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -77,21 +78,37 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     const getResultMessage = () => {
       const halfQuestions = totalQuestions / 2;
       if (correctAnswers > halfQuestions) {
-        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você está indo muito bem! Estude só um pouco mais para ser nota 10.`;
+        return t('game_feedback_good', { correct: correctAnswers, total: totalQuestions });
       } else {
-        return `Você acertou ${correctAnswers} de ${totalQuestions} questões. Você precisa estudar muito para não perder os objetivos da vida, mas não desista! Com dedicação, você vai chegar lá. Continue firme!`;
+        return t('game_feedback_bad', { correct: correctAnswers, total: totalQuestions });
       }
     };
 
     const message = getResultMessage();
     const utterance = new SpeechSynthesisUtterance(message);
-    utterance.lang = 'pt-BR';
+    
+    const langMap: { [key: string]: string } = {
+        pt: 'pt-BR',
+        en: 'en-US',
+        es: 'es-ES',
+        ja: 'ja-JP',
+        fr: 'fr-FR',
+        de: 'de-DE',
+        it: 'it-IT',
+        ko: 'ko-KR',
+        zh: 'zh-CN',
+        ar: 'ar-SA',
+        ru: 'ru-RU',
+        hi: 'hi-IN',
+    };
+    utterance.lang = langMap[language] || 'en-US';
+    utterance.rate = 0.9; // Deixando a voz mais suave
 
     const speak = () => {
       const voices = window.speechSynthesis.getVoices();
-      const portugueseVoice = voices.find(voice => voice.lang.startsWith('pt-BR') || voice.lang.startsWith('pt'));
-      if (portugueseVoice) {
-        utterance.voice = portugueseVoice;
+      const voiceForLang = voices.find(voice => voice.lang === utterance.lang);
+      if (voiceForLang) {
+        utterance.voice = voiceForLang;
       }
       window.speechSynthesis.speak(utterance);
     };
@@ -105,7 +122,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     return () => {
       window.speechSynthesis.cancel();
     };
-  }, [gameCompleted, isMuted, score, selectedAnswer, currentQuestion]);
+  }, [gameCompleted, isMuted, score, selectedAnswer, currentQuestion, t, language]);
 
   const startGame = () => {
     setGameStarted(true);

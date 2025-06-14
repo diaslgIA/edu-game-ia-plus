@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, User, Trophy, Target, BookOpen, Star, Settings, Edit3, Save, Heart } from 'lucide-react';
+import { ArrowLeft, User, Trophy, Target, BookOpen, Star, Settings, Edit3, Save, Heart, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
@@ -28,10 +27,56 @@ const Profile = () => {
     profile_picture_url: profile?.profile_picture_url || '👤'
   });
 
+  useEffect(() => {
+    if (!profile || !updateProfile || !profile.id) return;
+
+    const checkAndUpdateStreak = async () => {
+      const today = new Date();
+      const lastLogin = profile.last_login ? new Date(profile.last_login) : null;
+
+      const isSameDay = lastLogin &&
+        today.getFullYear() === lastLogin.getFullYear() &&
+        today.getMonth() === lastLogin.getMonth() &&
+        today.getDate() === lastLogin.getDate();
+
+      if (isSameDay) {
+        return; // Already updated today
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+
+      const isConsecutiveDay = lastLogin &&
+        yesterday.getFullYear() === lastLogin.getFullYear() &&
+        yesterday.getMonth() === lastLogin.getMonth() &&
+        yesterday.getDate() === lastLogin.getDate();
+      
+      const newStreak = isConsecutiveDay ? (profile.login_streak || 0) + 1 : 1;
+
+      try {
+        await updateProfile({
+          last_login: today.toISOString(),
+          login_streak: newStreak
+        });
+
+        if (newStreak > 1) {
+          toast({
+            title: t('streak_title', { count: newStreak }),
+            description: t('streak_motivation_desc'),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to update login streak:", error);
+      }
+    };
+
+    checkAndUpdateStreak();
+  }, [profile, updateProfile, t, toast]);
+
   const stats = useMemo(() => [
     { icon: Trophy, label: t('points'), value: profile?.points || 0, color: 'text-yellow-500' },
     { icon: Target, label: t('level'), value: profile?.level || 1, color: 'text-blue-500' },
-    { icon: BookOpen, label: t('studies'), value: '12 dias', color: 'text-green-500' },
+    { icon: Flame, label: t('login_streak'), value: `${profile?.login_streak || 0} ${t('days_short')}`, color: 'text-orange-500' },
     { icon: Star, label: t('achievements'), value: '8', color: 'text-purple-500' },
   ], [t, profile]);
 

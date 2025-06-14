@@ -58,6 +58,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         hi: 'hi-IN',
     };
     utterance.lang = langMap[language] || 'en-US';
+    utterance.rate = 0.9; // Deixando a voz mais suave
 
     const speak = () => {
         const voices = window.speechSynthesis.getVoices();
