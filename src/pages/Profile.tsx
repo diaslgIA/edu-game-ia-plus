@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -28,36 +28,36 @@ const Profile = () => {
     profile_picture_url: profile?.profile_picture_url || '👤'
   });
 
-  const stats = [
-    { icon: Trophy, label: t('points') || 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
-    { icon: Target, label: t('level') || 'Nível', value: profile?.level || 1, color: 'text-blue-500' },
-    { icon: BookOpen, label: 'Estudos', value: '12 dias', color: 'text-green-500' },
-    { icon: Star, label: 'Conquistas', value: '8', color: 'text-purple-500' },
-  ];
+  const stats = useMemo(() => [
+    { icon: Trophy, label: t('points'), value: profile?.points || 0, color: 'text-yellow-500' },
+    { icon: Target, label: t('level'), value: profile?.level || 1, color: 'text-blue-500' },
+    { icon: BookOpen, label: t('studies'), value: '12 dias', color: 'text-green-500' },
+    { icon: Star, label: t('achievements'), value: '8', color: 'text-purple-500' },
+  ], [t, profile]);
 
-  const achievements = [
-    { id: 1, name: 'Primeiro Quiz', description: 'Complete seu primeiro quiz', icon: '🎯', unlocked: true },
-    { id: 2, name: 'Estudante Dedicado', description: 'Estude 5 dias seguidos', icon: '📚', unlocked: true },
-    { id: 3, name: 'Matemático', description: 'Complete 10 quizzes de matemática', icon: '🧮', unlocked: true },
-    { id: 4, name: 'Escritor', description: 'Complete 10 quizzes de português', icon: '✍️', unlocked: false },
-    { id: 5, name: 'Cientista', description: 'Complete 10 quizzes de ciências', icon: '🔬', unlocked: false },
-    { id: 6, name: 'Historiador', description: 'Complete 10 quizzes de história', icon: '🏛️', unlocked: false },
-    { id: 7, name: 'Perfeccionista', description: 'Acerte 100% em um quiz', icon: '💯', unlocked: true },
-    { id: 8, name: 'Maratonista', description: 'Estude por 2 horas seguidas', icon: '🏃', unlocked: true },
-  ];
+  const achievements = useMemo(() => [
+    { id: 1, name: t('ach_first_quiz_name'), description: t('ach_first_quiz_desc'), icon: '🎯', unlocked: true },
+    { id: 2, name: t('ach_dedicated_student_name'), description: t('ach_dedicated_student_desc'), icon: '📚', unlocked: true },
+    { id: 3, name: t('ach_mathematician_name'), description: t('ach_mathematician_desc'), icon: '🧮', unlocked: true },
+    { id: 4, name: t('ach_writer_name'), description: t('ach_writer_desc'), icon: '✍️', unlocked: false },
+    { id: 5, name: t('ach_scientist_name'), description: t('ach_scientist_desc'), icon: '🔬', unlocked: false },
+    { id: 6, name: t('ach_historian_name'), description: t('ach_historian_desc'), icon: '🏛️', unlocked: false },
+    { id: 7, name: t('ach_perfectionist_name'), description: t('ach_perfectionist_desc'), icon: '💯', unlocked: true },
+    { id: 8, name: t('ach_marathoner_name'), description: t('ach_marathoner_desc'), icon: '🏃', unlocked: true },
+  ], [t]);
 
   const handleSave = async () => {
     try {
       await updateProfile(formData);
       setIsEditing(false);
       toast({
-        title: "Perfil atualizado!",
-        description: "Suas informações foram salvas com sucesso.",
+        title: t('profile_updated'),
+        description: t('profile_updated_desc'),
       });
     } catch (error) {
       toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível salvar as alterações.",
+        title: t('profile_update_error'),
+        description: t('profile_update_error_desc'),
         variant: "destructive"
       });
     }
@@ -71,17 +71,16 @@ const Profile = () => {
     const imageUrl = URL.createObjectURL(file);
     setFormData({ ...formData, profile_picture_url: imageUrl });
     
-    // Salvar automaticamente
     try {
       await updateProfile({ ...formData, profile_picture_url: imageUrl });
       toast({
-        title: "Foto atualizada!",
-        description: "Sua foto de perfil foi salva com sucesso.",
+        title: t('avatar_updated'),
+        description: t('avatar_updated_desc'),
       });
     } catch (error) {
       toast({
-        title: "Erro ao salvar foto",
-        description: "Não foi possível salvar sua foto.",
+        title: t('avatar_error'),
+        description: t('avatar_error_desc'),
         variant: "destructive"
       });
     }
@@ -97,8 +96,8 @@ const Profile = () => {
   const handleLanguageChange = (langCode: string) => {
     setLanguage(langCode as any);
     toast({
-      title: "Idioma alterado!",
-      description: `Idioma alterado para ${languages.find(l => l.code === langCode)?.name}`,
+      title: t('language_changed'),
+      description: t('language_changed_desc', { langName: languages.find(l => l.code === langCode)?.name || '' }),
     });
   };
 
@@ -118,7 +117,7 @@ const Profile = () => {
             </Button>
             <h1 className="text-base font-semibold flex items-center space-x-2">
               <User size={18} />
-              <span>{t('profile') || 'Perfil'}</span>
+              <span>{t('profile')}</span>
             </h1>
             <div className="flex space-x-2">
               <Button 
@@ -134,6 +133,7 @@ const Profile = () => {
                 size="sm"
                 onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                 className="text-white p-2"
+                aria-label={isEditing ? t('save') : t('edit')}
               >
                 {isEditing ? <Save size={16} /> : <Edit3 size={16} />}
               </Button>
@@ -156,7 +156,7 @@ const Profile = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="full_name" className="text-white text-sm font-medium">Nome Completo</Label>
+                  <Label htmlFor="full_name" className="text-white text-sm font-medium">{t('full_name')}</Label>
                   <Input
                     id="full_name"
                     value={formData.full_name}
@@ -167,7 +167,7 @@ const Profile = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="school_year" className="text-white text-sm font-medium">Ano Escolar</Label>
+                  <Label htmlFor="school_year" className="text-white text-sm font-medium">{t('school_year')}</Label>
                   <Input
                     id="school_year"
                     value={formData.school_year}
@@ -178,7 +178,7 @@ const Profile = () => {
                 </div>
 
                 <div>
-                  <Label className="text-white text-sm font-medium">Email</Label>
+                  <Label className="text-white text-sm font-medium">{t('email')}</Label>
                   <Input
                     value={user?.email || ''}
                     disabled
@@ -205,7 +205,7 @@ const Profile = () => {
 
             {/* Achievements */}
             <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
-              <h3 className="text-white font-semibold mb-4 text-base">🏆 Conquistas</h3>
+              <h3 className="text-white font-semibold mb-4 text-base">{t('achievements_title')}</h3>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {achievements.map((achievement) => (
                   <div
@@ -233,20 +233,18 @@ const Profile = () => {
 
             {/* Languages */}
             <Card className="bg-white/10 backdrop-blur-md border-white/20 p-4">
-              <h3 className="text-white font-semibold mb-4 text-base">🌍 Idiomas</h3>
+              <h3 className="text-white font-semibold mb-4 text-base">{t('languages')}</h3>
               
-              {/* Current Language */}
               <div className="mb-4 p-3 bg-white/20 rounded-lg">
-                <h4 className="text-white text-sm font-medium mb-2">Idioma Atual:</h4>
+                <h4 className="text-white text-sm font-medium mb-2">{t('current_language')}</h4>
                 <div className="flex items-center space-x-2">
                   <span className="text-xl">{languages.find(l => l.code === language)?.flag}</span>
                   <span className="text-white font-medium">{languages.find(l => l.code === language)?.name}</span>
                 </div>
               </div>
 
-              {/* Available Languages */}
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                <h4 className="text-white text-sm font-medium mb-2">Todos os Idiomas:</h4>
+                <h4 className="text-white text-sm font-medium mb-2">{t('all_languages')}</h4>
                 {languages.map((lang) => (
                   <div
                     key={lang.code}
@@ -259,7 +257,7 @@ const Profile = () => {
                       <span className="text-lg">{lang.flag}</span>
                       <span className="text-white text-sm">{lang.name}</span>
                       {language === lang.code && (
-                        <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">Atual</span>
+                        <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">{t('current')}</span>
                       )}
                     </div>
                     <Button

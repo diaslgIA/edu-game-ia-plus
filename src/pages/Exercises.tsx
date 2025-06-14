@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -6,6 +6,7 @@ import SubjectQuiz from '@/components/SubjectQuiz';
 import ContentSlides from '@/components/ContentSlides';
 import VirtualTeacher from '@/components/VirtualTeacher';
 import { useUserProgress } from '@/hooks/useUserProgress';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Target, Trophy, Clock, Play, Star, CheckCircle } from 'lucide-react';
 
@@ -15,6 +16,7 @@ const Exercises = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { getSubjectProgress, updateProgress } = useUserProgress();
+  const { t } = useLanguage();
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
   const [currentActivity, setCurrentActivity] = useState<'slides' | 'teacher' | 'quiz' | null>(null);
@@ -26,95 +28,23 @@ const Exercises = () => {
     }
   }, [searchParams]);
 
-  const subjects = [
-    {
-      id: 'matematica',
-      name: 'Matemática',
-      description: 'Álgebra, Geometria e Funções',
-      color: 'from-blue-500 to-blue-700',
-      icon: '📐',
-      difficulty: 'Médio',
-      exercises: 45
-    },
-    {
-      id: 'portugues',
-      name: 'Português',
-      description: 'Interpretação, Gramática e Literatura',
-      color: 'from-green-500 to-green-700',
-      icon: '📚',
-      difficulty: 'Fácil',
-      exercises: 52
-    },
-    {
-      id: 'fisica',
-      name: 'Física',
-      description: 'Mecânica, Eletricidade e Óptica',
-      color: 'from-purple-500 to-purple-700',
-      icon: '⚡',
-      difficulty: 'Difícil',
-      exercises: 38
-    },
-    {
-      id: 'quimica',
-      name: 'Química',
-      description: 'Orgânica, Inorgânica e Físico-química',
-      color: 'from-orange-500 to-orange-700',
-      icon: '🧪',
-      difficulty: 'Médio',
-      exercises: 41
-    },
-    {
-      id: 'biologia',
-      name: 'Biologia',
-      description: 'Ecologia, Genética e Citologia',
-      color: 'from-teal-500 to-teal-700',
-      icon: '🧬',
-      difficulty: 'Médio',
-      exercises: 47
-    },
-    {
-      id: 'historia',
-      name: 'História',
-      description: 'Brasil, Mundo e Atualidades',
-      color: 'from-amber-500 to-amber-700',
-      icon: '🏛️',
-      difficulty: 'Fácil',
-      exercises: 36
-    },
-    {
-      id: 'geografia',
-      name: 'Geografia',
-      description: 'Física, Humana e Cartografia',
-      color: 'from-emerald-500 to-emerald-700',
-      icon: '🌍',
-      difficulty: 'Fácil',
-      exercises: 33
-    },
-    {
-      id: 'filosofia',
-      name: 'Filosofia',
-      description: 'Ética, Política e Metafísica',
-      color: 'from-indigo-500 to-indigo-700',
-      icon: '🤔',
-      difficulty: 'Médio',
-      exercises: 24
-    },
-    {
-      id: 'sociologia',
-      name: 'Sociologia',
-      description: 'Sociedade, Cultura e Movimentos',
-      color: 'from-pink-500 to-pink-700',
-      icon: '👥',
-      difficulty: 'Fácil',
-      exercises: 28
-    }
-  ];
+  const subjects = useMemo(() => [
+    { id: 'matematica', name: t('subject_math_name'), description: t('subject_math_desc'), color: 'from-blue-500 to-blue-700', icon: '📐', difficulty: t('difficulty_medium'), exercises: 45 },
+    { id: 'portugues', name: t('subject_portuguese_name'), description: t('subject_portuguese_desc'), color: 'from-green-500 to-green-700', icon: '📚', difficulty: t('difficulty_easy'), exercises: 52 },
+    { id: 'fisica', name: t('subject_physics_name'), description: t('subject_physics_desc'), color: 'from-purple-500 to-purple-700', icon: '⚡', difficulty: t('difficulty_hard'), exercises: 38 },
+    { id: 'quimica', name: t('subject_chemistry_name'), description: t('subject_chemistry_desc'), color: 'from-orange-500 to-orange-700', icon: '🧪', difficulty: t('difficulty_medium'), exercises: 41 },
+    { id: 'biologia', name: t('subject_biology_name'), description: t('subject_biology_desc'), color: 'from-teal-500 to-teal-700', icon: '🧬', difficulty: t('difficulty_medium'), exercises: 47 },
+    { id: 'historia', name: t('subject_history_name'), description: t('subject_history_desc'), color: 'from-amber-500 to-amber-700', icon: '🏛️', difficulty: t('difficulty_easy'), exercises: 36 },
+    { id: 'geografia', name: t('subject_geography_name'), description: t('subject_geography_desc'), color: 'from-emerald-500 to-emerald-700', icon: '🌍', difficulty: t('difficulty_easy'), exercises: 33 },
+    { id: 'filosofia', name: t('subject_philosophy_name'), description: t('subject_philosophy_desc'), color: 'from-indigo-500 to-indigo-700', icon: '🤔', difficulty: t('difficulty_medium'), exercises: 24 },
+    { id: 'sociologia', name: t('subject_sociology_name'), description: t('subject_sociology_desc'), color: 'from-pink-500 to-pink-700', icon: '👥', difficulty: t('difficulty_easy'), exercises: 28 }
+  ], [t]);
 
-  const activities = [
-    { id: 'slides', name: 'Conteúdo', icon: BookOpen, color: 'bg-blue-500', description: 'Slides educativos' },
-    { id: 'teacher', name: 'Professor IA', icon: Play, color: 'bg-green-500', description: 'Aula virtual' },
-    { id: 'quiz', name: 'Quiz', icon: Trophy, color: 'bg-yellow-500', description: 'Teste seus conhecimentos' }
-  ];
+  const activities = useMemo(() => [
+    { id: 'slides', name: t('activity_slides_name'), icon: BookOpen, color: 'bg-blue-500', description: t('activity_slides_desc') },
+    { id: 'teacher', name: t('activity_teacher_name'), icon: Play, color: 'bg-green-500', description: t('activity_teacher_desc') },
+    { id: 'quiz', name: t('activity_quiz_name'), icon: Trophy, color: 'bg-yellow-500', description: t('activity_quiz_desc') }
+  ], [t]);
 
   const handleSubjectSelect = (subjectName: string) => {
     setSelectedSubject(subjectName);
@@ -168,7 +98,7 @@ const Exercises = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Conteúdo - {currentSubject.name}</h1>
+            <h1 className="text-lg font-semibold">{t('content_title', { subject: currentSubject.name })}</h1>
           </div>
           
           <div className="p-6 flex-1 flex items-center justify-center min-h-0">
@@ -196,7 +126,7 @@ const Exercises = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Professor Virtual - {currentSubject.name}</h1>
+            <h1 className="text-lg font-semibold">{t('virtual_teacher_title', { subject: currentSubject.name })}</h1>
           </div>
           
           <div className="p-6 flex-1 flex items-center justify-center min-h-0">
@@ -225,7 +155,7 @@ const Exercises = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Quiz - {currentSubject.name}</h1>
+            <h1 className="text-lg font-semibold">{t('quiz_title', { subject: currentSubject.name })}</h1>
           </div>
           
           <div className="p-6 flex-1 min-h-0">
@@ -255,7 +185,7 @@ const Exercises = () => {
             <ArrowLeft size={20} />
           </Button>
           <h1 className="text-lg font-semibold flex items-center space-x-2">
-            <span>{selectedSubject ? `Atividades - ${selectedSubject}` : 'Exercícios'}</span>
+            <span>{selectedSubject ? t('activities_title', { subject: selectedSubject }) : t('exercises_title')}</span>
             <Target size={20} />
           </h1>
         </div>
@@ -276,7 +206,7 @@ const Exercises = () => {
 
               {/* Subjects Grid */}
               <div>
-                <h2 className="text-white text-lg font-semibold mb-4">Escolha uma Matéria:</h2>
+                <h2 className="text-white text-lg font-semibold mb-4">{t('select_subject')}</h2>
                 <div className="grid grid-cols-1 gap-4">
                   {subjects.map((subject) => {
                     const subjectProgress = getSubjectProgress(subject.name);
@@ -299,7 +229,7 @@ const Exercises = () => {
                             <div className="flex items-center space-x-4 text-xs">
                               <div className="flex items-center space-x-1">
                                 <Target size={12} className="text-blue-400" />
-                                <span className="text-white/80">{subject.exercises} exercícios</span>
+                                <span className="text-white/80">{t('exercises_count', { count: subject.exercises })}</span>
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Clock size={12} className="text-green-400" />
@@ -327,7 +257,7 @@ const Exercises = () => {
               {/* Subject Header */}
               <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 text-white shadow-lg">
                 <h2 className="text-xl font-bold mb-2">{selectedSubject}</h2>
-                <p className="text-white/80 mb-4">Escolha uma atividade para começar:</p>
+                <p className="text-white/80 mb-4">{t('select_activity')}</p>
                 
                 <div className="w-full bg-white/20 rounded-full h-2 mb-2">
                   <div 
@@ -336,7 +266,7 @@ const Exercises = () => {
                   />
                 </div>
                 <p className="text-sm text-white/80">
-                  Progresso: {getSubjectProgress(selectedSubject).progress_percentage}%
+                  {t('progress')} {getSubjectProgress(selectedSubject).progress_percentage}%
                 </p>
               </div>
 
@@ -359,7 +289,7 @@ const Exercises = () => {
                         
                         <div className="flex items-center space-x-2 mt-2">
                           <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
-                            Etapa {index + 1}
+                            {t('step', { number: index + 1 })}
                           </span>
                           {currentActivity === activity.id && (
                             <CheckCircle size={16} className="text-green-400" />
@@ -380,7 +310,7 @@ const Exercises = () => {
                 variant="outline"
                 className="w-full text-white border-white/20 hover:bg-white/20"
               >
-                Voltar para Matérias
+                {t('back_to_subjects')}
               </Button>
             </>
           )}
