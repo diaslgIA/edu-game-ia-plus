@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,8 @@ interface Profile {
   is_verified: boolean;
   subscription_type: string;
   first_login: boolean;
+  last_login: string | null;
+  login_streak: number | null;
   created_at: string;
   updated_at: string;
 }

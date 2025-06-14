@@ -89,7 +89,9 @@ export type Database = {
           full_name: string
           id: string
           is_verified: boolean | null
+          last_login: string | null
           level: number | null
+          login_streak: number | null
           phone_number: string | null
           points: number | null
           profile_picture_url: string | null
@@ -104,7 +106,9 @@ export type Database = {
           full_name: string
           id: string
           is_verified?: boolean | null
+          last_login?: string | null
           level?: number | null
+          login_streak?: number | null
           phone_number?: string | null
           points?: number | null
           profile_picture_url?: string | null
@@ -119,7 +123,9 @@ export type Database = {
           full_name?: string
           id?: string
           is_verified?: boolean | null
+          last_login?: string | null
           level?: number | null
+          login_streak?: number | null
           phone_number?: string | null
           points?: number | null
           profile_picture_url?: string | null
