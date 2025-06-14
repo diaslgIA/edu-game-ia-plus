@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useExpandedQuestions } from '@/hooks/useExpandedQuestions';
@@ -92,9 +93,9 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   if (questions.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-          Carregando questões de {subject}...
+      <div className="font-pixel bg-gray-900 text-white border-4 border-gray-700 p-6 text-center">
+        <h3 className="text-xl font-bold text-white mb-4">
+          Carregando questoes de {subject}...
         </h3>
       </div>
     );
@@ -129,7 +130,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 h-full flex flex-col">
+    <div className="font-pixel bg-gray-900 text-white p-4 h-full flex flex-col">
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <QuizHeader 
@@ -156,32 +157,32 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         )}
 
         {/* Pontuação Atual - Sempre visível */}
-        <div className="mt-4 p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-xl">
+        <div className="mt-4 p-3 bg-gray-800 border-2 border-blue-500">
           <div className="text-center">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pontuação atual: </span>
-            <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{score} pontos</span>
+            <span className="text-gray-300 text-sm font-medium">Pontos: </span>
+            <span className="font-bold text-blue-400 text-lg">{score}</span>
           </div>
         </div>
       </div>
 
       {/* Botões de Ação - Sempre visíveis no final */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="pt-4 border-t border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
               onClick={handleSubmitAnswer}
               disabled={selectedAnswer === null}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl disabled:opacity-50"
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-blue-700 active:border-b-2 active:border-r-2 disabled:opacity-50"
             >
-              Confirmar Resposta
+              Confirmar
             </Button>
           ) : (
             <Button 
               onClick={handleNextQuestion}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
-              {currentQuestion < questions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
+              {currentQuestion < questions.length - 1 ? 'Proxima' : 'Finalizar Quiz'}
             </Button>
           )}
         </div>
