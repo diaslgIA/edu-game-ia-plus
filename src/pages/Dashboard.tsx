@@ -79,11 +79,18 @@ const Dashboard = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
-        {/* Header com Logo Maior */}
+        {/* Header com Logo MUITO Destacada */}
         <div className="bg-white/15 backdrop-blur-md text-white p-4 rounded-b-2xl shadow-xl flex-shrink-0">
-          {/* Logo Destacada - MUITO MAIOR */}
-          <div className="flex justify-center mb-4">
-            <Logo size="lg" showText={true} animated className="transform hover:scale-110 transition-transform duration-300" />
+          {/* Logo Principal - SUPER DESTACADA */}
+          <div className="flex justify-center mb-6 relative">
+            {/* Efeito de destaque extra para a logo */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-full blur-3xl opacity-30 animate-pulse scale-150"></div>
+            <Logo 
+              size="xl" 
+              showText={true} 
+              animated={true}
+              className="transform hover:scale-110 transition-transform duration-500 relative z-10" 
+            />
           </div>
           
           <div className="flex items-center justify-between mb-2">
