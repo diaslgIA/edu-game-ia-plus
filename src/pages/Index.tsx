@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +44,7 @@ const Index = () => {
         <div className="animate-scale-in">
           {/* Logo Destacada e Bem Visível */}
           <div className="flex justify-center mb-8">
-            <Logo size="xl" showText={true} animated className="transform hover:scale-105 transition-transform duration-300" />
+            <Logo size="lg" showText={true} animated className="transform hover:scale-105 transition-transform duration-300" />
           </div>
         </div>
         

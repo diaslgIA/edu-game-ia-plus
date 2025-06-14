@@ -85,7 +85,7 @@ const Dashboard = () => {
             {/* Logo e saudação */}
             <div className="flex items-center gap-2">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
-                <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
+                <Logo size="xs" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
               </div>
               <div>
                 <h1 className="text-sm font-bold">

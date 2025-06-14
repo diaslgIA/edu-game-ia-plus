@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   className?: string;
   animated?: boolean;
@@ -17,17 +17,19 @@ const Logo: React.FC<LogoProps> = ({
   onClick
 }) => {
   const sizeClasses = {
-    sm: 'w-16 h-16',
-    md: 'w-20 h-20',
-    lg: 'w-28 h-28',
-    xl: 'w-40 h-40'
+    xs: 'w-10 h-10',
+    sm: 'w-12 h-12',
+    md: 'w-16 h-16',
+    lg: 'w-24 h-24',
+    xl: 'w-32 h-32'
   };
 
   const textSizeClasses = {
+    xs: 'text-lg',
     sm: 'text-xl',
     md: 'text-2xl',
     lg: 'text-4xl',
-    xl: 'text-7xl'
+    xl: 'text-6xl'
   };
 
   return (
