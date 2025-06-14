@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 interface SoundContextType {
@@ -64,23 +63,51 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const audioContext = backgroundMusicRef.current;
     
-    // Criar música ambiente programaticamente (simulando música licenciada)
-    const musicBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 60, audioContext.sampleRate);
+    // Criar música de piano ambiente programaticamente
+    const musicBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 120, audioContext.sampleRate);
     
-    // Gerar tons harmônicos suaves para música ambiente
+    // Notas de piano em Hz (escala de Dó maior)
+    const pianoNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C4 to C5
+    
     for (let channel = 0; channel < musicBuffer.numberOfChannels; channel++) {
       const channelData = musicBuffer.getChannelData(channel);
-      const baseFreq = channel === 0 ? 220 : 330; // A3 e E4
       
       for (let i = 0; i < channelData.length; i++) {
         const time = i / audioContext.sampleRate;
-        // Criar harmônicos suaves com fade in/out
-        const envelope = Math.sin(time * 0.1) * 0.3 + 0.2;
-        const wave1 = Math.sin(2 * Math.PI * baseFreq * time) * 0.3;
-        const wave2 = Math.sin(2 * Math.PI * baseFreq * 1.5 * time) * 0.2;
-        const wave3 = Math.sin(2 * Math.PI * baseFreq * 2 * time) * 0.1;
+        let sample = 0;
         
-        channelData[i] = (wave1 + wave2 + wave3) * envelope;
+        // Criar acordes de piano suaves com envelope ADSR
+        const noteIndex = Math.floor((time * 0.25) % pianoNotes.length);
+        const freq = pianoNotes[noteIndex];
+        const chordFreq1 = pianoNotes[(noteIndex + 2) % pianoNotes.length]; // Terça
+        const chordFreq2 = pianoNotes[(noteIndex + 4) % pianoNotes.length]; // Quinta
+        
+        // Envelope ADSR para simular piano
+        const noteTime = (time * 0.25) % 4;
+        let envelope = 1;
+        if (noteTime < 0.1) {
+          envelope = noteTime / 0.1; // Attack
+        } else if (noteTime < 0.3) {
+          envelope = 1 - (noteTime - 0.1) / 0.2 * 0.3; // Decay
+        } else if (noteTime < 3.5) {
+          envelope = 0.7; // Sustain
+        } else {
+          envelope = 0.7 * (1 - (noteTime - 3.5) / 0.5); // Release
+        }
+        
+        // Misturar as frequências do acorde
+        sample += Math.sin(2 * Math.PI * freq * time) * 0.3 * envelope;
+        sample += Math.sin(2 * Math.PI * chordFreq1 * time) * 0.2 * envelope;
+        sample += Math.sin(2 * Math.PI * chordFreq2 * time) * 0.1 * envelope;
+        
+        // Adicionar reverb simples
+        const delayTime = 0.1;
+        const delaySamples = Math.floor(delayTime * audioContext.sampleRate);
+        if (i > delaySamples) {
+          sample += channelData[i - delaySamples] * 0.2;
+        }
+        
+        channelData[i] = sample * 0.3; // Volume geral
       }
     }
 
@@ -182,29 +209,35 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Diferentes frequências para diferentes tipos de som
-      const frequencies = {
-        success: [523, 659, 784], // C, E, G
-        error: [220, 196], // A, G (mais grave e sombrio)
-        click: [800], // Click único
-        notification: [523, 659] // C, E
+      // Sons de piano para diferentes tipos
+      const pianoSounds = {
+        success: [523.25, 659.25, 783.99], // C5, E5, G5 (acorde maior)
+        error: [220, 196, 174.61], // A3, G3, F3 (descendente)
+        click: [440], // A4 (nota única)
+        notification: [523.25, 659.25] // C5, E5
       };
 
-      const freq = frequencies[soundType];
+      const frequencies = pianoSounds[soundType];
       
-      oscillator.frequency.setValueAtTime(freq[0], audioContext.currentTime);
-      if (freq.length > 1) {
-        oscillator.frequency.setValueAtTime(freq[1], audioContext.currentTime + 0.1);
+      // Simular timbre de piano com ondas senoidais e envelope
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequencies[0], audioContext.currentTime);
+      
+      if (frequencies.length > 1) {
+        oscillator.frequency.setValueAtTime(frequencies[1], audioContext.currentTime + 0.15);
       }
-      if (freq.length > 2) {
-        oscillator.frequency.setValueAtTime(freq[2], audioContext.currentTime + 0.2);
+      if (frequencies.length > 2) {
+        oscillator.frequency.setValueAtTime(frequencies[2], audioContext.currentTime + 0.3);
       }
 
-      gainNode.gain.setValueAtTime(volume * 0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      // Envelope tipo piano (ataque rápido, decaimento)
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume * 0.4, audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.1, audioContext.currentTime + 0.2);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
 
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.stop(audioContext.currentTime + 0.8);
     } catch (error) {
       console.warn('Não foi possível reproduzir o som:', error);
     }

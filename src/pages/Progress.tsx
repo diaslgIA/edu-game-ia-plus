@@ -3,11 +3,23 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, BarChart3, ArrowRight } from 'lucide-react';
 
 const Progress = () => {
   const navigate = useNavigate();
+  const { playSound } = useSound();
+
+  const handleBack = () => {
+    playSound('click');
+    navigate(-1); // Voltar para a página anterior
+  };
+
+  const handleRankingClick = () => {
+    playSound('click');
+    navigate('/ranking');
+  };
 
   const subjects = [
     { name: 'Matemática', progress: 86, color: 'text-red-500', bgColor: 'bg-red-100' },
@@ -24,7 +36,7 @@ const Progress = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate('/dashboard')}
+            onClick={handleBack}
             className="text-white p-2"
           >
             <ArrowLeft size={20} />
@@ -87,7 +99,7 @@ const Progress = () => {
           {/* Ranking access */}
           <div className="bg-white rounded-2xl p-6 shadow-sm mt-8">
             <Button 
-              onClick={() => navigate('/ranking')}
+              onClick={handleRankingClick}
               className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-4 rounded-2xl flex items-center justify-between"
             >
               <div className="flex items-center space-x-3">

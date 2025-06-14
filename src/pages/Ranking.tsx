@@ -3,17 +3,29 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, Crown } from 'lucide-react';
 
 const Ranking = () => {
   const navigate = useNavigate();
+  const { playSound } = useSound();
+
+  const handleBack = () => {
+    playSound('click');
+    navigate(-1); // Voltar para a página anterior
+  };
 
   const players = [
     { position: 1, name: 'Marcela', points: 12500, avatar: '👩‍🦱', color: 'text-yellow-500' },
     { position: 2, name: 'Paulo', points: 9800, avatar: '👨‍💼', color: 'text-gray-400' },
     { position: 3, name: 'Roberta', points: 7050, avatar: '👩‍🎓', color: 'text-orange-500' },
   ];
+
+  const handleContinue = () => {
+    playSound('click');
+    navigate(-1);
+  };
 
   return (
     <MobileContainer background="light">
@@ -23,7 +35,7 @@ const Ranking = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate('/progress')}
+            onClick={handleBack}
             className="text-white p-2"
           >
             <ArrowLeft size={20} />
@@ -87,7 +99,10 @@ const Ranking = () => {
 
           {/* Continue button */}
           <div className="mt-8 flex justify-center">
-            <Button className="bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-2xl">
+            <Button 
+              onClick={handleContinue}
+              className="bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-2xl"
+            >
               <span className="text-2xl">»</span>
             </Button>
           </div>

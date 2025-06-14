@@ -12,6 +12,133 @@ interface TeacherContentProps {
   onContentComplete: () => void;
 }
 
+// Conteúdo específico por matéria
+const getSubjectContent = (subject: string) => {
+  const contentMap: { [key: string]: any } = {
+    'Matemática': [
+      {
+        title: "Funções Quadráticas",
+        content: "As funções quadráticas são fundamentais no ENEM. Vamos explorar como identificar, analisar e resolver problemas envolvendo parábolas.",
+        points: ["y = ax² + bx + c", "Vértice da parábola", "Discriminante (Δ)", "Raízes e intersecções"]
+      },
+      {
+        title: "Propriedades e Gráficos",
+        content: "O gráfico de uma função quadrática é uma parábola. Vamos aprender a determinar concavidade, vértice e pontos importantes.",
+        points: ["Concavidade (a > 0 ou a < 0)", "Coordenadas do vértice", "Eixo de simetria", "Valor máximo/mínimo"]
+      },
+      {
+        title: "Aplicações Práticas",
+        content: "Funções quadráticas aparecem em problemas de otimização, movimento uniformemente variado e geometria analítica.",
+        points: ["Problemas de área máxima", "Lançamento de projéteis", "Receita e lucro", "Problemas geométricos"]
+      }
+    ],
+    'Física': [
+      {
+        title: "Mecânica Clássica",
+        content: "A mecânica estuda o movimento dos corpos. Vamos abordar cinemática, dinâmica e suas aplicações no ENEM.",
+        points: ["Movimento uniforme (MU)", "Movimento uniformemente variado (MUV)", "Leis de Newton", "Energia mecânica"]
+      },
+      {
+        title: "Eletromagnetismo",
+        content: "Fenômenos elétricos e magnéticos são interconectados. Estudaremos campos, forças e indução eletromagnética.",
+        points: ["Lei de Coulomb", "Campo elétrico", "Corrente elétrica", "Lei de Faraday"]
+      },
+      {
+        title: "Ondas e Óptica",
+        content: "As ondas transportam energia sem transportar matéria. Vamos estudar suas propriedades e fenômenos ópticos.",
+        points: ["Características das ondas", "Reflexão e refração", "Interferência", "Espectro eletromagnético"]
+      }
+    ],
+    'Química': [
+      {
+        title: "Estrutura Atômica",
+        content: "O átomo é a unidade fundamental da matéria. Vamos estudar sua estrutura e as propriedades periódicas.",
+        points: ["Prótons, nêutrons e elétrons", "Número atômico e massa", "Configuração eletrônica", "Tabela periódica"]
+      },
+      {
+        title: "Ligações Químicas",
+        content: "Os átomos se unem através de ligações para formar compostos. Estudaremos os principais tipos de ligação.",
+        points: ["Ligação iônica", "Ligação covalente", "Ligação metálica", "Forças intermoleculares"]
+      },
+      {
+        title: "Reações Químicas",
+        content: "As reações químicas transformam reagentes em produtos. Vamos aprender a balancear equações e calcular quantidades.",
+        points: ["Balanceamento de equações", "Estequiometria", "Rendimento de reação", "Tipos de reação"]
+      }
+    ],
+    'Biologia': [
+      {
+        title: "Citologia",
+        content: "A célula é a unidade básica da vida. Vamos estudar sua estrutura e funcionamento.",
+        points: ["Célula procariota vs eucariota", "Organelas celulares", "Membrana plasmática", "Metabolismo celular"]
+      },
+      {
+        title: "Genética",
+        content: "A genética estuda a hereditariedade. Vamos abordar as leis de Mendel e conceitos modernos.",
+        points: ["Primeira Lei de Mendel", "Segunda Lei de Mendel", "DNA e RNA", "Mutações genéticas"]
+      },
+      {
+        title: "Ecologia",
+        content: "A ecologia estuda as relações entre os seres vivos e o ambiente. Vamos ver cadeias alimentares e ecossistemas.",
+        points: ["Cadeia e teia alimentar", "Pirâmides ecológicas", "Ciclos biogeoquímicos", "Sucessão ecológica"]
+      }
+    ],
+    'História': [
+      {
+        title: "Brasil Colonial",
+        content: "O período colonial brasileiro (1500-1822) foi marcado pela exploração portuguesa e formação da sociedade brasileira.",
+        points: ["Pacto Colonial", "Ciclo do açúcar", "Ciclo do ouro", "Escravidão colonial"]
+      },
+      {
+        title: "República Brasileira",
+        content: "A República no Brasil passou por diferentes fases, desde a Proclamação até os dias atuais.",
+        points: ["República Velha", "Era Vargas", "Regime Militar", "Nova República"]
+      },
+      {
+        title: "Século XX Mundial",
+        content: "O século XX foi marcado por duas guerras mundiais, Guerra Fria e transformações sociais.",
+        points: ["Primeira Guerra Mundial", "Segunda Guerra Mundial", "Guerra Fria", "Descolonização"]
+      }
+    ],
+    'Geografia': [
+      {
+        title: "Geografia Física",
+        content: "A geografia física estuda os aspectos naturais da Terra: relevo, clima, hidrografia e vegetação.",
+        points: ["Estrutura geológica", "Tipos de clima", "Bacias hidrográficas", "Biomas brasileiros"]
+      },
+      {
+        title: "Geografia Humana",
+        content: "A geografia humana analisa a ocupação do espaço pelo homem e suas atividades econômicas.",
+        points: ["Demografia", "Urbanização", "Atividades econômicas", "Globalização"]
+      },
+      {
+        title: "Geopolítica",
+        content: "A geopolítica estuda as relações de poder no espaço geográfico e conflitos territoriais.",
+        points: ["Blocos econômicos", "Conflitos territoriais", "Recursos naturais", "Fronteiras"]
+      }
+    ],
+    'Português': [
+      {
+        title: "Interpretação de Texto",
+        content: "A interpretação textual é fundamental no ENEM. Vamos desenvolver estratégias de leitura e análise.",
+        points: ["Ideia principal", "Inferências", "Linguagem figurada", "Gêneros textuais"]
+      },
+      {
+        title: "Gramática",
+        content: "O domínio gramatical é essencial para a redação e questões de língua portuguesa.",
+        points: ["Classes gramaticais", "Sintaxe", "Concordância", "Regência verbal e nominal"]
+      },
+      {
+        title: "Literatura",
+        content: "A literatura brasileira reflete nossa história e cultura. Vamos estudar os principais movimentos.",
+        points: ["Barroco", "Romantismo", "Realismo/Naturalismo", "Modernismo"]
+      }
+    ]
+  };
+
+  return contentMap[subject] || contentMap['Matemática'];
+};
+
 const TeacherContent: React.FC<TeacherContentProps> = ({ 
   teacher, 
   subject, 
@@ -23,23 +150,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  const slides = [
-    {
-      title: "Introdução à Física Quântica",
-      content: "A física quântica revolucionou nossa compreensão do universo microscópico. Nesta aula, vamos explorar os conceitos fundamentais que aparecem no ENEM.",
-      points: ["Dualidade onda-partícula", "Princípio da incerteza", "Quantização de energia"]
-    },
-    {
-      title: "Princípios Fundamentais",
-      content: "Os principais conceitos incluem dualidade onda-partícula e incerteza. Estes temas são recorrentes em questões de física moderna.",
-      points: ["Efeito fotoelétrico", "Modelo atômico de Bohr", "Espectro eletromagnético"]
-    },
-    {
-      title: "Aplicações Práticas",
-      content: "Tecnologias modernas como lasers e computadores quânticos são baseadas nestes princípios que estudamos.",
-      points: ["Laser e suas aplicações", "Tecnologia LED", "Medicina nuclear"]
-    }
-  ];
+  const slides = getSubjectContent(subject);
 
   const handlePlay = () => {
     setIsPlaying(!isPlaying);
@@ -78,7 +189,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
         <TeacherVideo
           teacher={teacher}
           subject={subject}
-          topic="Física Quântica"
+          topic={slides[0]?.title || "Conteúdo da Aula"}
           duration="15:30"
           isPremium={isPremium}
         />
@@ -114,7 +225,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
               <div className="bg-blue-50 rounded-lg p-4">
                 <h5 className="font-semibold text-blue-800 mb-2">Pontos Principais:</h5>
                 <ul className="space-y-1">
-                  {slides[currentSlide].points.map((point, index) => (
+                  {slides[currentSlide].points.map((point: string, index: number) => (
                     <li key={index} className="flex items-center text-blue-700">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
                       {point}
@@ -138,7 +249,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
             </Button>
 
             <div className="flex space-x-2">
-              {slides.map((_, index) => (
+              {slides.map((_: any, index: number) => (
                 <div
                   key={index}
                   className={`w-3 h-3 rounded-full transition-colors ${
