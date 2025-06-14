@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, Lock, Copy, Download, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { QRCode } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface PaymentFormProps {
   amount: string;
@@ -183,7 +184,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ amount, plan, onSuccess, onCa
             
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
               <div className="w-48 h-48 bg-white mx-auto mb-4 flex items-center justify-center rounded-lg p-2">
-                <QRCode value={pixCode} size={176} />
+                <QRCodeSVG value={pixCode} size={176} />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
                 {pixCode}
