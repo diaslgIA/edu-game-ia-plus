@@ -7,10 +7,10 @@ const RegistrationFooter: React.FC = () => {
   const { playSound } = useSound();
 
   return (
-    <div className="text-center space-y-2 py-2">
-      {/* Termos */}
+    <div className="text-center space-y-1 py-1">
+      {/* Termos mais compactos */}
       <div className="text-xs text-white/80">
-        <p className="mb-1">Ao criar uma conta, você concorda com nossos</p>
+        <p className="mb-0.5">Ao criar uma conta, você concorda com nossos</p>
         <p>
           <Link to="#" className="underline">Termos de Uso</Link> e{' '}
           <Link to="#" className="underline">Política de Privacidade</Link>
