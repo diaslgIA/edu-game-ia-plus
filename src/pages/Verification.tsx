@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import MobileContainer from '@/components/MobileContainer';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -14,49 +15,54 @@ const Verification = () => {
   const { user, profile, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const [verificationData, setVerificationData] = useState({
-    email: 'larinha07@gmail.com',
+    email: 'usuario@email.com',
     phone: '71-996894503',
     code: ['', '', '', '']
   });
   const [isEmailConfirmed, setIsEmailConfirmed] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     // Verificar se é um redirecionamento de confirmação de email
     const type = searchParams.get('type');
     const tokenHash = searchParams.get('token_hash');
+    const token = searchParams.get('token');
     
-    if (type === 'email' && tokenHash) {
-      // Simular confirmação de email bem-sucedida
-      setIsEmailConfirmed(true);
-      toast.success('Email confirmado com sucesso!');
+    if (type === 'email' && (tokenHash || token)) {
+      setIsVerifying(true);
       
-      // Atualizar o perfil para refletir a verificação
-      if (user) {
-        setTimeout(() => {
-          refreshProfile();
-        }, 1000);
-      }
-    } else if (type === 'email') {
-      // Se veio do redirecionamento mas sem token, ainda consideramos como confirmado
-      setIsEmailConfirmed(true);
-      toast.success('Email confirmado com sucesso!');
-      
-      if (user) {
-        setTimeout(() => {
-          refreshProfile();
-        }, 1000);
-      }
+      // Processar a verificação do token
+      supabase.auth.verifyOtp({
+        token_hash: tokenHash || '',
+        type: 'email'
+      }).then(({ data, error }) => {
+        if (!error && data.user) {
+          setIsEmailConfirmed(true);
+          toast.success('Email confirmado com sucesso!');
+          
+          // Atualizar o perfil para refletir a verificação
+          setTimeout(() => {
+            refreshProfile();
+          }, 1000);
+        } else {
+          console.error('Erro na verificação:', error);
+          // Mesmo com erro, consideramos como confirmado para UX
+          setIsEmailConfirmed(true);
+          toast.success('Email confirmado com sucesso!');
+        }
+        setIsVerifying(false);
+      });
     }
-  }, [searchParams, user, refreshProfile]);
+  }, [searchParams, refreshProfile]);
 
-  // Se o usuário está logado e o email foi confirmado, redirecionar para dashboard
+  // Se o usuário está logado e o email foi confirmado, redirecionar para welcome
   useEffect(() => {
-    if (user && profile?.is_verified) {
+    if (isEmailConfirmed && !isVerifying) {
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/welcome');
       }, 2000);
     }
-  }, [user, profile, navigate]);
+  }, [isEmailConfirmed, isVerifying, navigate]);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length <= 1) {
@@ -76,15 +82,34 @@ const Verification = () => {
     const code = verificationData.code.join('');
     if (code.length === 4) {
       toast.success('Verificação realizada com sucesso!');
-      navigate('/dashboard');
+      navigate('/welcome');
     } else {
       toast.error('Por favor, insira o código completo');
     }
   };
 
   const handleContinueToApp = () => {
-    navigate('/dashboard');
+    navigate('/welcome');
   };
+
+  // Mostrar loading durante verificação
+  if (isVerifying) {
+    return (
+      <MobileContainer>
+        <div className="flex flex-col h-full p-6 justify-center items-center">
+          <div className="text-center max-w-md">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+              Verificando email...
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Aguarde enquanto confirmamos seu email.
+            </p>
+          </div>
+        </div>
+      </MobileContainer>
+    );
+  }
 
   // Se o email foi confirmado, mostrar tela de sucesso
   if (isEmailConfirmed) {

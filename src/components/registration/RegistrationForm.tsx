@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, EyeOff } from 'lucide-react';
+import { FaGoogle } from 'react-icons/fa';
 
 const RegistrationForm: React.FC = () => {
   const navigate = useNavigate();
-  const { signUp, loading } = useAuth();
+  const { signUp, signInWithGmail, loading } = useAuth();
   const { playSound } = useSound();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -61,7 +62,19 @@ const RegistrationForm: React.FC = () => {
     
     if (success) {
       playSound('success');
-      navigate('/welcome');
+      // Não redireciona imediatamente, aguarda confirmação por email
+    } else {
+      playSound('error');
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    playSound('click');
+    const success = await signInWithGmail();
+    
+    if (success) {
+      playSound('success');
+      // O redirecionamento será feito automaticamente pelo Google OAuth
     } else {
       playSound('error');
     }
@@ -74,6 +87,25 @@ const RegistrationForm: React.FC = () => {
 
   return (
     <div className="w-full space-y-1">
+      {/* Botão Google no topo */}
+      <div className="mb-2">
+        <Button
+          type="button"
+          onClick={handleGoogleSignUp}
+          className="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-1.5 text-xs h-6 rounded-lg flex items-center justify-center gap-1.5"
+          disabled={loading}
+        >
+          <FaGoogle className="w-3 h-3" />
+          Continuar com Google
+        </Button>
+        
+        <div className="flex items-center my-2">
+          <div className="flex-1 h-px bg-white/20"></div>
+          <span className="px-2 text-white/60 text-xs">ou</span>
+          <div className="flex-1 h-px bg-white/20"></div>
+        </div>
+      </div>
+
       {/* Avatar Selector compacto */}
       <div className="flex justify-center py-0.5">
         <AvatarSelector
@@ -92,7 +124,7 @@ const RegistrationForm: React.FC = () => {
             value={formData.fullName}
             onChange={(e) => setFormData({...formData, fullName: e.target.value})}
             placeholder="Seu nome completo"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-7 text-xs"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-6 text-xs"
             required
           />
         </div>
@@ -107,10 +139,10 @@ const RegistrationForm: React.FC = () => {
             }}
             required
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white h-7 text-xs">
+            <SelectTrigger className="bg-white/20 border-white/30 text-white h-6 text-xs">
               <SelectValue placeholder="Selecione seu ano escolar" />
             </SelectTrigger>
-            <SelectContent className="bg-white border-gray-200 shadow-lg max-h-28 overflow-y-auto z-50">
+            <SelectContent className="bg-white border-gray-200 shadow-lg max-h-24 overflow-y-auto z-50">
               {schoolYearOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value} className="text-xs text-gray-800 hover:bg-gray-100">
                   {option.label}
@@ -128,7 +160,7 @@ const RegistrationForm: React.FC = () => {
             value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
             placeholder="seu@email.com"
-            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-7 text-xs"
+            className="bg-white/20 border-white/30 text-white placeholder:text-white/60 h-6 text-xs"
             required
           />
         </div>
@@ -142,20 +174,20 @@ const RegistrationForm: React.FC = () => {
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Mínimo 8 caracteres"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-7 h-7 text-xs"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-6 h-6 text-xs"
               required
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-0 top-0 h-full px-1.5 text-white/60 hover:text-white"
+              className="absolute right-0 top-0 h-full px-1 text-white/60 hover:text-white"
               onClick={() => {
                 setShowPassword(!showPassword);
                 playSound('click');
               }}
             >
-              {showPassword ? <EyeOff size={10} /> : <Eye size={10} />}
+              {showPassword ? <EyeOff size={8} /> : <Eye size={8} />}
             </Button>
           </div>
         </div>
@@ -169,20 +201,20 @@ const RegistrationForm: React.FC = () => {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
               placeholder="Confirme sua senha"
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-7 h-7 text-xs"
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 pr-6 h-6 text-xs"
               required
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-0 top-0 h-full px-1.5 text-white/60 hover:text-white"
+              className="absolute right-0 top-0 h-full px-1 text-white/60 hover:text-white"
               onClick={() => {
                 setShowConfirmPassword(!showConfirmPassword);
                 playSound('click');
               }}
             >
-              {showConfirmPassword ? <EyeOff size={10} /> : <Eye size={10} />}
+              {showConfirmPassword ? <EyeOff size={8} /> : <Eye size={8} />}
             </Button>
           </div>
         </div>
@@ -190,7 +222,7 @@ const RegistrationForm: React.FC = () => {
         <div className="pt-1">
           <Button 
             type="submit" 
-            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-1.5 text-xs h-7 rounded-xl"
+            className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-1 text-xs h-6 rounded-lg"
             disabled={loading}
             onClick={() => playSound('click')}
           >

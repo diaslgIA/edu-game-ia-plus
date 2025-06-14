@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Cadastro realizado!",
-          description: "Enviamos um link de confirmação para seu email. Verifique sua caixa de entrada.",
+          description: "Enviamos um link de confirmação para seu email. Verifique sua caixa de entrada e clique no link para confirmar sua conta.",
         });
       } else if (data.user) {
         toast({
@@ -252,7 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/welcome`
         }
       });
 
