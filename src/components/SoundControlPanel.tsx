@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Volume2, VolumeX, Music, Settings } from 'lucide-react';
+import { Volume2, VolumeX, Music, Settings, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useSound } from '@/contexts/SoundContext';
@@ -11,10 +11,24 @@ import {
 } from '@/components/ui/popover';
 
 const SoundControlPanel: React.FC = () => {
-  const { isMuted, volume, toggleMute, setVolume, playSound } = useSound();
+  const { 
+    isMuted, 
+    volume, 
+    isMusicPlaying,
+    musicVolume,
+    toggleMute, 
+    setVolume, 
+    toggleMusic,
+    setMusicVolume,
+    playSound 
+  } = useSound();
 
   const handleVolumeChange = (value: number[]) => {
     setVolume(value[0]);
+  };
+
+  const handleMusicVolumeChange = (value: number[]) => {
+    setMusicVolume(value[0]);
   };
 
   const testSound = (type: 'success' | 'error' | 'click' | 'notification') => {
@@ -71,8 +85,41 @@ const SoundControlPanel: React.FC = () => {
             </div>
           </div>
 
+          {/* Controle de Música de Fundo */}
+          <div className="space-y-3 border-t pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Música Ambiente</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleMusic}
+                className="h-8 w-8 p-0"
+                disabled={isMuted}
+              >
+                {isMusicPlaying ? <Pause size={16} /> : <Play size={16} />}
+              </Button>
+            </div>
+            
+            <div className="px-2">
+              <Slider
+                value={[musicVolume]}
+                onValueChange={handleMusicVolumeChange}
+                max={1}
+                min={0}
+                step={0.1}
+                disabled={isMuted || !isMusicPlaying}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0%</span>
+                <span>{Math.round(musicVolume * 100)}%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </div>
+
           {/* Teste de Sons */}
-          <div className="space-y-2">
+          <div className="space-y-2 border-t pt-3">
             <h4 className="text-sm font-medium text-gray-700">Testar Sons</h4>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -116,7 +163,8 @@ const SoundControlPanel: React.FC = () => {
 
           {/* Informações */}
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            <p>💡 Os sons ajudam a tornar sua experiência mais interativa e divertida!</p>
+            <p>🎵 Música ambiente gerada de forma programática</p>
+            <p>💡 Sons ajudam a tornar sua experiência mais interativa!</p>
           </div>
         </div>
       </PopoverContent>

@@ -8,6 +8,7 @@ import { useUserProgress } from '@/hooks/useUserProgress';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
+import SoundControlPanel from '@/components/SoundControlPanel';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings } from 'lucide-react';
 import Logo from '@/components/Logo';
@@ -73,6 +74,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <Logo size="lg" showText={true} animated className="flex-1" />
             <div className="flex space-x-2">
+              <SoundControlPanel />
               <Button 
                 variant="ghost" 
                 size="sm"

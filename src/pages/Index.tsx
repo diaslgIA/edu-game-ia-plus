@@ -2,18 +2,26 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSound } from '@/contexts/SoundContext';
 import MobileContainer from '@/components/MobileContainer';
+import SoundControlPanel from '@/components/SoundControlPanel';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
+  const { playSound } = useSound();
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  const handleNavigation = (path: string) => {
+    playSound('click');
+    navigate(path);
+  };
 
   if (loading) {
     return (
@@ -27,7 +35,12 @@ const Index = () => {
 
   return (
     <MobileContainer>
-      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-white">
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-white relative">
+        {/* Controle de Som no canto superior direito */}
+        <div className="absolute top-4 right-4">
+          <SoundControlPanel />
+        </div>
+
         <div className="animate-scale-in">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-20 h-20 relative">
@@ -59,14 +72,14 @@ const Index = () => {
 
           <div className="space-y-4 mt-12">
             <Button 
-              onClick={() => navigate('/auth?tab=login')}
+              onClick={() => handleNavigation('/auth?tab=login')}
               className="w-full btn-primary bg-white text-purple-600 hover:bg-gray-100 font-bold py-4 rounded-2xl shadow-lg"
             >
               Entrar na minha conta
             </Button>
             
             <Button 
-              onClick={() => navigate('/auth?tab=register')}
+              onClick={() => handleNavigation('/auth?tab=register')}
               className="w-full bg-white/20 text-white hover:bg-white/30 border-white/30 font-bold py-4 rounded-2xl backdrop-blur-sm"
               variant="outline"
             >
@@ -79,6 +92,7 @@ const Index = () => {
             <p>✓ Atividades gamificadas</p>
             <p>✓ Simulados realistas</p>
             <p>✓ Acompanhamento de progresso</p>
+            <p>🎵 Experiência sonora imersiva</p>
           </div>
         </div>
       </div>
