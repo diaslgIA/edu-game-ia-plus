@@ -62,7 +62,7 @@ const Support = () => {
             >
               <ArrowLeft size={18} />
             </Button>
-            <Logo size="sm" showText={false} />
+            <Logo size="md" showText={false} />
             <div className="w-10" />
           </div>
           <h1 className="text-lg font-bold">Suporte</h1>
