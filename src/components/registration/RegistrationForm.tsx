@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, EyeOff } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 const RegistrationForm: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const RegistrationForm: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
 
   const schoolYearOptions = [
     { value: '1º Ano Ensino Médio', label: '1º Ano do Ensino Médio' },
@@ -39,13 +41,13 @@ const RegistrationForm: React.FC = () => {
     
     if (formData.password !== formData.confirmPassword) {
       playSound('error');
-      alert('As senhas não coincidem');
+      toast.error('As senhas não coincidem');
       return;
     }
 
     if (formData.password.length < 8) {
       playSound('error');
-      alert('A senha deve ter pelo menos 8 caracteres');
+      toast.error('A senha deve ter pelo menos 8 caracteres');
       return;
     }
 
@@ -69,13 +71,27 @@ const RegistrationForm: React.FC = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    playSound('click');
-    const success = await signInWithGmail();
-    
-    if (success) {
-      playSound('success');
-      // O redirecionamento será feito automaticamente pelo Google OAuth
-    } else {
+    try {
+      playSound('click');
+      const success = await signInWithGmail();
+      
+      if (success) {
+        playSound('success');
+        // O redirecionamento será feito automaticamente pelo Google OAuth
+      } else {
+        playSound('error');
+      }
+    } catch (error: any) {
+      console.error('Erro no Google Auth:', error);
+      
+      // Verificar se é erro de provedor não habilitado
+      if (error.message?.includes('provider is not enabled') || 
+          error.message?.includes('Unsupported provider')) {
+        setGoogleAuthEnabled(false);
+        toast.error('Login com Google não está disponível no momento. Use o cadastro por email.');
+      } else {
+        toast.error('Erro ao tentar fazer login com Google. Tente novamente.');
+      }
       playSound('error');
     }
   };
@@ -87,24 +103,35 @@ const RegistrationForm: React.FC = () => {
 
   return (
     <div className="w-full space-y-1">
-      {/* Botão Google no topo */}
-      <div className="mb-2">
-        <Button
-          type="button"
-          onClick={handleGoogleSignUp}
-          className="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-1.5 text-xs h-6 rounded-lg flex items-center justify-center gap-1.5"
-          disabled={loading}
-        >
-          <FaGoogle className="w-3 h-3" />
-          Continuar com Google
-        </Button>
-        
-        <div className="flex items-center my-2">
-          <div className="flex-1 h-px bg-white/20"></div>
-          <span className="px-2 text-white/60 text-xs">ou</span>
-          <div className="flex-1 h-px bg-white/20"></div>
+      {/* Botão Google no topo - apenas se habilitado */}
+      {googleAuthEnabled && (
+        <div className="mb-2">
+          <Button
+            type="button"
+            onClick={handleGoogleSignUp}
+            className="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-1.5 text-xs h-6 rounded-lg flex items-center justify-center gap-1.5"
+            disabled={loading}
+          >
+            <FaGoogle className="w-3 h-3" />
+            Continuar com Google
+          </Button>
+          
+          <div className="flex items-center my-2">
+            <div className="flex-1 h-px bg-white/20"></div>
+            <span className="px-2 text-white/60 text-xs">ou</span>
+            <div className="flex-1 h-px bg-white/20"></div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Aviso se Google Auth não estiver disponível */}
+      {!googleAuthEnabled && (
+        <div className="mb-2 p-2 bg-yellow-500/20 rounded-lg">
+          <p className="text-yellow-200 text-xs text-center">
+            Login com Google temporariamente indisponível
+          </p>
+        </div>
+      )}
 
       {/* Avatar Selector compacto */}
       <div className="flex justify-center py-0.5">

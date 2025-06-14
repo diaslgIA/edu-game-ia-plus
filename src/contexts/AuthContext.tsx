@@ -258,6 +258,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Erro no login com Google:', error);
+        
+        // Verificar se é erro de provedor não habilitado
+        if (error.message.includes('provider is not enabled') || 
+            error.message.includes('Unsupported provider')) {
+          throw new Error('provider is not enabled');
+        }
+        
         toast({
           title: "Erro no login com Google",
           description: error.message,
@@ -267,8 +274,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro inesperado no login com Google:', error);
+      
+      // Re-throw provider errors para serem tratados no componente
+      if (error.message?.includes('provider is not enabled') || 
+          error.message?.includes('Unsupported provider')) {
+        throw error;
+      }
+      
       toast({
         title: "Erro no login com Google",
         description: "Ocorreu um erro inesperado. Tente novamente.",
