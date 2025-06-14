@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface LogoProps {
@@ -31,45 +32,22 @@ const Logo: React.FC<LogoProps> = ({
     xl: 'text-6xl'
   };
 
-  const containerPaddingClasses = {
-    xs: 'p-1',
-    sm: 'p-1.5',
-    md: 'p-2',
-    lg: 'p-3',
-    xl: 'p-3'
-  };
-
-  const imageContainerPaddingClasses = {
-    xs: 'p-1',
-    sm: 'p-1',
-    md: 'p-1.5',
-    lg: 'p-2',
-    xl: 'p-2'
-  };
-
   return (
     <div 
       className={`flex items-center gap-4 ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
-      <div className={`${sizeClasses[size]} relative ${animated ? 'animate-pulse' : ''} transition-all duration-300 hover:scale-110`}>
-        {/* Efeito de brilho aprimorado para destacar a nova logo */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-blue-500 to-cyan-500 rounded-xl blur-xl opacity-50 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-500 rounded-xl blur-2xl opacity-30 animate-pulse animation-delay-1000"></div>
+      <div className={`${sizeClasses[size]} relative group ${animated ? 'animate-float' : ''}`}>
+        {/* Efeito de brilho aprimorado */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-edu-purple via-edu-pink to-edu-yellow rounded-2xl blur-lg opacity-70 group-hover:opacity-100 transition-opacity duration-300 animate-pulse-glow"></div>
         
-        {/* Container da Logo com melhor destaque visual */}
-        <div className={`relative bg-white/20 backdrop-blur-md rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl transition-all duration-300 hover:bg-white/30 ${containerPaddingClasses[size]}`}>
-          <div className={`bg-gradient-to-br from-white/90 to-white/70 rounded-lg hover:from-white hover:to-white/80 transition-all duration-300 ${imageContainerPaddingClasses[size]}`}>
-            <img 
-              src="/lovable-uploads/200f2456-0066-4697-99f3-2260b38b409a.png" 
-              alt="EdugameIA Logo - Cérebro com Quebra-cabeça" 
-              className="w-full h-full object-contain rounded-lg filter drop-shadow-lg hover:drop-shadow-2xl transition-all duration-300"
-              style={{
-                imageRendering: 'crisp-edges',
-                filter: 'drop-shadow(0 0 10px rgba(128, 90, 213, 0.6)) contrast(1.1) brightness(1.1)'
-              }}
-            />
-          </div>
+        {/* Container da Logo */}
+        <div className="relative bg-black/40 backdrop-blur-md rounded-xl shadow-lg w-full h-full flex items-center justify-center p-2 group-hover:bg-black/50 transition-colors duration-300">
+          <img 
+            src="/lovable-uploads/200f2456-0066-4697-99f3-2260b38b409a.png" 
+            alt="EdugameIA Logo - Cérebro com Quebra-cabeça" 
+            className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+          />
         </div>
       </div>
       
