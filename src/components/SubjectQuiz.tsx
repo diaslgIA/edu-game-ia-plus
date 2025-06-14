@@ -131,7 +131,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 h-full flex flex-col">
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <QuizHeader 
           subject={subject}
           topic={question.topic}
@@ -165,7 +165,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       </div>
 
       {/* Botões de Ação - Sempre visíveis no final */}
-      <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
