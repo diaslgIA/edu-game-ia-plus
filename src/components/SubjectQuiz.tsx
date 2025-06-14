@@ -129,40 +129,43 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
-      <QuizHeader 
-        subject={subject}
-        topic={question.topic}
-        currentQuestion={currentQuestion}
-        totalQuestions={questions.length}
-        timeLeft={timeLeft}
-        onBack={onBack}
-      />
-
-      <QuizQuestion 
-        question={question}
-        selectedAnswer={selectedAnswer}
-        showResult={showResult}
-        onAnswerSelect={handleAnswerSelect}
-      />
-
-      {showResult && (
-        <QuizExplanation 
-          explanation={question.explanation}
-          isCorrect={isCorrect}
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 h-full flex flex-col">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        <QuizHeader 
+          subject={subject}
+          topic={question.topic}
+          currentQuestion={currentQuestion}
+          totalQuestions={questions.length}
+          timeLeft={timeLeft}
+          onBack={onBack}
         />
-      )}
 
-      {/* Pontuação Atual - Sempre visível */}
-      <div className="mt-4 p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-xl">
-        <div className="text-center">
-          <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pontuação atual: </span>
-          <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{score} pontos</span>
+        <QuizQuestion 
+          question={question}
+          selectedAnswer={selectedAnswer}
+          showResult={showResult}
+          onAnswerSelect={handleAnswerSelect}
+        />
+
+        {showResult && (
+          <QuizExplanation 
+            explanation={question.explanation}
+            isCorrect={isCorrect}
+          />
+        )}
+
+        {/* Pontuação Atual - Sempre visível */}
+        <div className="mt-4 p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-xl">
+          <div className="text-center">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pontuação atual: </span>
+            <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{score} pontos</span>
+          </div>
         </div>
       </div>
 
       {/* Botões de Ação - Sempre visíveis no final */}
-      <div className="sticky bottom-0 bg-white dark:bg-gray-800 pt-4 mt-4">
+      <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
