@@ -157,13 +157,13 @@ const Exercises = () => {
   if (exerciseMode === 'slides' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20 font-pixel">
-          <div className="bg-purple-900/80 text-white p-4 flex items-center space-x-3 border-b-4 border-purple-400">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleBackToSelection}
-              className="text-white p-2 hover:bg-white/20"
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
             >
               <ArrowLeft size={20} />
             </Button>
@@ -185,13 +185,13 @@ const Exercises = () => {
   if (exerciseMode === 'teacher' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20 font-pixel">
-          <div className="bg-purple-900/80 text-white p-4 flex items-center space-x-3 border-b-4 border-purple-400">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleBackToSelection}
-              className="text-white p-2 hover:bg-white/20"
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
             >
               <ArrowLeft size={20} />
             </Button>
@@ -214,13 +214,13 @@ const Exercises = () => {
   if (exerciseMode === 'quiz' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20 font-pixel">
-          <div className="bg-purple-900/80 text-white p-4 flex items-center space-x-3 border-b-4 border-purple-400">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleBackToSelection}
-              className="text-white p-2 hover:bg-white/20"
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
             >
               <ArrowLeft size={20} />
             </Button>
@@ -242,14 +242,14 @@ const Exercises = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20 font-pixel">
+      <div className="flex flex-col h-full pb-20">
         {/* Header */}
-        <div className="bg-purple-900/80 text-white p-4 flex items-center space-x-3 border-b-4 border-purple-400">
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => navigate('/dashboard')}
-            className="text-white p-2 hover:bg-white/20"
+            className="text-white p-2 hover:bg-white/20 rounded-xl"
           >
             <ArrowLeft size={20} />
           </Button>
@@ -265,7 +265,7 @@ const Exercises = () => {
               {/* Info Cards */}
               <div className="grid grid-cols-3 gap-3">
                 {activities.map((activity) => (
-                  <div key={activity.id} className="bg-black/30 p-3 text-center text-white border-2 border-white/50">
+                  <div key={activity.id} className="bg-white/15 backdrop-blur-md rounded-xl p-3 text-center shadow-lg">
                     <activity.icon className="w-6 h-6 text-white mx-auto mb-1" />
                     <p className="text-white text-xs font-medium">{activity.name}</p>
                     <p className="text-white/80 text-xs">{activity.description}</p>
@@ -284,10 +284,10 @@ const Exercises = () => {
                       <div
                         key={subject.id}
                         onClick={() => handleSubjectSelect(subject.name)}
-                        className="bg-black/30 p-4 cursor-pointer hover:bg-black/50 transition-all hover:scale-105 border-2 border-white/50"
+                        className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
                       >
                         <div className="flex items-center space-x-4">
-                          <div className={`w-16 h-16 bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl`}>
+                          <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
                             {subject.icon}
                           </div>
                           
@@ -324,13 +324,13 @@ const Exercises = () => {
           ) : (
             <>
               {/* Subject Header */}
-              <div className="bg-black/30 p-6 text-white border-2 border-white/50">
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 text-white shadow-lg">
                 <h2 className="text-xl font-bold mb-2">{selectedSubject}</h2>
                 <p className="text-white/80 mb-4">Escolha uma atividade para começar:</p>
                 
-                <div className="w-full bg-white/20 h-2 mb-2">
+                <div className="w-full bg-white/20 rounded-full h-2 mb-2">
                   <div 
-                    className="bg-white h-2 transition-all duration-500"
+                    className="bg-white rounded-full h-2 transition-all duration-500"
                     style={{ width: `${getSubjectProgress(selectedSubject).progress_percentage}%` }}
                   />
                 </div>
@@ -345,10 +345,10 @@ const Exercises = () => {
                   <div
                     key={activity.id}
                     onClick={() => handleActivitySelect(activity.id as 'slides' | 'teacher' | 'quiz')}
-                    className="bg-black/30 p-6 cursor-pointer hover:bg-black/50 transition-all hover:scale-105 border-2 border-white/50"
+                    className="bg-white/15 backdrop-blur-md rounded-2xl p-6 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className={`w-16 h-16 ${activity.color} flex items-center justify-center text-white`}>
+                      <div className={`w-16 h-16 rounded-xl ${activity.color} flex items-center justify-center text-white shadow-lg`}>
                         <activity.icon size={24} />
                       </div>
                       
@@ -357,7 +357,7 @@ const Exercises = () => {
                         <p className="text-white/80 text-sm">{activity.description}</p>
                         
                         <div className="flex items-center space-x-2 mt-2">
-                          <span className="text-xs bg-white/20 px-2 py-1 text-white">
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
                             Etapa {index + 1}
                           </span>
                           {currentActivity === activity.id && (

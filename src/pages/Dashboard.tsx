@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,13 +78,13 @@ const Dashboard = () => {
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full font-pixel">
+      <div className="flex flex-col h-full">
         {/* Header Super Compacto */}
-        <div className="bg-purple-900/80 text-white p-3 flex-shrink-0 border-b-4 border-purple-400">
+        <div className="bg-white/20 backdrop-blur-lg text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
           <div className="flex items-center justify-between">
             {/* Logo e saudação */}
             <div className="flex items-center gap-3">
-              <div className="bg-black/50 border-2 border-white p-1">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
                 <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
               </div>
               <div>
@@ -103,7 +104,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={handleSettingsClick}
-                className="text-white/80 hover:text-white hover:bg-white/20 p-2"
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2"
               >
                 <Settings size={14} />
               </Button>
@@ -111,7 +112,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={handleSignOut}
-                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 px-2 py-1 text-xs font-medium"
+                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 rounded-lg px-2 py-1 text-xs font-medium shadow-md"
               >
                 <LogOut size={12} className="mr-1" />
                 Sair
@@ -126,7 +127,7 @@ const Dashboard = () => {
           <div className="px-3 py-3">
             <div className="grid grid-cols-2 gap-2">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-black/30 p-3 text-white border-2 border-white/50">
+                <div key={index} className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                   <div className="flex items-center space-x-2">
                     <stat.icon className={`${stat.color} w-5 h-5`} />
                     <div>
@@ -150,7 +151,7 @@ const Dashboard = () => {
                 <Button
                   key={index}
                   onClick={() => handleNavigation(action.path)}
-                  className={`bg-gradient-to-br ${action.color} text-white p-4 h-auto hover:scale-105 transition-all duration-200 border-2 border-white/50`}
+                  className={`bg-gradient-to-br ${action.color} text-white p-4 rounded-lg h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-2">{action.icon}</div>
@@ -164,7 +165,7 @@ const Dashboard = () => {
 
           {/* Study Streak */}
           <div className="px-3 py-2">
-            <div className="bg-black/30 p-3 text-white border-2 border-white/50">
+            <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm">Sequência de Estudos</h3>
@@ -179,8 +180,8 @@ const Dashboard = () => {
                 {[...Array(7)].map((_, i) => (
                   <div
                     key={i}
-                    className={`flex-1 h-2 ${
-                      i < 5 ? 'bg-yellow-400' : 'bg-white/20'
+                    className={`flex-1 h-2 rounded-full ${
+                      i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
                     }`}
                   />
                 ))}
@@ -192,7 +193,7 @@ const Dashboard = () => {
           <div className="px-3 py-2 mb-3">
             <h2 className="text-white text-sm font-semibold mb-3">Atividade Recente</h2>
             <div className="space-y-2">
-              <div className="bg-black/30 p-3 text-white border-2 border-white/50">
+              <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                 <div className="flex items-center space-x-2">
                   <Star className="text-yellow-400" size={16} />
                   <div>
@@ -201,7 +202,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-black/30 p-3 text-white border-2 border-white/50">
+              <div className="bg-white/20 backdrop-blur-md rounded-lg p-3 text-white shadow-lg border border-white/10">
                 <div className="flex items-center space-x-2">
                   <Star className="text-blue-400" size={16} />
                   <div>

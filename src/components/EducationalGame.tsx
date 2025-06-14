@@ -115,13 +115,13 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
 
   if (!gameStarted) {
     return (
-      <div className="bg-white p-6 text-center border-4 border-gray-800">
+      <div className="bg-white rounded-2xl p-6 text-center">
         <div className="mb-6">
           <Trophy className="mx-auto mb-4 text-yellow-500" size={48} />
           <h3 className="text-xl font-bold text-gray-800 mb-2">Quiz Educativo</h3>
           <p className="text-gray-600">Teste seus conhecimentos e ganhe pontos!</p>
         </div>
-        <div className="bg-blue-50 p-4 mb-6 border-2 border-blue-200">
+        <div className="bg-blue-50 rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-blue-800 mb-2">Como jogar:</h4>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• Responda cada questão em até 30 segundos</li>
@@ -132,7 +132,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
         </div>
         <Button 
           onClick={startGame}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4"
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-xl"
         >
           <Star className="mr-2" size={20} />
           Começar Jogo
@@ -146,10 +146,10 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     const percentage = Math.round((finalScore / (sampleQuestions.length * 10)) * 100);
     
     return (
-      <div className="bg-white dark:bg-gray-800 p-6 text-center border-4 border-gray-800">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
         <Trophy className="mx-auto mb-4 text-yellow-500" size={64} />
         <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Quiz Concluído!</h3>
-        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 p-4 mb-6">
+        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-lg p-4 mb-6">
           <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{finalScore} pontos</div>
           <div className="text-lg text-orange-700 dark:text-orange-300">{percentage}% de acertos</div>
           <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
@@ -168,7 +168,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
         </div>
         <Button 
           onClick={resetGame}
-          className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3"
+          className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
         >
           Jogar Novamente
         </Button>
@@ -180,11 +180,11 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="bg-white p-6 border-4 border-gray-800">
+    <div className="bg-white rounded-2xl p-6">
       {/* Header do Quiz */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-2">
-          <span className="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium">
+          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
             {question.subject}
           </span>
           <span className="text-gray-500 text-sm">
@@ -198,9 +198,9 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
       </div>
 
       {/* Barra de Progresso */}
-      <div className="w-full bg-gray-200 h-2 mb-6">
+      <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
         <div 
-          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 transition-all duration-300"
+          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
           style={{ width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }}
         ></div>
       </div>
@@ -215,7 +215,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
             key={index}
             onClick={() => handleAnswerSelect(index)}
             disabled={showResult}
-            className={`w-full p-4 text-left border-2 transition-all duration-200 ${
+            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
               selectedAnswer === index
                 ? showResult
                   ? isCorrect && selectedAnswer === index
@@ -244,7 +244,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
 
       {/* Explicação (apenas quando mostrar resultado) */}
       {showResult && (
-        <div className="bg-blue-50 p-4 mb-6 border-2 border-blue-200">
+        <div className="bg-blue-50 rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-blue-800 mb-2">
             {isCorrect ? '🎉 Correto!' : '📚 Explicação:'}
           </h4>
@@ -258,14 +258,14 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
           <Button 
             onClick={handleSubmitAnswer}
             disabled={selectedAnswer === null}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 disabled:opacity-50"
+            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl disabled:opacity-50"
           >
             Confirmar Resposta
           </Button>
         ) : (
           <Button 
             onClick={handleNextQuestion}
-            className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3"
+            className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
           >
             {currentQuestion < sampleQuestions.length - 1 ? 'Próxima Pergunta' : 'Finalizar Quiz'}
           </Button>
