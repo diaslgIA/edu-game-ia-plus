@@ -9,6 +9,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
 import SoundControlPanel from '@/components/SoundControlPanel';
+import UserAvatar from '@/components/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/Logo';
@@ -82,11 +83,15 @@ const Dashboard = () => {
         {/* Header Super Compacto */}
         <div className="bg-white/20 backdrop-blur-lg text-white p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
           <div className="flex items-center justify-between">
-            {/* Logo e saudação */}
+            {/* Logo, avatar e saudação */}
             <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
                 <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
               </div>
+              
+              {/* Avatar do usuário */}
+              <UserAvatar size="sm" className="transform hover:scale-110 transition-transform duration-300" />
+              
               <div>
                 <h1 className="text-sm font-bold">
                   Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}!
