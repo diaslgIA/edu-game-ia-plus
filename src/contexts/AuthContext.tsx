@@ -303,6 +303,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
+      
+      // Clear local state first
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -313,26 +319,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
       } else {
-        // Clear local state
-        setUser(null);
-        setProfile(null);
-        setSession(null);
-        
         toast({
           title: "Logout realizado com sucesso!",
           description: "Até logo!",
         });
-        
-        // Redirect to home page
-        window.location.href = '/';
       }
+      
+      // Force redirect regardless of error
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
     } catch (error) {
       console.error('Signout error:', error);
+      
+      // Clear local state even if there's an error
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      
       toast({
-        title: "Erro ao sair",
-        description: "Ocorreu um erro inesperado.",
-        variant: "destructive",
+        title: "Logout realizado",
+        description: "Você foi desconectado.",
       });
+      
+      // Force redirect even on error
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     } finally {
       setLoading(false);
     }
