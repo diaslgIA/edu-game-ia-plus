@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,9 +120,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch profile immediately when user signs in
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
+          // Defer profile fetch to avoid potential deadlock
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+          }, 0);
         } else {
           setProfile(null);
         }
@@ -282,7 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error('Erro inesperado no login com Google:', error);
       
-      // Re-throw provider errors for handling in component
+      // Re-throw provider errors para serem tratados no componente
       if (error.message?.includes('provider is not enabled') || 
           error.message?.includes('Unsupported provider') ||
           error.message?.includes('validation_failed')) {
@@ -303,12 +306,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
-      
-      // Clear local state first
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -319,34 +316,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
       } else {
+        // Clear local state
+        setUser(null);
+        setProfile(null);
+        setSession(null);
+        
         toast({
           title: "Logout realizado com sucesso!",
           description: "Até logo!",
         });
-      }
-      
-      // Force redirect regardless of error
-      setTimeout(() => {
+        
+        // Redirect to home page
         window.location.href = '/';
-      }, 100);
-      
+      }
     } catch (error) {
       console.error('Signout error:', error);
-      
-      // Clear local state even if there's an error
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      
       toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado.",
+        title: "Erro ao sair",
+        description: "Ocorreu um erro inesperado.",
+        variant: "destructive",
       });
-      
-      // Force redirect even on error
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
     } finally {
       setLoading(false);
     }
@@ -372,9 +361,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Refresh profile data to get updated info
+      // Refresh profile data
       await refreshProfile();
       
+      toast({
+        title: "Perfil atualizado!",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+
       return true;
     } catch (error) {
       console.error('Erro inesperado ao atualizar perfil:', error);

@@ -38,25 +38,13 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
       if (file.type.startsWith('image/')) {
         try {
           playSound('click');
-          
-          // Criar URL temporária para preview imediato
+          // Criar URL temporária para preview
           const imageUrl = URL.createObjectURL(file);
-          
-          // Atualizar estado local imediatamente
           onAvatarChange(imageUrl);
           
-          // Salvar no banco de dados
+          // Salvar no perfil se updateProfile existir
           if (updateProfile) {
-            const success = await updateProfile({ profile_picture_url: imageUrl });
-            if (success) {
-              playSound('success');
-              toast({
-                title: "Foto atualizada!",
-                description: "Sua foto de perfil foi salva com sucesso.",
-              });
-            } else {
-              throw new Error('Falha ao salvar no banco');
-            }
+            await updateProfile({ profile_picture_url: imageUrl });
           }
           
           if (onPhotoUpload) {
@@ -64,16 +52,19 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
           }
           
           setShowOptions(false);
+          playSound('success');
+          toast({
+            title: "Foto atualizada!",
+            description: "Sua foto de perfil foi salva com sucesso.",
+          });
         } catch (error) {
           playSound('error');
           console.error('Erro ao processar imagem:', error);
           toast({
             title: "Erro ao salvar foto",
-            description: "Não foi possível salvar sua foto. Tente novamente.",
+            description: "Não foi possível processar sua foto.",
             variant: "destructive"
           });
-          // Reverter para avatar anterior em caso de erro
-          onAvatarChange('👤');
         }
       } else {
         playSound('error');
@@ -89,35 +80,27 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
   const handleEmojiSelect = async (emoji: string) => {
     try {
       playSound('click');
-      
-      // Atualizar estado local imediatamente
       onAvatarChange(emoji);
       
-      // Salvar no banco de dados
+      // Salvar no perfil se updateProfile existir
       if (updateProfile) {
-        const success = await updateProfile({ profile_picture_url: emoji });
-        if (success) {
-          playSound('success');
-          toast({
-            title: "Avatar atualizado!",
-            description: "Seu avatar foi salvo com sucesso.",
-          });
-        } else {
-          throw new Error('Falha ao salvar no banco');
-        }
+        await updateProfile({ profile_picture_url: emoji });
       }
       
       setShowOptions(false);
+      playSound('success');
+      toast({
+        title: "Avatar atualizado!",
+        description: "Seu avatar foi salvo com sucesso.",
+      });
     } catch (error) {
       playSound('error');
       console.error('Erro ao salvar avatar:', error);
       toast({
         title: "Erro ao salvar avatar",
-        description: "Não foi possível salvar seu avatar. Tente novamente.",
+        description: "Não foi possível salvar seu avatar.",
         variant: "destructive"
       });
-      // Reverter para avatar anterior em caso de erro
-      onAvatarChange('👤');
     }
   };
 
