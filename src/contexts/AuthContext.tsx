@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -120,11 +119,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetch to avoid potential deadlock
-          setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-          }, 0);
+          // Fetch profile immediately when user signs in
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
         } else {
           setProfile(null);
         }
@@ -285,7 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error('Erro inesperado no login com Google:', error);
       
-      // Re-throw provider errors para serem tratados no componente
+      // Re-throw provider errors for handling in component
       if (error.message?.includes('provider is not enabled') || 
           error.message?.includes('Unsupported provider') ||
           error.message?.includes('validation_failed')) {
@@ -361,14 +358,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Refresh profile data
+      // Refresh profile data to get updated info
       await refreshProfile();
       
-      toast({
-        title: "Perfil atualizado!",
-        description: "Suas informações foram salvas com sucesso.",
-      });
-
       return true;
     } catch (error) {
       console.error('Erro inesperado ao atualizar perfil:', error);
