@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
+import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,16 +112,8 @@ const Auth = () => {
       <div className="flex flex-col items-center justify-center min-h-full p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <img 
-                src="/lovable-uploads/21637d78-a84d-46c7-9307-1bd4869cd140.png" 
-                alt="EduGameIA Logo" 
-                className="w-12 h-12"
-              />
-              <h1 className="text-2xl font-bold text-white">
-                <span className="text-blue-200">Edugame</span>
-                <span className="text-purple-200">IA</span>
-              </h1>
+            <div className="flex justify-center mb-4">
+              <Logo size="md" showText={true} />
             </div>
             <p className="text-white/80">
               {isLoginMode ? 'Entre na sua conta' : 'Crie sua conta gratuita'}

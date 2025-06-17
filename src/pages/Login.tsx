@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,16 +50,10 @@ const Login = () => {
           <SoundControlPanel />
         </div>
 
-        {/* Logo Destacada e MAIOR com melhor qualidade */}
+        {/* Logo usando o componente atualizado */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-12">
-            <div className="relative transform hover:scale-105 transition-transform duration-300">
-              <Logo size="xl" animated={true} />
-              {/* Efeitos de brilho múltiplos para melhor definição */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full blur-3xl opacity-40 animate-pulse"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 rounded-full blur-2xl opacity-30 animate-pulse animation-delay-500"></div>
-              <div className="absolute inset-0 bg-white rounded-full blur-xl opacity-20 animate-pulse animation-delay-1000"></div>
-            </div>
+            <Logo size="xl" animated={true} />
           </div>
           <div className="space-y-4">
             <h1 className="text-6xl font-bold bg-gradient-to-r from-white via-blue-200 to-yellow-200 bg-clip-text text-transparent drop-shadow-2xl">
