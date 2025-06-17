@@ -38,15 +38,16 @@ const Logo: React.FC<LogoProps> = ({
       onClick={onClick}
     >
       <div className={`${sizeClasses[size]} relative ${animated ? 'animate-float' : ''} transition-all duration-3000 hover:scale-102`}>
-        {/* Efeito de brilho suave */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-edu-purple via-edu-pink to-edu-yellow rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-3000"></div>
+        {/* Efeito de brilho suave e colorido */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-3000"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity duration-3000"></div>
         
-        {/* Container da Logo */}
-        <div className="relative bg-black/40 backdrop-blur-md rounded-xl shadow-lg w-full h-full flex items-center justify-center p-2 group-hover:bg-black/50 transition-colors duration-3000">
+        {/* Container da Logo sem borda preta */}
+        <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl shadow-2xl w-full h-full flex items-center justify-center p-3 group-hover:bg-white/15 transition-all duration-3000 border border-white/20">
           <img 
             src="/lovable-uploads/200f2456-0066-4697-99f3-2260b38b409a.png" 
             alt="EdugameIA Logo - Cérebro com Quebra-cabeça" 
-            className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-101 transition-transform duration-3000"
+            className="w-full h-full object-contain filter drop-shadow-xl group-hover:scale-101 transition-transform duration-3000"
           />
         </div>
       </div>
