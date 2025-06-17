@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
@@ -58,14 +57,53 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         hi: 'hi-IN',
     };
     utterance.lang = langMap[language] || 'en-US';
-    utterance.rate = 0.9; // Deixando a voz mais suave
+    
+    // Configurações para voz feminina mais suave e natural
+    utterance.rate = 0.8; // Um pouco mais devagar para soar mais natural
+    utterance.pitch = 1.2; // Pitch um pouco mais alto para soar feminino
+    utterance.volume = 0.8; // Volume moderado
 
     const speak = () => {
         const voices = window.speechSynthesis.getVoices();
-        const voiceForLang = voices.find(voice => voice.lang === utterance.lang);
-        if (voiceForLang) {
-            utterance.voice = voiceForLang;
+        
+        // Procurar especificamente por vozes femininas
+        const femaleVoices = voices.filter(voice => 
+            voice.lang === utterance.lang && (
+                voice.name.toLowerCase().includes('female') ||
+                voice.name.toLowerCase().includes('woman') ||
+                voice.name.toLowerCase().includes('maria') ||
+                voice.name.toLowerCase().includes('luciana') ||
+                voice.name.toLowerCase().includes('ana') ||
+                voice.name.toLowerCase().includes('samantha') ||
+                voice.name.toLowerCase().includes('karen') ||
+                voice.name.toLowerCase().includes('alice') ||
+                voice.name.toLowerCase().includes('sarah') ||
+                voice.name.toLowerCase().includes('amelie') ||
+                voice.name.toLowerCase().includes('paulina') ||
+                voice.name.toLowerCase().includes('monica') ||
+                voice.name.toLowerCase().includes('kyoko') ||
+                voice.name.toLowerCase().includes('li-mu') ||
+                voice.name.toLowerCase().includes('fiona') ||
+                voice.name.toLowerCase().includes('veena') ||
+                voice.name.toLowerCase().includes('milena') ||
+                voice.name.toLowerCase().includes('catherine') ||
+                voice.name.toLowerCase().includes('zuzana') ||
+                voice.name.toLowerCase().includes('tessa')
+            )
+        );
+        
+        // Se não encontrar vozes femininas específicas, usar as com qualidade mais alta
+        const preferredVoice = femaleVoices.length > 0 
+            ? femaleVoices[0] 
+            : voices.find(voice => 
+                voice.lang === utterance.lang && 
+                voice.localService === false // Vozes de rede tendem a ser de melhor qualidade
+              ) || voices.find(voice => voice.lang === utterance.lang);
+        
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
         }
+        
         window.speechSynthesis.speak(utterance);
     };
 
