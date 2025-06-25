@@ -27,7 +27,7 @@ const MobileContainer: React.FC<MobileContainerProps> = ({
   return (
     <div className={`min-h-screen ${getBackgroundClass()} transition-colors duration-300 relative overflow-hidden`}>
       <InteractiveBackground isDark={theme === 'dark'} />
-      <div className="max-w-md mx-auto h-screen overflow-y-auto relative z-10">
+      <div className="w-full max-w-md mx-auto min-h-screen overflow-y-auto relative z-10 safe-area-inset">
         {children}
       </div>
     </div>
