@@ -40,8 +40,7 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
         .from('guild_chat_messages')
         .select(`
           *,
-          profiles!guild_chat_messages_sender_id_fkey(full_name),
-          guild_members!inner(role)
+          profiles!guild_chat_messages_sender_id_fkey(full_name)
         `)
         .eq('guild_id', guildId)
         .order('created_at', { ascending: true })
@@ -49,15 +48,25 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
 
       if (error) throw error;
 
-      const processedMessages = data.map(msg => ({
-        ...msg,
-        sender_name: msg.profiles?.full_name || 'Usuário',
-        sender_role: Array.isArray(msg.guild_members) && msg.guild_members.length > 0 
-          ? msg.guild_members[0].role 
-          : 'membro'
-      }));
+      // Buscar role do usuário para cada mensagem
+      const messagesWithRoles = await Promise.all(
+        data.map(async (msg) => {
+          const { data: memberData } = await supabase
+            .from('guild_members')
+            .select('role')
+            .eq('guild_id', guildId)
+            .eq('profile_id', msg.sender_id)
+            .single();
 
-      setMessages(processedMessages);
+          return {
+            ...msg,
+            sender_name: msg.profiles?.full_name || 'Usuário',
+            sender_role: memberData?.role || 'membro'
+          };
+        })
+      );
+
+      setMessages(messagesWithRoles);
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error);
     } finally {
@@ -96,7 +105,7 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
   useEffect(() => {
     fetchMessages();
 
-    // Configurar escuta em tempo real aprimorada
+    // Configurar escuta em tempo real
     const channel = supabase
       .channel(`guild_chat_${guildId}`)
       .on(
@@ -109,7 +118,6 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
         },
         (payload) => {
           console.log('Nova mensagem recebida:', payload);
-          // Recarregar mensagens para garantir dados completos
           fetchMessages();
         }
       )
@@ -145,11 +153,11 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages */}
-      <div className="flex-1 p-3 space-y-2 overflow-y-auto">
+    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
+      {/* Messages Container */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
         {loading ? (
-          <div className="text-center text-white/80">Carregando mensagens...</div>
+          <div className="text-center text-white/80 py-4">Carregando mensagens...</div>
         ) : messages.length === 0 ? (
           <div className="text-center text-white/80 py-8">
             <Send size={48} className="mx-auto mb-4 opacity-50" />
@@ -179,14 +187,14 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="p-3 bg-white/10 backdrop-blur-md flex-shrink-0">
+      {/* Message Input - Fixed at bottom */}
+      <div className="bg-white/10 backdrop-blur-md p-3 border-t border-white/20">
         <div className="flex space-x-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm"
+            className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm h-10"
             onKeyPress={handleKeyPress}
             disabled={sending}
             maxLength={500}
@@ -194,7 +202,7 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
           <Button 
             onClick={sendMessage}
             disabled={!newMessage.trim() || sending}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 h-10"
           >
             <Send size={16} />
           </Button>
