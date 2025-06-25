@@ -22,13 +22,13 @@ const WelcomeNavigation: React.FC<WelcomeNavigationProps> = ({
   const isFirstSlide = currentSlide === 0;
 
   return (
-    <div className="space-y-3 mt-6">
+    <div className="space-y-3">
       <div className="flex gap-3">
         {!isFirstSlide && (
           <Button
             onClick={onPrevious}
             variant="outline"
-            className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20 py-2 text-sm"
+            className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20 py-3 text-sm"
           >
             Anterior
           </Button>
@@ -36,7 +36,7 @@ const WelcomeNavigation: React.FC<WelcomeNavigationProps> = ({
         
         <Button
           onClick={onNext}
-          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-2 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"
+          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-3 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"
         >
           {isLastSlide ? (
             <>
@@ -56,7 +56,7 @@ const WelcomeNavigation: React.FC<WelcomeNavigationProps> = ({
       {!isLastSlide && (
         <button
           onClick={onSkip}
-          className="text-white/60 text-xs hover:text-white/80 transition-colors"
+          className="text-white/60 text-xs hover:text-white/80 transition-colors w-full"
         >
           Pular apresentação
         </button>

@@ -30,21 +30,27 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ onComplete, userName })
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center z-50 p-4">
-      <div className="text-center text-white w-full max-w-sm mx-auto h-full flex flex-col justify-between py-8">
-        <WelcomeProgressIndicator 
-          totalSlides={slides.length}
-          currentSlide={currentSlide}
-        />
+      <div className="text-center text-white w-full max-w-sm mx-auto h-full flex flex-col justify-between py-6 overflow-y-auto">
+        <div className="flex-shrink-0">
+          <WelcomeProgressIndicator 
+            totalSlides={slides.length}
+            currentSlide={currentSlide}
+          />
+        </div>
 
-        <WelcomeSlide slide={slides[currentSlide]} />
+        <div className="flex-1 flex flex-col justify-center min-h-0 overflow-y-auto">
+          <WelcomeSlide slide={slides[currentSlide]} />
+        </div>
 
-        <WelcomeNavigation
-          currentSlide={currentSlide}
-          totalSlides={slides.length}
-          onPrevious={prevSlide}
-          onNext={nextSlide}
-          onSkip={onComplete}
-        />
+        <div className="flex-shrink-0 mt-4">
+          <WelcomeNavigation
+            currentSlide={currentSlide}
+            totalSlides={slides.length}
+            onPrevious={prevSlide}
+            onNext={nextSlide}
+            onSkip={onComplete}
+          />
+        </div>
       </div>
     </div>
   );
