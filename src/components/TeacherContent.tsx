@@ -12,8 +12,36 @@ interface TeacherContentProps {
   onContentComplete: () => void;
 }
 
+// Função para mapear nomes das matérias para os identificadores corretos
+const mapSubjectName = (subject: string): string => {
+  const subjectMap: { [key: string]: string } = {
+    'Matemática': 'Matemática',
+    'matematica': 'Matemática',
+    'Português': 'Português',
+    'portugues': 'Português',
+    'Física': 'Física',
+    'fisica': 'Física',
+    'Química': 'Química',
+    'quimica': 'Química',
+    'Biologia': 'Biologia',
+    'biologia': 'Biologia',
+    'História': 'História',
+    'historia': 'História',
+    'Geografia': 'Geografia',
+    'geografia': 'Geografia',
+    'Filosofia': 'Filosofia',
+    'filosofia': 'Filosofia',
+    'Sociologia': 'Sociologia',
+    'sociologia': 'Sociologia'
+  };
+  
+  return subjectMap[subject] || 'Matemática';
+};
+
 // Conteúdo específico por matéria
 const getSubjectContent = (subject: string) => {
+  const mappedSubject = mapSubjectName(subject);
+  
   const contentMap: { [key: string]: any } = {
     'Matemática': [
       {
@@ -30,6 +58,23 @@ const getSubjectContent = (subject: string) => {
         title: "Aplicações Práticas",
         content: "Funções quadráticas aparecem em problemas de otimização, movimento uniformemente variado e geometria analítica.",
         points: ["Problemas de área máxima", "Lançamento de projéteis", "Receita e lucro", "Problemas geométricos"]
+      }
+    ],
+    'Português': [
+      {
+        title: "Interpretação de Texto",
+        content: "A interpretação textual é fundamental no ENEM. Vamos desenvolver estratégias de leitura e análise crítica.",
+        points: ["Ideia principal", "Inferências", "Pressupostos", "Gêneros textuais"]
+      },
+      {
+        title: "Gramática Normativa",
+        content: "O domínio gramatical é essencial para a redação e questões de língua portuguesa no ENEM.",
+        points: ["Concordância verbal e nominal", "Regência verbal", "Uso da crase", "Pontuação"]
+      },
+      {
+        title: "Literatura Brasileira",
+        content: "A literatura brasileira reflete nossa história e cultura. Vamos estudar os principais movimentos literários.",
+        points: ["Barroco", "Romantismo", "Realismo/Naturalismo", "Modernismo"]
       }
     ],
     'Física': [
@@ -117,26 +162,43 @@ const getSubjectContent = (subject: string) => {
         points: ["Blocos econômicos", "Conflitos territoriais", "Recursos naturais", "Fronteiras"]
       }
     ],
-    'Português': [
+    'Filosofia': [
       {
-        title: "Interpretação de Texto",
-        content: "A interpretação textual é fundamental no ENEM. Vamos desenvolver estratégias de leitura e análise.",
-        points: ["Ideia principal", "Inferências", "Linguagem figurada", "Gêneros textuais"]
+        title: "Filosofia Antiga",
+        content: "Os filósofos gregos estabeleceram as bases do pensamento ocidental com questões sobre realidade e conhecimento.",
+        points: ["Sócrates e o método maiêutico", "Platão e o mundo das ideias", "Aristóteles e a lógica", "Escolas helenísticas"]
       },
       {
-        title: "Gramática",
-        content: "O domínio gramatical é essencial para a redação e questões de língua portuguesa.",
-        points: ["Classes gramaticais", "Sintaxe", "Concordância", "Regência verbal e nominal"]
+        title: "Filosofia Moderna",
+        content: "A filosofia moderna trouxe novas perspectivas sobre razão, empirismo e o método científico.",
+        points: ["Racionalismo de Descartes", "Empirismo de Hume", "Iluminismo", "Kant e a crítica da razão"]
       },
       {
-        title: "Literatura",
-        content: "A literatura brasileira reflete nossa história e cultura. Vamos estudar os principais movimentos.",
-        points: ["Barroco", "Romantismo", "Realismo/Naturalismo", "Modernismo"]
+        title: "Ética e Política",
+        content: "A ética e a filosofia política abordam questões sobre moral, justiça e organização social.",
+        points: ["Teorias éticas", "Contrato social", "Direitos humanos", "Filosofia política contemporânea"]
+      }
+    ],
+    'Sociologia': [
+      {
+        title: "Clássicos da Sociologia",
+        content: "Os fundadores da sociologia - Durkheim, Weber e Marx - criaram teorias fundamentais sobre a sociedade.",
+        points: ["Émile Durkheim e o fato social", "Max Weber e a ação social", "Karl Marx e luta de classes", "Métodos sociológicos"]
+      },
+      {
+        title: "Estratificação Social",
+        content: "A sociedade se organiza em classes, estamentos e castas. Vamos estudar desigualdade e mobilidade social.",
+        points: ["Classes sociais", "Desigualdade social", "Mobilidade social", "Estratificação no Brasil"]
+      },
+      {
+        title: "Movimentos Sociais",
+        content: "Os movimentos sociais são formas de organização da sociedade civil para reivindicar direitos e mudanças.",
+        points: ["Tipos de movimentos sociais", "Movimentos sociais no Brasil", "Cidadania", "Participação política"]
       }
     ]
   };
 
-  return contentMap[subject] || contentMap['Matemática'];
+  return contentMap[mappedSubject] || contentMap['Matemática'];
 };
 
 const TeacherContent: React.FC<TeacherContentProps> = ({ 
@@ -188,7 +250,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
       {contentType === 'video' ? (
         <TeacherVideo
           teacher={teacher}
-          subject={subject}
+          subject={mapSubjectName(subject)}
           topic={slides[0]?.title || "Conteúdo da Aula"}
           duration="15:30"
           isPremium={isPremium}
@@ -200,7 +262,7 @@ const TeacherContent: React.FC<TeacherContentProps> = ({
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h3 className="font-bold">{teacher}</h3>
-                <p className="text-blue-100 text-sm">{subject}</p>
+                <p className="text-blue-100 text-sm">{mapSubjectName(subject)}</p>
               </div>
               {!isPremium && (
                 <div className="flex items-center space-x-1 bg-orange-500 px-2 py-1 rounded-full">

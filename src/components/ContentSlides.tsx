@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
@@ -16,13 +15,41 @@ interface ContentSlidesProps {
   onComplete: () => void;
 }
 
+// Função para mapear nomes das matérias para os identificadores corretos
+const mapSubjectName = (subject: string): string => {
+  const subjectMap: { [key: string]: string } = {
+    'Matemática': 'Matemática',
+    'matematica': 'Matemática',
+    'Português': 'Português',
+    'portugues': 'Português',
+    'Física': 'Física',
+    'fisica': 'Física',
+    'Química': 'Química',
+    'quimica': 'Química',
+    'Biologia': 'Biologia',
+    'biologia': 'Biologia',
+    'História': 'História',
+    'historia': 'História',
+    'Geografia': 'Geografia',
+    'geografia': 'Geografia',
+    'Filosofia': 'Filosofia',
+    'filosofia': 'Filosofia',
+    'Sociologia': 'Sociologia',
+    'sociologia': 'Sociologia'
+  };
+  
+  return subjectMap[subject] || 'Matemática';
+};
+
 // Conteúdo específico por matéria para os slides introdutórios
 const getIntroductoryContent = (subject: string): Slide[] => {
+  const mappedSubject = mapSubjectName(subject);
+  
   const contentMap: { [key: string]: Slide[] } = {
     'Matemática': [
       {
         id: 1,
-        title: `Introdução à ${subject}`,
+        title: `Introdução à ${mappedSubject}`,
         content: `Bem-vindos ao estudo de Matemática! Nesta aula, vamos explorar conceitos fundamentais que são essenciais para o ENEM, incluindo funções, geometria e estatística.`,
         concepts: ['Funções e equações', 'Geometria plana e espacial', 'Estatística e probabilidade']
       },
@@ -45,10 +72,36 @@ const getIntroductoryContent = (subject: string): Slide[] => {
         concepts: ['Medidas de tendência central', 'Gráficos e tabelas', 'Cálculo de probabilidades']
       }
     ],
+    'Português': [
+      {
+        id: 1,
+        title: `Introdução ao ${mappedSubject}`,
+        content: `Bem-vindos ao estudo de Português! Vamos explorar interpretação textual, gramática e literatura brasileira para dominar o ENEM.`,
+        concepts: ['Interpretação de texto', 'Gramática normativa', 'Literatura brasileira']
+      },
+      {
+        id: 2,
+        title: 'Interpretação de Texto',
+        content: `A interpretação textual é fundamental no ENEM. Vamos desenvolver estratégias de leitura e análise crítica.`,
+        concepts: ['Ideia principal e secundária', 'Inferências e pressupostos', 'Gêneros textuais']
+      },
+      {
+        id: 3,
+        title: 'Gramática e Norma Culta',
+        content: `O domínio da gramática é essencial para uma comunicação eficaz e para a redação do ENEM.`,
+        concepts: ['Concordância verbal e nominal', 'Regência e crase', 'Pontuação e sintaxe']
+      },
+      {
+        id: 4,
+        title: 'Literatura Brasileira',
+        content: `A literatura reflete nossa cultura e história. Estudaremos os principais movimentos literários brasileiros.`,
+        concepts: ['Barroco e Arcadismo', 'Romantismo e Realismo', 'Modernismo']
+      }
+    ],
     'Física': [
       {
         id: 1,
-        title: `Introdução à ${subject}`,
+        title: `Introdução à ${mappedSubject}`,
         content: `A Física explica os fenômenos naturais através de leis e princípios. Vamos estudar mecânica, termodinâmica e eletromagnetismo.`,
         concepts: ['Mecânica clássica', 'Termodinâmica', 'Eletromagnetismo']
       },
@@ -74,7 +127,7 @@ const getIntroductoryContent = (subject: string): Slide[] => {
     'Química': [
       {
         id: 1,
-        title: `Introdução à ${subject}`,
+        title: `Introdução à ${mappedSubject}`,
         content: `A Química estuda a matéria e suas transformações. Vamos explorar átomos, moléculas e reações químicas.`,
         concepts: ['Estrutura atômica', 'Ligações químicas', 'Reações químicas']
       },
@@ -100,7 +153,7 @@ const getIntroductoryContent = (subject: string): Slide[] => {
     'Biologia': [
       {
         id: 1,
-        title: `Introdução à ${subject}`,
+        title: `Introdução à ${mappedSubject}`,
         content: `A Biologia é a ciência da vida. Vamos estudar desde células até ecossistemas, passando por genética e evolução.`,
         concepts: ['Citologia', 'Genética', 'Ecologia']
       },
@@ -122,10 +175,114 @@ const getIntroductoryContent = (subject: string): Slide[] => {
         content: `A ecologia estuda as relações entre os seres vivos e o ambiente. Um tema muito importante no ENEM.`,
         concepts: ['Cadeias alimentares', 'Ciclos biogeoquímicos', 'Problemas ambientais']
       }
+    ],
+    'História': [
+      {
+        id: 1,
+        title: `Introdução à ${mappedSubject}`,
+        content: `A História nos ajuda a compreender o presente através do passado. Estudaremos eventos importantes do Brasil e do mundo.`,
+        concepts: ['História do Brasil', 'História mundial', 'Análise de fontes históricas']
+      },
+      {
+        id: 2,
+        title: 'Brasil Colonial',
+        content: `O período colonial brasileiro (1500-1822) foi marcado pela exploração portuguesa e formação da sociedade brasileira.`,
+        concepts: ['Pacto Colonial', 'Ciclo do açúcar', 'Escravidão colonial']
+      },
+      {
+        id: 3,
+        title: 'República Brasileira',
+        content: `A República no Brasil passou por diferentes fases, desde a Proclamação até os dias atuais.`,
+        concepts: ['República Velha', 'Era Vargas', 'Regime Militar']
+      },
+      {
+        id: 4,
+        title: 'História Contemporânea',
+        content: `O século XX foi marcado por guerras mundiais, Guerra Fria e transformações sociais globais.`,
+        concepts: ['Guerras Mundiais', 'Guerra Fria', 'Globalização']
+      }
+    ],
+    'Geografia': [
+      {
+        id: 1,
+        title: `Introdução à ${mappedSubject}`,
+        content: `A Geografia estuda o espaço e as relações entre sociedade e natureza. Vamos explorar aspectos físicos e humanos.`,
+        concepts: ['Geografia física', 'Geografia humana', 'Cartografia']
+      },
+      {
+        id: 2,
+        title: 'Geografia Física do Brasil',
+        content: `O Brasil possui grande diversidade natural: relevo, clima, hidrografia e vegetação únicos.`,
+        concepts: ['Relevo brasileiro', 'Climas do Brasil', 'Biomas brasileiros']
+      },
+      {
+        id: 3,
+        title: 'Demografia e Urbanização',
+        content: `O crescimento populacional e a urbanização são fenômenos importantes da geografia humana brasileira.`,
+        concepts: ['Demografia brasileira', 'Processo de urbanização', 'Problemas urbanos']
+      },
+      {
+        id: 4,
+        title: 'Geopolítica e Globalização',
+        content: `As relações de poder no espaço geográfico e os processos de globalização transformam o mundo atual.`,
+        concepts: ['Blocos econômicos', 'Conflitos territoriais', 'Globalização']
+      }
+    ],
+    'Filosofia': [
+      {
+        id: 1,
+        title: `Introdução à ${mappedSubject}`,
+        content: `A Filosofia é o amor à sabedoria. Vamos explorar questões fundamentais sobre existência, conhecimento e ética.`,
+        concepts: ['História da filosofia', 'Principais filósofos', 'Questões fundamentais']
+      },
+      {
+        id: 2,
+        title: 'Filosofia Antiga',
+        content: `Os filósofos gregos estabeleceram as bases do pensamento ocidental com questões sobre realidade e conhecimento.`,
+        concepts: ['Sócrates, Platão e Aristóteles', 'Escolas helenísticas', 'Pensamento grego']
+      },
+      {
+        id: 3,
+        title: 'Filosofia Moderna',
+        content: `A filosofia moderna trouxe novas perspectivas sobre razão, empirismo e o método científico.`,
+        concepts: ['Racionalismo', 'Empirismo', 'Iluminismo']
+      },
+      {
+        id: 4,
+        title: 'Ética e Filosofia Política',
+        content: `A ética e a filosofia política abordam questões sobre moral, justiça e organização social.`,
+        concepts: ['Teorias éticas', 'Filosofia política', 'Direitos humanos']
+      }
+    ],
+    'Sociologia': [
+      {
+        id: 1,
+        title: `Introdução à ${mappedSubject}`,
+        content: `A Sociologia estuda a sociedade e as relações sociais. Vamos analisar estruturas sociais e mudanças históricas.`,
+        concepts: ['Teoria sociológica', 'Métodos de pesquisa', 'Sociedade e cultura']
+      },
+      {
+        id: 2,
+        title: 'Clássicos da Sociologia',
+        content: `Os fundadores da sociologia - Durkheim, Weber e Marx - criaram teorias fundamentais sobre a sociedade.`,
+        concepts: ['Émile Durkheim', 'Max Weber', 'Karl Marx']
+      },
+      {
+        id: 3,
+        title: 'Estratificação Social',
+        content: `A sociedade se organiza em classes, estamentos e castas. Vamos estudar desigualdade e mobilidade social.`,
+        concepts: ['Classes sociais', 'Desigualdade social', 'Mobilidade social']
+      },
+      {
+        id: 4,
+        title: 'Sociologia Contemporânea',
+        content: `Os desafios sociais atuais incluem globalização, tecnologia e novos movimentos sociais.`,
+        concepts: ['Globalização', 'Movimentos sociais', 'Sociedade digital']
+      }
     ]
   };
 
-  return contentMap[subject] || contentMap['Matemática'];
+  return contentMap[mappedSubject] || contentMap['Matemática'];
 };
 
 const ContentSlides: React.FC<ContentSlidesProps> = ({ subject, onComplete }) => {
@@ -156,7 +313,7 @@ const ContentSlides: React.FC<ContentSlidesProps> = ({ subject, onComplete }) =>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             <BookOpen size={20} />
-            <h3 className="font-bold">{subject}</h3>
+            <h3 className="font-bold">{mapSubjectName(subject)}</h3>
           </div>
           <div className="text-sm bg-white/20 px-2 py-1 rounded-full">
             {currentSlide + 1} / {slides.length}
