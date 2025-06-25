@@ -42,17 +42,35 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     try {
       setLoading(true);
       
-      // Buscar usuários que não são membros da guilda
-      const { data: profiles, error } = await supabase
+      // Primeiro, buscar IDs de usuários que já são membros ou foram convidados
+      const { data: existingUsers } = await supabase
+        .from('guild_members')
+        .select('profile_id')
+        .eq('guild_id', guildId);
+
+      const { data: invitedUsers } = await supabase
+        .from('guild_invites')
+        .select('invited_user_id')
+        .eq('guild_id', guildId)
+        .eq('status', 'pending');
+
+      const excludeIds = [
+        ...(existingUsers || []).map(u => u.profile_id),
+        ...(invitedUsers || []).map(u => u.invited_user_id)
+      ];
+
+      // Buscar usuários que não são membros da guilda nem foram convidados
+      let query = supabase
         .from('profiles')
         .select('id, full_name, email')
-        .or(`full_name.ilike.%${searchTerm}%, email.ilike.%${searchTerm}%`)
-        .not('id', 'in', `(
-          SELECT profile_id FROM guild_members WHERE guild_id = '${guildId}'
-          UNION
-          SELECT invited_user_id FROM guild_invites WHERE guild_id = '${guildId}' AND status = 'pending'
-        )`)
+        .ilike('full_name', `%${searchTerm}%`)
         .limit(10);
+
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.map(id => `'${id}'`).join(',')})`);
+      }
+
+      const { data: profiles, error } = await query;
 
       if (error) throw error;
       setSearchResults(profiles || []);
@@ -103,6 +121,12 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      searchUsers();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -120,8 +144,8 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Buscar usuários por nome ou email..."
+            onKeyPress={handleKeyPress}
+            placeholder="Buscar usuários por nome..."
             className="pl-10"
           />
           <Button 
@@ -129,14 +153,12 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
             disabled={loading || !searchTerm.trim()}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 px-2"
           >
-            Buscar
+            {loading ? 'Buscando...' : 'Buscar'}
           </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="text-center py-4">Buscando...</div>
-          ) : searchResults.length === 0 ? (
+          {searchResults.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
               {searchTerm ? 'Nenhum usuário encontrado' : 'Digite para buscar usuários'}
             </div>
