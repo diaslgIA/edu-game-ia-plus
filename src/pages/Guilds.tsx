@@ -95,6 +95,8 @@ const Guilds = () => {
     if (!newGuildName.trim() || !user) return;
 
     try {
+      console.log('Tentando criar guilda com usuário:', user.id);
+      
       // Criar guilda
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
@@ -107,7 +109,12 @@ const Guilds = () => {
         .select()
         .single();
 
-      if (guildError) throw guildError;
+      if (guildError) {
+        console.error('Erro ao criar guilda:', guildError);
+        throw guildError;
+      }
+
+      console.log('Guilda criada com sucesso:', guild);
 
       // Adicionar o criador como membro
       const { error: memberError } = await supabase
@@ -118,7 +125,10 @@ const Guilds = () => {
           role: 'líder'
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Erro ao adicionar criador como membro:', memberError);
+        throw memberError;
+      }
 
       toast({
         title: "Guilda criada!",
@@ -129,11 +139,20 @@ const Guilds = () => {
       setNewGuildName('');
       setNewGuildDescription('');
       fetchGuilds();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar guilda:', error);
+      
+      let errorMessage = "Não foi possível criar a guilda.";
+      
+      if (error.message?.includes('row-level security')) {
+        errorMessage = "Erro de permissão. Verifique se você está logado corretamente.";
+      } else if (error.code === '42501') {
+        errorMessage = "Você não tem permissão para criar guildas. Entre em contato com o suporte.";
+      }
+      
       toast({
         title: "Erro ao criar guilda",
-        description: "Não foi possível criar a guilda. Verifique se você tem permissão.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
