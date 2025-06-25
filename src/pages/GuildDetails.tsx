@@ -5,13 +5,12 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Library, Crown, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Crown, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import GuildChat from '@/components/guild/GuildChat';
 import GuildMural from '@/components/guild/GuildMural';
-import GuildLibrary from '@/components/guild/GuildLibrary';
 import GuildMembers from '@/components/guild/GuildMembers';
 import GuildInviteModal from '@/components/guild/GuildInviteModal';
 import GuildInvites from '@/components/guild/GuildInvites';
@@ -36,7 +35,7 @@ const GuildDetails = () => {
   const { toast } = useToast();
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('mural');
+  const [activeTab, setActiveTab] = useState('chat'); // Mudança: iniciar no chat
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   const fetchGuildDetails = async () => {
@@ -114,6 +113,7 @@ const GuildDetails = () => {
   }
 
   const canInvite = guild.owner_id === user?.id || guild.user_role === 'líder' || guild.user_role === 'moderador';
+  const canInviteMore = (guild.member_count || 0) < 20; // Verificar limite de 20 membros
 
   return (
     <MobileContainer background="gradient">
@@ -138,7 +138,7 @@ const GuildDetails = () => {
               </div>
               <p className="text-white/80 text-xs">{guild.description}</p>
             </div>
-            {canInvite && (
+            {canInvite && canInviteMore && (
               <Button 
                 onClick={() => setShowInviteModal(true)}
                 className="bg-green-500 hover:bg-green-600 text-white px-3"
@@ -152,7 +152,7 @@ const GuildDetails = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
                 <Users size={12} />
-                <span>{guild.member_count} membros</span>
+                <span>{guild.member_count}/20 membros</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Trophy size={12} />
@@ -161,23 +161,25 @@ const GuildDetails = () => {
             </div>
             <span>{guild.owner_name}</span>
           </div>
+          
+          {!canInviteMore && (
+            <div className="mt-2 text-xs text-yellow-400">
+              ⚠️ Guilda lotada (20/20 membros)
+            </div>
+          )}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Removida biblioteca */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md mx-3 mt-3">
-              <TabsTrigger value="mural" className="text-xs">
-                <FileText size={14} className="mr-1" />
-                Mural
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-md mx-3 mt-3">
               <TabsTrigger value="chat" className="text-xs">
                 <MessageSquare size={14} className="mr-1" />
                 Chat
               </TabsTrigger>
-              <TabsTrigger value="biblioteca" className="text-xs">
-                <Library size={14} className="mr-1" />
-                Biblioteca
+              <TabsTrigger value="mural" className="text-xs">
+                <FileText size={14} className="mr-1" />
+                Mural
               </TabsTrigger>
               <TabsTrigger value="membros" className="text-xs">
                 <Users size={14} className="mr-1" />
@@ -191,14 +193,11 @@ const GuildDetails = () => {
             </TabsList>
             
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="mural" className="h-full m-0">
-                <GuildMural guildId={guild.id} />
-              </TabsContent>
               <TabsContent value="chat" className="h-full m-0">
                 <GuildChat guildId={guild.id} />
               </TabsContent>
-              <TabsContent value="biblioteca" className="h-full m-0">
-                <GuildLibrary guildId={guild.id} />
+              <TabsContent value="mural" className="h-full m-0">
+                <GuildMural guildId={guild.id} />
               </TabsContent>
               <TabsContent value="membros" className="h-full m-0">
                 <GuildMembers guildId={guild.id} />

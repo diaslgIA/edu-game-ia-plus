@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -64,9 +66,10 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || sending) return;
 
     try {
+      setSending(true);
       const { error } = await supabase
         .from('guild_chat_messages')
         .insert({
@@ -85,13 +88,15 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
         description: "Não foi possível enviar a mensagem.",
         variant: "destructive"
       });
+    } finally {
+      setSending(false);
     }
   };
 
   useEffect(() => {
     fetchMessages();
 
-    // Configurar escuta em tempo real
+    // Configurar escuta em tempo real aprimorada
     const channel = supabase
       .channel(`guild_chat_${guildId}`)
       .on(
@@ -102,13 +107,21 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
           table: 'guild_chat_messages',
           filter: `guild_id=eq.${guildId}`
         },
-        () => {
+        (payload) => {
+          console.log('Nova mensagem recebida:', payload);
+          // Recarregar mensagens para garantir dados completos
           fetchMessages();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Status do canal:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Conectado ao chat em tempo real');
+        }
+      });
 
     return () => {
+      console.log('Desconectando do chat');
       supabase.removeChannel(channel);
     };
   }, [guildId]);
@@ -122,6 +135,13 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
@@ -151,7 +171,7 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
                   <span className="font-semibold text-[10px]">{message.sender_name}</span>
                   <span className="text-[9px] opacity-70">{formatTime(message.created_at)}</span>
                 </div>
-                <p className="text-[11px]">{message.content}</p>
+                <p className="text-[11px] break-words">{message.content}</p>
               </div>
             </div>
           ))
@@ -167,15 +187,20 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite sua mensagem..."
             className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm"
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyPress={handleKeyPress}
+            disabled={sending}
+            maxLength={500}
           />
           <Button 
             onClick={sendMessage}
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || sending}
             className="bg-blue-500 hover:bg-blue-600 text-white px-3"
           >
             <Send size={16} />
           </Button>
+        </div>
+        <div className="text-xs text-white/60 mt-1">
+          {newMessage.length}/500 caracteres
         </div>
       </div>
     </div>

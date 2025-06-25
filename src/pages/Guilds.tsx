@@ -41,38 +41,35 @@ const Guilds = () => {
     try {
       setLoading(true);
       
-      // Buscar guildas públicas
-      const { data: guildsData, error } = await supabase
-        .from('guilds')
+      // Buscar guildas onde o usuário é membro
+      const { data: memberGuilds, error: memberError } = await supabase
+        .from('guild_members')
         .select(`
-          *,
-          profiles!guilds_owner_id_fkey(full_name)
+          guild_id,
+          guilds!inner(
+            *,
+            profiles!guilds_owner_id_fkey(full_name)
+          )
         `)
-        .eq('is_public', true);
+        .eq('profile_id', user?.id);
 
-      if (error) throw error;
+      if (memberError) throw memberError;
 
-      // Processar dados para incluir contagem de membros e verificar se usuário é membro
+      // Processar dados para incluir contagem de membros
       const processedGuilds = await Promise.all(
-        guildsData.map(async (guild) => {
+        memberGuilds.map(async (memberGuild) => {
+          const guild = memberGuild.guilds;
+          
           // Contar membros
           const { count: memberCount } = await supabase
             .from('guild_members')
             .select('*', { count: 'exact', head: true })
             .eq('guild_id', guild.id);
 
-          // Verificar se usuário é membro
-          const { data: membership } = await supabase
-            .from('guild_members')
-            .select('profile_id')
-            .eq('guild_id', guild.id)
-            .eq('profile_id', user?.id)
-            .single();
-
           return {
             ...guild,
             member_count: memberCount || 0,
-            is_member: !!membership,
+            is_member: true,
             owner_name: guild.profiles?.full_name || 'Usuário'
           };
         })
@@ -104,14 +101,14 @@ const Guilds = () => {
     try {
       console.log('Criando guilda...', { userId: user.id, guildName: newGuildName });
       
-      // Criar guilda
+      // Criar guilda (agora não é mais pública por padrão)
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .insert({
           name: newGuildName.trim(),
           description: newGuildDescription.trim() || null,
           owner_id: user.id,
-          is_public: true,
+          is_public: false, // Mudança: guildas não são mais públicas
           total_points: 0
         })
         .select()
@@ -135,13 +132,12 @@ const Guilds = () => {
 
       if (memberError) {
         console.error('Erro ao adicionar criador como membro:', memberError);
-        // Não falhar aqui, pois a guilda já foi criada
         console.warn('Guilda criada mas não foi possível adicionar como membro automaticamente');
       }
 
       toast({
         title: "Guilda criada com sucesso!",
-        description: `A guilda "${newGuildName}" foi criada.`,
+        description: `A guilda "${newGuildName}" foi criada. Agora você pode convidar membros.`,
       });
 
       setShowCreateModal(false);
@@ -164,35 +160,6 @@ const Guilds = () => {
       toast({
         title: "Erro ao criar guilda",
         description: errorMessage,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const joinGuild = async (guildId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('guild_members')
-        .insert({
-          guild_id: guildId,
-          profile_id: user.id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Ingressou na guilda!",
-        description: "Você agora faz parte desta guilda.",
-      });
-
-      await fetchGuilds();
-    } catch (error) {
-      console.error('Erro ao ingressar na guilda:', error);
-      toast({
-        title: "Erro ao ingressar",
-        description: "Não foi possível ingressar na guilda.",
         variant: "destructive"
       });
     }
@@ -221,7 +188,7 @@ const Guilds = () => {
             <ArrowLeft size={18} />
           </Button>
           <h1 className="text-base font-semibold flex items-center space-x-2">
-            <span>Guildas</span>
+            <span>Minhas Guildas</span>
             <Users size={18} />
           </h1>
           <div className="flex-1" />
@@ -248,7 +215,7 @@ const Guilds = () => {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar guildas..."
+                placeholder="Buscar minhas guildas..."
                 className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm pl-10"
               />
             </div>
@@ -260,15 +227,15 @@ const Guilds = () => {
               ) : filteredGuilds.length === 0 ? (
                 <div className="text-center text-white/80 py-8">
                   <Users size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Nenhuma guilda encontrada</p>
-                  <p className="text-sm opacity-75">Seja o primeiro a criar uma!</p>
+                  <p>Você não faz parte de nenhuma guilda ainda</p>
+                  <p className="text-sm opacity-75">Crie uma nova guilda ou aguarde um convite!</p>
                 </div>
               ) : (
                 filteredGuilds.map((guild) => (
                   <div
                     key={guild.id}
                     className="bg-white/10 backdrop-blur-md rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all"
-                    onClick={() => guild.is_member ? navigate(`/guilda/${guild.id}`) : null}
+                    onClick={() => navigate(`/guilda/${guild.id}`)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -284,7 +251,7 @@ const Guilds = () => {
                           <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-1">
                               <Users size={12} />
-                              <span>{guild.member_count} membros</span>
+                              <span>{guild.member_count}/20 membros</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <Trophy size={12} />
@@ -295,20 +262,6 @@ const Guilds = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    {!guild.is_member && (
-                      <div className="mt-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            joinGuild(guild.id);
-                          }}
-                          className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-1"
-                        >
-                          Ingressar
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ))
               )}
@@ -343,6 +296,12 @@ const Guilds = () => {
                     className="w-full"
                     maxLength={200}
                   />
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    ℹ️ Sua guilda será privada. Você poderá convidar até 20 membros através do sistema de convites.
+                  </p>
                 </div>
               </div>
 

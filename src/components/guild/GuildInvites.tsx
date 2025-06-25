@@ -75,12 +75,45 @@ const GuildInvites: React.FC<GuildInvitesProps> = ({
       if (!invite) return;
 
       if (accept) {
-        // Aceitar convite - adicionar à guilda e atualizar status
+        // Verificar se a guilda ainda tem espaço (limite de 20)
+        const { count: memberCount } = await supabase
+          .from('guild_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('guild_id', invite.guild_id);
+
+        if ((memberCount || 0) >= 20) {
+          toast({
+            title: "Guilda lotada",
+            description: "Esta guilda já atingiu o limite de 20 membros.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Verificar se o usuário já é membro
+        const { data: existingMember } = await supabase
+          .from('guild_members')
+          .select('profile_id')
+          .eq('guild_id', invite.guild_id)
+          .eq('profile_id', user?.id)
+          .single();
+
+        if (existingMember) {
+          toast({
+            title: "Já é membro",
+            description: "Você já faz parte desta guilda.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Aceitar convite - adicionar à guilda
         const { error: memberError } = await supabase
           .from('guild_members')
           .insert({
             guild_id: invite.guild_id,
-            profile_id: user?.id
+            profile_id: user?.id,
+            role: 'membro'
           });
 
         if (memberError) throw memberError;
@@ -142,14 +175,14 @@ const GuildInvites: React.FC<GuildInvitesProps> = ({
   }, [user, guildId, showReceivedInvites]);
 
   if (loading) {
-    return <div className="text-center py-4">Carregando convites...</div>;
+    return <div className="text-center py-4 text-white/80">Carregando convites...</div>;
   }
 
   if (invites.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <User size={48} className="mx-auto mb-4 opacity-50" />
-        <p>{showReceivedInvites ? 'Nenhum convite recebido' : 'Nenhum convite pendente'}</p>
+      <div className="text-center py-8">
+        <User size={48} className="mx-auto mb-4 opacity-50 text-white/50" />
+        <p className="text-white/80">{showReceivedInvites ? 'Nenhum convite recebido' : 'Nenhum convite pendente'}</p>
       </div>
     );
   }
