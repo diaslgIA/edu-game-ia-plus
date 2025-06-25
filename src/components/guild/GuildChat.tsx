@@ -51,7 +51,9 @@ const GuildChat: React.FC<GuildChatProps> = ({ guildId }) => {
       const processedMessages = data.map(msg => ({
         ...msg,
         sender_name: msg.profiles?.full_name || 'Usuário',
-        sender_role: msg.guild_members?.[0]?.role || 'membro'
+        sender_role: Array.isArray(msg.guild_members) && msg.guild_members.length > 0 
+          ? msg.guild_members[0].role 
+          : 'membro'
       }));
 
       setMessages(processedMessages);

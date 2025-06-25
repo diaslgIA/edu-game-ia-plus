@@ -204,13 +204,13 @@ const Guilds = () => {
         <div className="flex-1 overflow-y-auto pb-20">
           <div className="p-4 space-y-4">
             {/* Search */}
-            <div>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60" />
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar guildas..."
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm"
-                icon={<Search size={16} />}
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm pl-10"
               />
             </div>
 

@@ -22,6 +22,8 @@ import Subjects from "./pages/Subjects";
 import Exercises from "./pages/Exercises";
 import StudyRecommendations from "./pages/StudyRecommendations";
 import Classes from "./pages/Classes";
+import Guilds from "./pages/Guilds";
+import GuildDetails from "./pages/GuildDetails";
 import Subscriptions from "./pages/Subscriptions";
 import Support from "./pages/Support";
 import Profile from "./pages/Profile";
