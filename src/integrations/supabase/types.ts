@@ -81,6 +81,209 @@ export type Database = {
         }
         Relationships: []
       }
+      guild_chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          guild_id: string | null
+          id: number
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          guild_id?: string | null
+          id?: number
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          guild_id?: string | null
+          id?: number
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_chat_messages_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_library_files: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          file_name: string
+          guild_id: string | null
+          id: string
+          storage_path: string
+          uploader_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          file_name: string
+          guild_id?: string | null
+          id?: string
+          storage_path: string
+          uploader_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          file_name?: string
+          guild_id?: string | null
+          id?: string
+          storage_path?: string
+          uploader_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_library_files_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_library_files_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_members: {
+        Row: {
+          guild_id: string
+          joined_at: string | null
+          profile_id: string
+          role: string | null
+        }
+        Insert: {
+          guild_id: string
+          joined_at?: string | null
+          profile_id: string
+          role?: string | null
+        }
+        Update: {
+          guild_id?: string
+          joined_at?: string | null
+          profile_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_members_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_mural_posts: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string | null
+          guild_id: string | null
+          id: string
+          is_answered: boolean | null
+          title: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          is_answered?: boolean | null
+          title: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          is_answered?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_mural_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_mural_posts_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guilds: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          owner_id: string
+          total_points: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          owner_id: string
+          total_points?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          owner_id?: string
+          total_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guilds_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

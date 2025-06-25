@@ -61,11 +61,11 @@ const Dashboard = () => {
       path: '/exercises'
     },
     {
-      title: 'Simulados',
-      description: 'Teste seus conhecimentos',
-      icon: '🎯',
+      title: 'Guildas',
+      description: 'Colabore e compita',
+      icon: '⚔️',
       color: 'from-purple-400 to-purple-600',
-      path: '/exercises'
+      path: '/guilds'
     },
     {
       title: 'Ranking',
