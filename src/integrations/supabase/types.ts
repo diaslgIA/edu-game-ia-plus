@@ -245,12 +245,48 @@ export type Database = {
           },
         ]
       }
+      user_rankings: {
+        Row: {
+          badge: string | null
+          full_name: string
+          id: string
+          position: number
+          title: string | null
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badge?: string | null
+          full_name: string
+          id?: string
+          position?: number
+          title?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badge?: string | null
+          full_name?: string
+          id?: string
+          position?: number
+          title?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recalculate_all_rankings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
