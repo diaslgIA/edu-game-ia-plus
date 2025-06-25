@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star } from 'lucide-react';
@@ -214,15 +215,15 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
 
   if (!gameStarted) {
     return (
-      <div className="font-pixel bg-gray-900 text-white border-4 border-gray-700 p-6 text-center">
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
         <div className="mb-6">
-          <Trophy className="mx-auto mb-4 text-yellow-400" size={48} />
-          <h3 className="text-xl font-bold text-white mb-2">Quiz Educativo</h3>
-          <p className="text-gray-400">Teste seus conhecimentos e ganhe pontos!</p>
+          <Trophy className="mx-auto mb-4 text-yellow-500 dark:text-yellow-400" size={48} />
+          <h3 className="text-xl font-bold mb-2">Quiz Educativo</h3>
+          <p className="text-gray-600 dark:text-gray-400">Teste seus conhecimentos e ganhe pontos!</p>
         </div>
-        <div className="bg-gray-800 border-2 border-gray-700 p-4 mb-6">
-          <h4 className="font-semibold text-blue-400 mb-2">Como jogar:</h4>
-          <ul className="text-sm text-blue-300 space-y-1 text-left">
+        <div className="bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 p-4 mb-6 rounded-lg">
+          <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">Como jogar:</h4>
+          <ul className="text-sm text-blue-500 dark:text-blue-300 space-y-1 text-left">
             <li>- Responda em ate 30s</li>
             <li>- Ganhe 10 pts/acerto</li>
             <li>- Veja explicacoes</li>
@@ -245,22 +246,22 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
     const percentage = Math.round((finalScore / (sampleQuestions.length * 10)) * 100);
     
     return (
-      <div className="font-pixel bg-gray-900 text-white border-4 border-gray-700 p-6 text-center">
-        <Trophy className="mx-auto mb-4 text-yellow-400" size={64} />
-        <h3 className="text-2xl font-bold text-white mb-2">Quiz Concluído!</h3>
-        <div className="bg-gray-800 border-2 border-yellow-500 p-4 mb-6">
-          <div className="text-3xl font-bold text-yellow-400 mb-2">{finalScore} pontos</div>
-          <div className="text-lg text-yellow-300">{percentage}% de acertos</div>
-          <div className="text-sm text-yellow-400 mt-2">
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
+        <Trophy className="mx-auto mb-4 text-yellow-500 dark:text-yellow-400" size={64} />
+        <h3 className="text-2xl font-bold mb-2">Quiz Concluído!</h3>
+        <div className="bg-gray-100 dark:bg-gray-800 border-2 border-yellow-500 p-4 mb-6 rounded-lg">
+          <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">{finalScore} pontos</div>
+          <div className="text-lg text-yellow-500 dark:text-yellow-300">{percentage}% de acertos</div>
+          <div className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
             {saving ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
           </div>
         </div>
         <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-center space-x-2 text-green-400">
+          <div className="flex items-center justify-center space-x-2 text-green-600 dark:text-green-400">
             <CheckCircle size={20} />
             <span>+{finalScore} pontos ganhos</span>
           </div>
-          <div className="flex items-center justify-center space-x-2 text-blue-400">
+          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
             <Star size={20} />
             <span>Conquista: "Estudante Dedicado"</span>
           </div>
@@ -279,33 +280,33 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="font-pixel bg-gray-900 text-white border-4 border-gray-700 p-6">
+    <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 rounded-lg">
       {/* Header do Quiz */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-2">
-          <span className="bg-blue-500 text-white px-3 py-1 text-sm font-medium">
+          <span className="bg-blue-500 text-white px-3 py-1 text-sm font-medium rounded">
             {question.subject}
           </span>
-          <span className="text-gray-400 text-sm">
+          <span className="text-gray-600 dark:text-gray-400 text-sm">
             {currentQuestion + 1}/{sampleQuestions.length}
           </span>
         </div>
-        <div className="flex items-center space-x-2 text-yellow-400">
+        <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-400">
           <Clock size={18} />
           <span className="font-bold">{timeLeft}s</span>
         </div>
       </div>
 
       {/* Barra de Progresso */}
-      <div className="w-full bg-gray-700 h-2 mb-6">
+      <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 mb-6 rounded">
         <div 
-          className="bg-blue-500 h-2 transition-all duration-300"
+          className="bg-blue-500 h-2 transition-all duration-300 rounded"
           style={{ width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }}
         ></div>
       </div>
 
       {/* Pergunta */}
-      <h3 className="text-lg font-bold text-white mb-6 leading-tight">{question.question}</h3>
+      <h3 className="text-lg font-bold mb-6 leading-tight">{question.question}</h3>
 
       {/* Opções de Resposta */}
       <div className="space-y-3 mb-6">
@@ -314,18 +315,18 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
             key={index}
             onClick={() => handleAnswerSelect(index)}
             disabled={showResult}
-            className={`w-full p-4 text-left border-2 transition-all duration-200 text-sm ${
+            className={`w-full p-4 text-left border-2 transition-all duration-200 text-sm rounded-lg ${
               selectedAnswer === index
                 ? showResult
                   ? isCorrect && selectedAnswer === index
-                    ? 'border-green-500 bg-green-900 text-white'
+                    ? 'border-green-500 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                     : selectedAnswer === index && !isCorrect
-                    ? 'border-red-500 bg-red-900 text-white'
-                    : 'border-blue-500 bg-blue-900 text-white'
-                  : 'border-blue-500 bg-blue-900 text-white'
+                    ? 'border-red-500 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                    : 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                  : 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
                 : showResult && index === question.correctAnswer
-                ? 'border-green-500 bg-green-900 text-white'
-                : 'border-gray-600 bg-gray-800 text-white hover:border-blue-400 hover:bg-gray-700'
+                ? 'border-green-500 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -343,11 +344,11 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
 
       {/* Explicação (apenas quando mostrar resultado) */}
       {showResult && (
-        <div className="bg-gray-800 border-2 border-blue-500 p-4 mb-6">
-          <h4 className="font-semibold text-blue-400 mb-2">
+        <div className="bg-gray-100 dark:bg-gray-800 border-2 border-blue-500 p-4 mb-6 rounded-lg">
+          <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">
             {isCorrect ? '🎉 Correto!' : '📚 Explicacao:'}
           </h4>
-          <p className="text-blue-300 text-sm leading-snug">{question.explanation}</p>
+          <p className="text-blue-500 dark:text-blue-300 text-sm leading-snug">{question.explanation}</p>
         </div>
       )}
 
@@ -373,8 +374,8 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
 
       {/* Pontuação Atual */}
       <div className="mt-4 text-center">
-        <span className="text-gray-400 text-sm">Pontos: </span>
-        <span className="font-bold text-blue-400">{score}</span>
+        <span className="text-gray-600 dark:text-gray-400 text-sm">Pontos: </span>
+        <span className="font-bold text-blue-600 dark:text-blue-400">{score}</span>
       </div>
     </div>
   );

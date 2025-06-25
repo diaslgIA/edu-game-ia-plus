@@ -26,7 +26,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(180); // Alterado para 3 minutos (180 segundos)
+  const [timeLeft, setTimeLeft] = useState(180);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
@@ -93,8 +93,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   if (questions.length === 0) {
     return (
-      <div className="font-pixel bg-gray-900 text-white border-4 border-gray-700 p-6 text-center">
-        <h3 className="text-xl font-bold text-white mb-4">
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
+        <h3 className="text-xl font-bold mb-4">
           Carregando questoes de {subject}...
         </h3>
       </div>
@@ -130,7 +130,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
-    <div className="font-pixel bg-gray-900 text-white p-4 h-full flex flex-col">
+    <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg">
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <QuizHeader 
@@ -157,16 +157,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         )}
 
         {/* Pontuação Atual - Sempre visível */}
-        <div className="mt-4 p-3 bg-gray-800 border-2 border-blue-500">
+        <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 border-2 border-blue-500 rounded-lg">
           <div className="text-center">
-            <span className="text-gray-300 text-sm font-medium">Pontos: </span>
-            <span className="font-bold text-blue-400 text-lg">{score}</span>
+            <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">Pontos: </span>
+            <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{score}</span>
           </div>
         </div>
       </div>
 
       {/* Botões de Ação - Sempre visíveis no final */}
-      <div className="pt-4 border-t border-gray-700">
+      <div className="pt-4 border-t border-gray-300 dark:border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
