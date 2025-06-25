@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GraduationCap, Users, Star, BookOpen, Target, Heart } from 'lucide-react';
 
@@ -114,6 +113,13 @@ export const createSlides = (userName: string): SlideData[] => [
               <span className="text-white font-bold text-sm">LG</span>
             </div>
             <h4 className="text-xs font-semibold">Lara Gidi</h4>
+            <p className="text-xs opacity-80">Co-fundadora</p>
+          </div>
+          <div className="text-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-400 rounded-full flex items-center justify-center mx-auto mb-1">
+              <span className="text-white font-bold text-sm">PC</span>
+            </div>
+            <h4 className="text-xs font-semibold">Pauline Cintra Gomes</h4>
             <p className="text-xs opacity-80">Co-fundadora</p>
           </div>
         </div>
