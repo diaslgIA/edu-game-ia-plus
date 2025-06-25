@@ -92,25 +92,33 @@ const Guilds = () => {
   };
 
   const createGuild = async () => {
-    if (!newGuildName.trim() || !user) return;
+    if (!newGuildName.trim() || !user) {
+      toast({
+        title: "Erro de validação",
+        description: "Nome da guilda é obrigatório e você precisa estar logado.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      console.log('Tentando criar guilda com usuário:', user.id);
+      console.log('Criando guilda...', { userId: user.id, guildName: newGuildName });
       
       // Criar guilda
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .insert({
           name: newGuildName.trim(),
-          description: newGuildDescription.trim(),
+          description: newGuildDescription.trim() || null,
           owner_id: user.id,
-          is_public: true
+          is_public: true,
+          total_points: 0
         })
         .select()
         .single();
 
       if (guildError) {
-        console.error('Erro ao criar guilda:', guildError);
+        console.error('Erro detalhado ao criar guilda:', guildError);
         throw guildError;
       }
 
@@ -127,27 +135,30 @@ const Guilds = () => {
 
       if (memberError) {
         console.error('Erro ao adicionar criador como membro:', memberError);
-        throw memberError;
+        // Não falhar aqui, pois a guilda já foi criada
+        console.warn('Guilda criada mas não foi possível adicionar como membro automaticamente');
       }
 
       toast({
-        title: "Guilda criada!",
-        description: `A guilda "${newGuildName}" foi criada com sucesso.`,
+        title: "Guilda criada com sucesso!",
+        description: `A guilda "${newGuildName}" foi criada.`,
       });
 
       setShowCreateModal(false);
       setNewGuildName('');
       setNewGuildDescription('');
-      fetchGuilds();
+      await fetchGuilds();
     } catch (error: any) {
-      console.error('Erro ao criar guilda:', error);
+      console.error('Erro completo ao criar guilda:', error);
       
       let errorMessage = "Não foi possível criar a guilda.";
       
-      if (error.message?.includes('row-level security')) {
-        errorMessage = "Erro de permissão. Verifique se você está logado corretamente.";
-      } else if (error.code === '42501') {
-        errorMessage = "Você não tem permissão para criar guildas. Entre em contato com o suporte.";
+      if (error.message?.includes('duplicate key')) {
+        errorMessage = "Já existe uma guilda com este nome.";
+      } else if (error.message?.includes('permission') || error.message?.includes('policy')) {
+        errorMessage = "Erro de permissão. Tente fazer logout e login novamente.";
+      } else if (error.code) {
+        errorMessage = `Erro técnico: ${error.code}`;
       }
       
       toast({
@@ -176,7 +187,7 @@ const Guilds = () => {
         description: "Você agora faz parte desta guilda.",
       });
 
-      fetchGuilds();
+      await fetchGuilds();
     } catch (error) {
       console.error('Erro ao ingressar na guilda:', error);
       toast({
@@ -313,22 +324,24 @@ const Guilds = () => {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nome da Guilda</label>
+                  <label className="block text-sm font-medium mb-1">Nome da Guilda *</label>
                   <Input
                     value={newGuildName}
                     onChange={(e) => setNewGuildName(e.target.value)}
                     placeholder="Digite o nome da guilda..."
                     className="w-full"
+                    maxLength={50}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Descrição</label>
+                  <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
                   <Input
                     value={newGuildDescription}
                     onChange={(e) => setNewGuildDescription(e.target.value)}
                     placeholder="Descreva o propósito da guilda..."
                     className="w-full"
+                    maxLength={200}
                   />
                 </div>
               </div>
@@ -336,7 +349,11 @@ const Guilds = () => {
               <div className="flex space-x-2 mt-6">
                 <Button
                   variant="outline"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewGuildName('');
+                    setNewGuildDescription('');
+                  }}
                   className="flex-1"
                 >
                   Cancelar
@@ -346,7 +363,7 @@ const Guilds = () => {
                   disabled={!newGuildName.trim()}
                   className="flex-1"
                 >
-                  Criar
+                  Criar Guilda
                 </Button>
               </div>
             </div>
