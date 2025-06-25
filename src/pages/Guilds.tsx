@@ -5,11 +5,12 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Users, Crown, Trophy, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Users, Crown, Trophy, Search, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import GuildInvites from '@/components/guild/GuildInvites';
 
 interface Guild {
   id: string;
@@ -32,6 +33,7 @@ const Guilds = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInvitesModal, setShowInvitesModal] = useState(false);
   const [newGuildName, setNewGuildName] = useState('');
   const [newGuildDescription, setNewGuildDescription] = useState('');
 
@@ -39,14 +41,14 @@ const Guilds = () => {
     try {
       setLoading(true);
       
-      // Buscar guildas públicas e guildas do usuário
+      // Buscar guildas públicas
       const { data: guildsData, error } = await supabase
         .from('guilds')
         .select(`
           *,
-          guild_members!inner(profile_id),
           profiles!guilds_owner_id_fkey(full_name)
-        `);
+        `)
+        .eq('is_public', true);
 
       if (error) throw error;
 
@@ -99,7 +101,8 @@ const Guilds = () => {
         .insert({
           name: newGuildName.trim(),
           description: newGuildDescription.trim(),
-          owner_id: user.id
+          owner_id: user.id,
+          is_public: true
         })
         .select()
         .single();
@@ -130,7 +133,7 @@ const Guilds = () => {
       console.error('Erro ao criar guilda:', error);
       toast({
         title: "Erro ao criar guilda",
-        description: "Não foi possível criar a guilda.",
+        description: "Não foi possível criar a guilda. Verifique se você tem permissão.",
         variant: "destructive"
       });
     }
@@ -192,6 +195,12 @@ const Guilds = () => {
             <Users size={18} />
           </h1>
           <div className="flex-1" />
+          <Button 
+            onClick={() => setShowInvitesModal(true)}
+            className="bg-green-500 hover:bg-green-600 text-white px-3"
+          >
+            <Mail size={16} />
+          </Button>
           <Button 
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-3"
@@ -320,6 +329,29 @@ const Guilds = () => {
                 >
                   Criar
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Invites Modal */}
+        {showInvitesModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Convites Recebidos</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowInvitesModal(false)}
+                  className="text-white"
+                >
+                  <ArrowLeft size={18} />
+                </Button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                <GuildInvites showReceivedInvites={true} />
               </div>
             </div>
           </div>

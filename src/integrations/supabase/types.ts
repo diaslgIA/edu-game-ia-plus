@@ -120,6 +120,58 @@ export type Database = {
           },
         ]
       }
+      guild_invites: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          invited_user_id: string
+          inviter_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          invited_user_id: string
+          inviter_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          invited_user_id?: string
+          inviter_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_invites_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_invites_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_invites_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_library_files: {
         Row: {
           created_at: string | null

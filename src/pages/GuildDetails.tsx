@@ -5,7 +5,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Library, Crown } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Library, Crown, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,8 @@ import GuildChat from '@/components/guild/GuildChat';
 import GuildMural from '@/components/guild/GuildMural';
 import GuildLibrary from '@/components/guild/GuildLibrary';
 import GuildMembers from '@/components/guild/GuildMembers';
+import GuildInviteModal from '@/components/guild/GuildInviteModal';
+import GuildInvites from '@/components/guild/GuildInvites';
 
 interface Guild {
   id: string;
@@ -24,6 +26,7 @@ interface Guild {
   created_at: string;
   member_count?: number;
   owner_name?: string;
+  user_role?: string;
 }
 
 const GuildDetails = () => {
@@ -34,6 +37,7 @@ const GuildDetails = () => {
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('mural');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const fetchGuildDetails = async () => {
     if (!id) return;
@@ -58,10 +62,19 @@ const GuildDetails = () => {
         .select('*', { count: 'exact', head: true })
         .eq('guild_id', id);
 
+      // Verificar papel do usuário na guilda
+      const { data: memberData } = await supabase
+        .from('guild_members')
+        .select('role')
+        .eq('guild_id', id)
+        .eq('profile_id', user?.id)
+        .single();
+
       setGuild({
         ...guildData,
         member_count: memberCount || 0,
-        owner_name: guildData.profiles?.full_name || 'Usuário'
+        owner_name: guildData.profiles?.full_name || 'Usuário',
+        user_role: memberData?.role || 'não-membro'
       });
     } catch (error) {
       console.error('Erro ao buscar detalhes da guilda:', error);
@@ -100,6 +113,8 @@ const GuildDetails = () => {
     );
   }
 
+  const canInvite = guild.owner_id === user?.id || guild.user_role === 'líder' || guild.user_role === 'moderador';
+
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
@@ -123,6 +138,14 @@ const GuildDetails = () => {
               </div>
               <p className="text-white/80 text-xs">{guild.description}</p>
             </div>
+            {canInvite && (
+              <Button 
+                onClick={() => setShowInviteModal(true)}
+                className="bg-green-500 hover:bg-green-600 text-white px-3"
+              >
+                <UserPlus size={16} />
+              </Button>
+            )}
           </div>
           
           <div className="flex items-center justify-between text-xs text-white/80">
@@ -143,7 +166,7 @@ const GuildDetails = () => {
         {/* Tabs */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-md mx-3 mt-3">
+            <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-md mx-3 mt-3">
               <TabsTrigger value="mural" className="text-xs">
                 <FileText size={14} className="mr-1" />
                 Mural
@@ -160,6 +183,11 @@ const GuildDetails = () => {
                 <Users size={14} className="mr-1" />
                 Membros
               </TabsTrigger>
+              {canInvite && (
+                <TabsTrigger value="convites" className="text-xs">
+                  Convites
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <div className="flex-1 overflow-hidden">
@@ -175,9 +203,24 @@ const GuildDetails = () => {
               <TabsContent value="membros" className="h-full m-0">
                 <GuildMembers guildId={guild.id} />
               </TabsContent>
+              {canInvite && (
+                <TabsContent value="convites" className="h-full m-0">
+                  <div className="p-3">
+                    <GuildInvites guildId={guild.id} />
+                  </div>
+                </TabsContent>
+              )}
             </div>
           </Tabs>
         </div>
+
+        {/* Invite Modal */}
+        <GuildInviteModal
+          guildId={guild.id}
+          guildName={guild.name}
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+        />
       </div>
       
       <BottomNavigation />
