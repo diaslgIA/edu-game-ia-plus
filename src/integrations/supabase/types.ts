@@ -586,24 +586,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_guild_member: {
-        Args: { target_guild_id: string; target_user_id: string }
-        Returns: boolean
-      }
       is_guild_member_safe: {
-        Args: { target_guild_id: string; target_user_id: string }
-        Returns: boolean
-      }
-      is_guild_owner: {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean
       }
       is_guild_owner_safe: {
         Args: { target_guild_id: string; target_user_id: string }
-        Returns: boolean
-      }
-      is_member_of_guild: {
-        Args: { g_id: string }
         Returns: boolean
       }
       recalculate_all_rankings: {
