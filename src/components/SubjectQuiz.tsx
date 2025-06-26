@@ -29,7 +29,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(180);
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutos por questão
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
@@ -43,9 +43,9 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     if (questions.length > 0) {
       console.log('Raw questions from database:', questions);
       
-      // Selecionar 10 questões aleatórias
+      // Selecionar 15 questões aleatórias (aumentado de 10)
       const shuffled = [...questions].sort(() => Math.random() - 0.5);
-      const selectedQuestions = shuffled.slice(0, Math.min(10, questions.length));
+      const selectedQuestions = shuffled.slice(0, Math.min(15, questions.length));
       
       // Converter para o formato esperado pelo quiz
       const formattedQuestions = selectedQuestions.map(q => {
@@ -57,6 +57,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
           optionsArray = q.options;
         } else if (typeof q.options === 'object' && q.options !== null) {
           optionsArray = Object.values(q.options);
+        } else if (typeof q.options === 'string') {
+          try {
+            const parsed = JSON.parse(q.options);
+            optionsArray = Array.isArray(parsed) ? parsed : Object.values(parsed);
+          } catch {
+            optionsArray = ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
+          }
         } else {
           console.error('Invalid options format for question:', q);
           optionsArray = ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
@@ -97,7 +104,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !showResult) {
-      handleNextQuestion();
+      // Tempo esgotado - submeter resposta automaticamente
+      handleSubmitAnswer();
     }
   }, [timeLeft, gameStarted, showResult, gameCompleted]);
 
@@ -115,7 +123,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     console.log('Starting game with questions:', quizQuestions);
     setGameStarted(true);
     setStartTime(Date.now());
-    setTimeLeft(180);
+    setTimeLeft(180); // 3 minutos por questão
     if (playSound) playSound('click');
   };
 
@@ -129,21 +137,19 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   const handleSubmitAnswer = () => {
     console.log('Submitting answer:', selectedAnswer);
-    if (selectedAnswer !== null) {
-      setShowResult(true);
-      setShowMentorGuide(false);
-      
-      const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
-      const questionScore = isCorrect ? 10 : 0;
-      
-      console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
-      
-      if (isCorrect) {
-        setScore(score + questionScore);
-      }
-      
-      setShowMentorFeedback(true);
+    setShowResult(true);
+    setShowMentorGuide(false);
+    
+    const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
+    const questionScore = isCorrect ? 10 : 0;
+    
+    console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
+    
+    if (isCorrect) {
+      setScore(score + questionScore);
     }
+    
+    setShowMentorFeedback(true);
   };
 
   const handleNextQuestion = async () => {
@@ -153,7 +159,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
-      setTimeLeft(180);
+      setTimeLeft(180); // Reset para 3 minutos
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -324,7 +330,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
               disabled={selectedAnswer === null}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-blue-700 active:border-b-2 active:border-r-2 disabled:opacity-50"
             >
-              Confirmar
+              {timeLeft <= 10 ? `Confirmar (${timeLeft}s)` : 'Confirmar'}
             </Button>
           ) : (
             <Button 
