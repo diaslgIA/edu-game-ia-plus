@@ -602,6 +602,10 @@ export type Database = {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean
       }
+      is_member_of_guild: {
+        Args: { g_id: string }
+        Returns: boolean
+      }
       recalculate_all_rankings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
