@@ -179,8 +179,8 @@ const Guilds = () => {
       
       if (error.message?.includes('duplicate key')) {
         errorMessage = "Já existe uma guilda com este nome.";
-      } else if (error.message?.includes('permission') || error.message?.includes('policy')) {
-        errorMessage = "Erro de permissão. Verifique se você está logado corretamente.";
+      } else if (error.message?.includes('Falha ao configurar')) {
+        errorMessage = error.message;
       } else if (error.code) {
         errorMessage = `Erro técnico: ${error.message || error.code}`;
       }
@@ -361,7 +361,7 @@ const Guilds = () => {
 
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    ℹ️ Sua guilda será visível para todos, mas apenas você poderá aprovar novos membros. Um código único será gerado para facilitar a descoberta.
+                    ℹ️ Você será automaticamente o dono da guilda e poderá promover outros membros a líderes. Um código único será gerado para facilitar a descoberta.
                   </p>
                 </div>
               </div>
