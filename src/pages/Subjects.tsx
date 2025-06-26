@@ -1,202 +1,321 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import Logo from '@/components/Logo';
 import { useUserProgress } from '@/hooks/useUserProgress';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileText, ArrowRight, Clock, Users, Trophy, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, Play, Target, Clock, Star, ChevronRight } from 'lucide-react';
 
 const Subjects = () => {
   const navigate = useNavigate();
-  const { progress, getTotalProgress, getSubjectProgress } = useUserProgress();
+  const { getSubjectProgress } = useUserProgress();
+  const { t } = useLanguage();
+  const { playSound, isMuted } = useSound();
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
-  const subjects = [
+  const handleNavigation = (path: string) => {
+    if (!isMuted) playSound('click');
+    navigate(path);
+  };
+
+  // Áreas do conhecimento com suas respectivas matérias
+  const knowledgeAreas = [
     {
-      title: 'Matemática e suas Tecnologias',
-      subject: 'Matemática',
-      icon: '🧮',
-      color: 'from-blue-400 to-blue-600',
-      topics: ['Álgebra', 'Geometria', 'Estatística', 'Funções', 'Trigonometria'],
-      exercises: 45,
-      time: '12h'
+      id: 'linguagens',
+      name: 'Linguagens e Códigos',
+      icon: '📝',
+      color: 'from-blue-500 to-blue-700',
+      subjects: [
+        { id: 'portugues', name: 'Português', icon: '📚', difficulty: 'Fácil', topics: 42 },
+        { id: 'ingles', name: 'Inglês', icon: '🌎', difficulty: 'Médio', topics: 28 },
+        { id: 'espanhol', name: 'Espanhol', icon: '🇪🇸', difficulty: 'Médio', topics: 24 },
+        { id: 'literatura', name: 'Literatura', icon: '📖', difficulty: 'Médio', topics: 36 },
+        { id: 'redacao', name: 'Redação', icon: '✍️', difficulty: 'Difícil', topics: 20 }
+      ]
     },
     {
-      title: 'Ciências da Natureza',
-      subject: 'Física',
-      icon: '🧪',
-      color: 'from-green-400 to-green-600',
-      topics: ['Física', 'Química', 'Biologia', 'Ecologia', 'Genética'],
-      exercises: 38,
-      time: '8h'
+      id: 'matematica',
+      name: 'Matemática',
+      icon: '📐',
+      color: 'from-purple-500 to-purple-700',
+      subjects: [
+        { id: 'matematica', name: 'Matemática', icon: '🔢', difficulty: 'Médio', topics: 48 }
+      ]
     },
     {
-      title: 'Ciências Humanas',
-      subject: 'História',
-      icon: '🗺️',
-      color: 'from-purple-400 to-purple-600',
-      topics: ['História', 'Geografia', 'Sociologia', 'Filosofia', 'Atualidades'],
-      exercises: 42,
-      time: '10h'
+      id: 'natureza',
+      name: 'Ciências da Natureza',
+      icon: '🔬',
+      color: 'from-green-500 to-green-700',
+      subjects: [
+        { id: 'fisica', name: 'Física', icon: '⚡', difficulty: 'Difícil', topics: 38 },
+        { id: 'quimica', name: 'Química', icon: '🧪', difficulty: 'Médio', topics: 41 },
+        { id: 'biologia', name: 'Biologia', icon: '🧬', difficulty: 'Médio', topics: 47 }
+      ]
     },
     {
-      title: 'Linguagens e Códigos',
-      subject: 'Português',
-      icon: '📖',
-      color: 'from-pink-400 to-pink-600',
-      topics: ['Português', 'Literatura', 'Inglês', 'Artes', 'Ed. Física'],
-      exercises: 50,
-      time: '15h'
-    },
-    {
-      title: 'Redação',
-      subject: 'Português',
-      icon: '✍️',
-      color: 'from-orange-400 to-orange-600',
-      topics: ['Dissertação', 'Argumentação', 'Coesão', 'Coerência', 'Temas Atuais'],
-      exercises: 25,
-      time: '6h'
+      id: 'humanas',
+      name: 'Ciências Humanas',
+      icon: '🌍',
+      color: 'from-orange-500 to-orange-700',
+      subjects: [
+        { id: 'historia', name: 'História', icon: '🏛️', difficulty: 'Fácil', topics: 36 },
+        { id: 'geografia', name: 'Geografia', icon: '🌍', difficulty: 'Fácil', topics: 33 },
+        { id: 'filosofia', name: 'Filosofia', icon: '🤔', difficulty: 'Médio', topics: 24 },
+        { id: 'sociologia', name: 'Sociologia', icon: '👥', difficulty: 'Fácil', topics: 28 }
+      ]
     }
   ];
 
-  const handleSubjectClick = (subject: string) => {
-    navigate(`/exercises?subject=${encodeURIComponent(subject)}`);
+  // Conteúdos para cada matéria
+  const subjectContents = {
+    'portugues': [
+      { title: 'Interpretação de Texto', description: 'Técnicas de leitura e compreensão', type: 'content' },
+      { title: 'Gramática', description: 'Sintaxe, morfologia e semântica', type: 'content' },
+      { title: 'Literatura Brasileira', description: 'Escolas literárias e autores', type: 'content' },
+      { title: 'Quiz de Português', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'matematica': [
+      { title: 'Álgebra', description: 'Equações e funções', type: 'content' },
+      { title: 'Geometria', description: 'Figuras planas e espaciais', type: 'content' },
+      { title: 'Estatística', description: 'Análise de dados e probabilidade', type: 'content' },
+      { title: 'Quiz de Matemática', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'fisica': [
+      { title: 'Mecânica', description: 'Cinemática e dinâmica', type: 'content' },
+      { title: 'Eletromagnetismo', description: 'Eletricidade e magnetismo', type: 'content' },
+      { title: 'Ondas e Óptica', description: 'Propagação e fenômenos', type: 'content' },
+      { title: 'Quiz de Física', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'quimica': [
+      { title: 'Química Geral', description: 'Estrutura atômica e ligações', type: 'content' },
+      { title: 'Química Orgânica', description: 'Compostos de carbono', type: 'content' },
+      { title: 'Físico-Química', description: 'Termoquímica e cinética', type: 'content' },
+      { title: 'Quiz de Química', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'biologia': [
+      { title: 'Citologia', description: 'Estrutura e função celular', type: 'content' },
+      { title: 'Genética', description: 'Hereditariedade e evolução', type: 'content' },
+      { title: 'Ecologia', description: 'Meio ambiente e sustentabilidade', type: 'content' },
+      { title: 'Quiz de Biologia', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'historia': [
+      { title: 'História do Brasil', description: 'Colônia, Império e República', type: 'content' },
+      { title: 'História Geral', description: 'Antiguidade aos tempos modernos', type: 'content' },
+      { title: 'História Contemporânea', description: 'Século XX e XXI', type: 'content' },
+      { title: 'Quiz de História', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'geografia': [
+      { title: 'Geografia Física', description: 'Relevo, clima e hidrografia', type: 'content' },
+      { title: 'Geografia Humana', description: 'População e urbanização', type: 'content' },
+      { title: 'Geopolítica', description: 'Relações internacionais', type: 'content' },
+      { title: 'Quiz de Geografia', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'filosofia': [
+      { title: 'Filosofia Antiga', description: 'Pensadores gregos e romanos', type: 'content' },
+      { title: 'Filosofia Moderna', description: 'Renascimento ao Iluminismo', type: 'content' },
+      { title: 'Ética e Política', description: 'Moral e organização social', type: 'content' },
+      { title: 'Quiz de Filosofia', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ],
+    'sociologia': [
+      { title: 'Teorias Sociológicas', description: 'Durkheim, Weber e Marx', type: 'content' },
+      { title: 'Estrutura Social', description: 'Classes e estratificação', type: 'content' },
+      { title: 'Movimentos Sociais', description: 'Cidadania e participação', type: 'content' },
+      { title: 'Quiz de Sociologia', description: 'Teste seus conhecimentos', type: 'quiz' }
+    ]
   };
 
-  return (
-    <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-6 rounded-b-3xl shadow-xl">
-          <div className="flex items-center justify-between mb-4">
+  const handleContentClick = (subject: string, content: any) => {
+    if (content.type === 'quiz') {
+      handleNavigation(`/exercises?subject=${encodeURIComponent(subject)}`);
+    } else {
+      handleNavigation(`/exercises?subject=${encodeURIComponent(subject)}`);
+    }
+  };
+
+  if (selectedSubject) {
+    const contents = subjectContents[selectedSubject as keyof typeof subjectContents] || [];
+    
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          {/* Header */}
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => setSelectedSubject(null)}
               className="text-white p-2 hover:bg-white/20 rounded-xl"
             >
               <ArrowLeft size={20} />
             </Button>
-            <Logo size="md" showText={true} animated />
-            <div className="w-10" />
+            <h1 className="text-lg font-semibold">{selectedSubject.charAt(0).toUpperCase() + selectedSubject.slice(1)}</h1>
           </div>
-          <h1 className="text-2xl font-bold flex items-center space-x-2">
-            <FileText size={24} />
-            <span>Matérias ENEM</span>
-          </h1>
-          <p className="text-white/90 text-sm mt-2">
-            Escolha uma área de conhecimento para começar
-          </p>
-        </div>
 
-        {/* Stats Overview */}
-        <div className="px-6 py-4">
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg">
-            <h2 className="font-semibold mb-3 flex items-center">
-              <Trophy className="mr-2 text-yellow-400" size={20} />
-              Seu Progresso Geral
-            </h2>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold">{getTotalProgress()}%</div>
-                <div className="text-xs opacity-80">Concluído</div>
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+            {contents.map((content, index) => (
+              <div
+                key={index}
+                onClick={() => handleContentClick(selectedSubject, content)}
+                className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className={`w-12 h-12 rounded-xl ${content.type === 'quiz' ? 'bg-yellow-500' : 'bg-blue-500'} flex items-center justify-center text-white shadow-lg`}>
+                    {content.type === 'quiz' ? <Target size={20} /> : <BookOpen size={20} />}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white text-lg mb-1">{content.title}</h3>
+                    <p className="text-white/80 text-sm">{content.description}</p>
+                    
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className={`text-xs px-2 py-1 rounded-lg text-white ${
+                        content.type === 'quiz' ? 'bg-yellow-500/30' : 'bg-blue-500/30'
+                      }`}>
+                        {content.type === 'quiz' ? 'Quiz' : 'Conteúdo'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-white/60 text-2xl">
+                    <ChevronRight size={20} />
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold">200</div>
-                <div className="text-xs opacity-80">Exercícios</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">51h</div>
-                <div className="text-xs opacity-80">Estudadas</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
-        {/* Subjects list */}
-        <div className="px-6 flex-1 overflow-y-auto">
-          <div className="space-y-4">
-            {subjects.map((subject, index) => {
-              const subjectProgress = getSubjectProgress(subject.subject);
+  if (selectedArea) {
+    const area = knowledgeAreas.find(area => area.id === selectedArea);
+    
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          {/* Header */}
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setSelectedArea(null)}
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">{area?.name}</h1>
+          </div>
+
+          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+            {area?.subjects.map((subject, index) => {
+              const subjectProgress = getSubjectProgress(subject.name);
               
               return (
                 <div
                   key={index}
-                  onClick={() => handleSubjectClick(subject.subject)}
-                  className={`bg-gradient-to-r ${subject.color} rounded-2xl p-6 text-white shadow-lg cursor-pointer hover:scale-105 transition-all duration-200 border border-white/10`}
+                  onClick={() => setSelectedSubject(subject.id)}
+                  className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-3xl bg-white/20 rounded-xl p-2">{subject.icon}</div>
-                      <div>
-                        <h3 className="font-bold text-lg leading-tight">{subject.title}</h3>
-                        <div className="flex items-center space-x-4 mt-2 text-sm opacity-90">
-                          <div className="flex items-center space-x-1">
-                            <Clock size={14} />
-                            <span>{subject.time}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <BookOpen size={14} />
-                            <span>{subject.exercises}</span>
-                          </div>
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${area.color} flex items-center justify-center text-2xl shadow-lg`}>
+                      {subject.icon}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white text-lg mb-1">{subject.name}</h3>
+                      <p className="text-white/80 text-sm mb-2">{subject.topics} tópicos disponíveis</p>
+                      
+                      <div className="flex items-center space-x-4 text-xs">
+                        <div className="flex items-center space-x-1">
+                          <Clock size={12} className="text-green-400" />
+                          <span className="text-white/80">{subject.difficulty}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star size={12} className="text-yellow-400" />
+                          <span className="text-white/80">{subjectProgress.progress_percentage}%</span>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white/20 hover:bg-white/30 text-white rounded-xl p-3 transition-colors">
-                      <ArrowRight size={20} />
-                    </div>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm opacity-90">Progresso</span>
-                      <span className="text-sm font-bold">{subjectProgress.progress_percentage}%</span>
-                    </div>
-                    <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
-                      <div 
-                        className="bg-white rounded-full h-3 transition-all duration-500 shadow-inner"
-                        style={{ width: `${subjectProgress.progress_percentage}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Topics */}
-                  <div>
-                    <p className="text-sm opacity-90 mb-2">Principais tópicos:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {subject.topics.slice(0, 3).map((topic, topicIndex) => (
-                        <span
-                          key={topicIndex}
-                          className="bg-white/25 px-3 py-1 rounded-lg text-xs font-medium"
-                        >
-                          {topic}
-                        </span>
-                      ))}
-                      {subject.topics.length > 3 && (
-                        <span className="bg-white/25 px-3 py-1 rounded-lg text-xs font-medium">
-                          +{subject.topics.length - 3} mais
-                        </span>
-                      )}
+                    
+                    <div className="text-white/60 text-2xl">
+                      <ChevronRight size={20} />
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
-          {/* Study Tips */}
-          <div className="mt-6 mb-4">
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-white shadow-lg">
-              <h3 className="font-bold text-lg mb-3 flex items-center">
-                <Trophy className="mr-2 text-yellow-400" size={20} />
-                Dica de Estudo
-              </h3>
-              <p className="text-sm opacity-90 leading-relaxed">
-                Comece pelas matérias que você tem mais dificuldade. O EduGameIA 
-                adapta o conteúdo ao seu ritmo de aprendizado para maximizar seus resultados!
-              </p>
+  return (
+    <MobileContainer background="gradient">
+      <div className="flex flex-col h-full pb-20">
+        {/* Header */}
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="text-white p-2 hover:bg-white/20 rounded-xl"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className="text-lg font-semibold flex items-center space-x-2">
+            <BookOpen size={20} />
+            <span>{t('subjects')}</span>
+          </h1>
+        </div>
+
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          <div>
+            <h2 className="text-white text-lg font-semibold mb-4">Áreas do Conhecimento</h2>
+            <div className="grid grid-cols-1 gap-4">
+              {knowledgeAreas.map((area, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedArea(area.id)}
+                  className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${area.color} flex items-center justify-center text-2xl shadow-lg`}>
+                      {area.icon}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white text-lg mb-1">{area.name}</h3>
+                      <p className="text-white/80 text-sm mb-2">{area.subjects.length} matérias disponíveis</p>
+                      
+                      <div className="flex flex-wrap gap-1">
+                        {area.subjects.slice(0, 3).map((subject, idx) => (
+                          <span key={idx} className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
+                            {subject.name}
+                          </span>
+                        ))}
+                        {area.subjects.length > 3 && (
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
+                            +{area.subjects.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="text-white/60 text-2xl">
+                      <ChevronRight size={20} />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
