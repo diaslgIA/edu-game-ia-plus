@@ -7,10 +7,10 @@ interface SubjectQuestion {
   subject: string;
   topic: string;
   question: string;
-  options: any; // Changed from string[] to any to handle Json type
+  options: string[] | any; // Pode vir como array ou objeto do banco
   correct_answer: number;
   explanation: string;
-  difficulty_level: string; // Changed from union type to string
+  difficulty_level: string;
 }
 
 export const useSubjectQuestions = (subject: string) => {
@@ -26,6 +26,8 @@ export const useSubjectQuestions = (subject: string) => {
   const loadQuestions = async () => {
     try {
       setLoading(true);
+      console.log('Loading questions for subject:', subject);
+      
       const { data, error } = await supabase
         .from('subject_questions')
         .select('*')
@@ -36,6 +38,7 @@ export const useSubjectQuestions = (subject: string) => {
         return;
       }
 
+      console.log('Loaded questions from database:', data);
       setQuestions(data || []);
     } catch (error) {
       console.error('Error loading questions:', error);

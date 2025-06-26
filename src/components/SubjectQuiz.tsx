@@ -41,23 +41,56 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   useEffect(() => {
     if (questions.length > 0) {
+      console.log('Raw questions from database:', questions);
+      
       // Selecionar 10 questões aleatórias
       const shuffled = [...questions].sort(() => Math.random() - 0.5);
       const selectedQuestions = shuffled.slice(0, Math.min(10, questions.length));
       
       // Converter para o formato esperado pelo quiz
-      const formattedQuestions = selectedQuestions.map(q => ({
-        question: q.question,
-        options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
-        correctAnswer: q.correct_answer,
-        explanation: q.explanation,
-        topic: q.topic,
-        difficulty: q.difficulty_level || 'medium'
-      }));
+      const formattedQuestions = selectedQuestions.map(q => {
+        console.log('Processing question:', q);
+        
+        // Garantir que options seja um array
+        let optionsArray = [];
+        if (Array.isArray(q.options)) {
+          optionsArray = q.options;
+        } else if (typeof q.options === 'object' && q.options !== null) {
+          optionsArray = Object.values(q.options);
+        } else {
+          console.error('Invalid options format for question:', q);
+          optionsArray = ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
+        }
+        
+        // Mapear dificuldade
+        const difficultyMap: { [key: string]: string } = {
+          'easy': 'Fácil',
+          'medium': 'Médio', 
+          'hard': 'Difícil',
+          'facil': 'Fácil',
+          'medio': 'Médio',
+          'dificil': 'Difícil'
+        };
+        
+        const difficulty = difficultyMap[q.difficulty_level?.toLowerCase()] || 'Médio';
+        
+        const formattedQuestion = {
+          question: q.question,
+          options: optionsArray,
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation || "Explicação não disponível.",
+          topic: q.topic || subject,
+          difficulty: difficulty
+        };
+        
+        console.log('Formatted question:', formattedQuestion);
+        return formattedQuestion;
+      });
       
+      console.log('Final formatted questions:', formattedQuestions);
       setQuizQuestions(formattedQuestions);
     }
-  }, [questions]);
+  }, [questions, subject]);
 
   useEffect(() => {
     if (gameStarted && timeLeft > 0 && !showResult && !gameCompleted) {
@@ -72,13 +105,14 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   useEffect(() => {
     if (gameStarted && !showResult && quizQuestions.length > 0 && currentQuestion < quizQuestions.length) {
       const question = quizQuestions[currentQuestion];
-      if (question.difficulty === 'hard' && timeLeft < 120) {
+      if (question.difficulty === 'Difícil' && timeLeft < 120) {
         setShowMentorGuide(true);
       }
     }
   }, [gameStarted, showResult, currentQuestion, timeLeft, quizQuestions]);
 
   const startGame = () => {
+    console.log('Starting game with questions:', quizQuestions);
     setGameStarted(true);
     setStartTime(Date.now());
     setTimeLeft(180);
@@ -86,6 +120,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
+    console.log('Answer selected:', answerIndex);
     if (!showResult) {
       setSelectedAnswer(answerIndex);
       if (playSound) playSound('click');
@@ -93,12 +128,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   };
 
   const handleSubmitAnswer = () => {
+    console.log('Submitting answer:', selectedAnswer);
     if (selectedAnswer !== null) {
       setShowResult(true);
       setShowMentorGuide(false);
       
       const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
       const questionScore = isCorrect ? 10 : 0;
+      
+      console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
       
       if (isCorrect) {
         setScore(score + questionScore);
@@ -202,6 +240,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const question = quizQuestions[currentQuestion];
   const isCorrect = selectedAnswer === question.correctAnswer;
   const xpGained = isCorrect ? 10 : 3;
+
+  console.log('Current question:', question);
+  console.log('Selected answer:', selectedAnswer);
+  console.log('Show result:', showResult);
 
   return (
     <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg relative">
