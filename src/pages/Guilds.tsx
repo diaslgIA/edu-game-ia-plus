@@ -124,67 +124,25 @@ const Guilds = () => {
       const guildCode = generateGuildCode();
       console.log('Código da guilda gerado:', guildCode);
 
-      // Criar a guilda
-      const guildInsertData = {
-        name: newGuildData.name.trim(),
-        description: newGuildData.description.trim(),
+      // Usar uma transação RPC para criar guilda e adicionar membro de forma atômica
+      const { data: result, error: rpcError } = await supabase.rpc('create_guild_with_owner', {
+        guild_name: newGuildData.name.trim(),
+        guild_description: newGuildData.description.trim(),
         guild_code: guildCode,
         owner_id: user.id,
-        is_public: newGuildData.isPublic,
-        total_points: 0
-      };
+        is_public: newGuildData.isPublic
+      });
 
-      console.log('Dados para inserir na guilda:', guildInsertData);
-
-      const { data: guild, error: guildError } = await supabase
-        .from('guilds')
-        .insert(guildInsertData)
-        .select()
-        .single();
-
-      if (guildError) {
-        console.error('Erro ao criar guilda:', guildError);
-        toast({
-          title: "Erro ao criar guilda",
-          description: `Erro: ${guildError.message}`,
-          variant: "destructive"
-        });
-        return;
+      if (rpcError) {
+        console.error('Erro na função RPC:', rpcError);
+        throw rpcError;
       }
 
-      console.log('Guilda criada com sucesso:', guild);
-
-      // Adicionar o criador como primeiro membro com papel de dono
-      const memberInsertData = {
-        guild_id: guild.id,
-        profile_id: user.id,
-        role: 'dono',
-        joined_at: new Date().toISOString()
-      };
-
-      console.log('Dados para inserir membro dono:', memberInsertData);
-
-      const { error: memberError } = await supabase
-        .from('guild_members')
-        .insert(memberInsertData);
-
-      if (memberError) {
-        console.error('Erro ao adicionar membro dono:', memberError);
-        // Se falhar ao adicionar como membro, tentar deletar a guilda criada
-        await supabase.from('guilds').delete().eq('id', guild.id);
-        toast({
-          title: "Erro ao criar guilda",
-          description: `Erro ao adicionar como membro: ${memberError.message}`,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('Membro dono adicionado com sucesso');
+      console.log('Guilda criada com sucesso via RPC:', result);
 
       toast({
         title: "Guilda criada!",
-        description: `A guilda "${guild.name}" foi criada com sucesso.`,
+        description: `A guilda "${newGuildData.name}" foi criada com sucesso.`,
       });
 
       setShowCreateModal(false);
@@ -195,7 +153,7 @@ const Guilds = () => {
       
       toast({
         title: "Erro ao criar guilda",
-        description: `Erro inesperado: ${error.message || 'Erro desconhecido'}`,
+        description: `Erro: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive"
       });
     } finally {
