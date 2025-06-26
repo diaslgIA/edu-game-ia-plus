@@ -8,9 +8,9 @@ interface SubjectContent {
   subject: string;
   title: string;
   description: string;
-  content_type: 'theory' | 'exercise' | 'video';
+  content_type: string; // Changed from union type to string
   content_data: any;
-  difficulty_level: 'easy' | 'medium' | 'hard';
+  difficulty_level: string; // Changed from union type to string
   estimated_time: number;
   is_premium: boolean;
   order_index: number;

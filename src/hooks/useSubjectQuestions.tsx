@@ -7,10 +7,10 @@ interface SubjectQuestion {
   subject: string;
   topic: string;
   question: string;
-  options: string[];
+  options: any; // Changed from string[] to any to handle Json type
   correct_answer: number;
   explanation: string;
-  difficulty_level: 'easy' | 'medium' | 'hard';
+  difficulty_level: string; // Changed from union type to string
 }
 
 export const useSubjectQuestions = (subject: string) => {
