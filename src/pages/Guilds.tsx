@@ -125,13 +125,14 @@ const Guilds = () => {
       console.log('Código da guilda gerado:', guildCode);
 
       // Usar uma transação RPC para criar guilda e adicionar membro de forma atômica
-      const { data: result, error: rpcError } = await supabase.rpc('create_guild_with_owner', {
-        guild_name: newGuildData.name.trim(),
-        guild_description: newGuildData.description.trim(),
-        guild_code: guildCode,
-        owner_id: user.id,
-        is_public: newGuildData.isPublic
-      });
+      const { data: result, error: rpcError } = await supabase
+        .rpc('create_guild_with_owner', {
+          guild_name: newGuildData.name.trim(),
+          guild_description: newGuildData.description.trim(),
+          guild_code: guildCode,
+          owner_id: user.id,
+          is_public: newGuildData.isPublic
+        });
 
       if (rpcError) {
         console.error('Erro na função RPC:', rpcError);

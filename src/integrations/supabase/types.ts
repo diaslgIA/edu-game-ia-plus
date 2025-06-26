@@ -586,6 +586,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_guild_with_owner: {
+        Args: {
+          guild_name: string
+          guild_description: string
+          guild_code: string
+          owner_id: string
+          is_public: boolean
+        }
+        Returns: Json
+      }
       is_guild_member_safe: {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean
