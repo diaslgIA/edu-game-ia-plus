@@ -39,7 +39,20 @@ export const useMentorAffinity = () => {
         return;
       }
 
-      setAffinities(data || []);
+      // Transform the data to match our interface
+      const transformedData: MentorAffinity[] = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        mentor_id: item.mentor_id,
+        affinity_level: item.affinity_level,
+        experience_points: item.experience_points,
+        unlocked_content: Array.isArray(item.unlocked_content) ? item.unlocked_content : [],
+        last_interaction: item.last_interaction,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+
+      setAffinities(transformedData);
     } catch (error) {
       console.error('Error fetching mentor affinities:', error);
     } finally {

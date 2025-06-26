@@ -139,4 +139,8 @@ export const getMentorBySubject = (subject: string): Mentor | null => {
   return mentors.find(m => m.id === mentorId) || mentors[0]; // Fallback para Pitágoras
 };
 
+export const getAllMentors = (): Mentor[] => {
+  return mentors;
+};
+
 export default mentors;
