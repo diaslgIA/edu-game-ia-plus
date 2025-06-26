@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -45,30 +44,43 @@ const Guilds = () => {
       setLoading(true);
       console.log('Buscando guildas...');
 
-      let query = supabase
-        .from('guilds')
-        .select(`
-          *,
-          guild_members(count)
-        `);
+      // Buscar guildas sem a contagem aninhada para evitar recursão
+      let guildsQuery = supabase.from('guilds').select('*');
 
       if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
+        guildsQuery = guildsQuery.ilike('name', `%${searchQuery}%`);
       }
 
-      const { data, error } = await query;
+      const { data: guildsData, error: guildsError } = await guildsQuery;
 
-      if (error) {
-        console.error('Erro ao buscar guildas:', error);
-        throw error;
+      if (guildsError) {
+        console.error('Erro ao buscar guildas:', guildsError);
+        throw guildsError;
       }
 
-      console.log('Guildas encontradas:', data);
+      console.log('Guildas encontradas:', guildsData);
 
-      const guildsWithMemberCount = data?.map(guild => ({
-        ...guild,
-        member_count: guild.guild_members ? guild.guild_members.length : 0,
-      })) || [];
+      // Buscar contagem de membros separadamente para cada guilda
+      const guildsWithMemberCount = await Promise.all(
+        (guildsData || []).map(async (guild) => {
+          try {
+            const { count, error: countError } = await supabase
+              .from('guild_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('guild_id', guild.id);
+
+            if (countError) {
+              console.warn(`Erro ao contar membros da guilda ${guild.id}:`, countError);
+              return { ...guild, member_count: 0 };
+            }
+
+            return { ...guild, member_count: count || 0 };
+          } catch (error) {
+            console.warn(`Erro ao buscar contagem para guilda ${guild.id}:`, error);
+            return { ...guild, member_count: 0 };
+          }
+        })
+      );
 
       setGuilds(guildsWithMemberCount);
     } catch (error) {
