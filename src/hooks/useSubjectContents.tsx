@@ -107,8 +107,19 @@ export const useSubjectContents = (subject: string) => {
     }
   };
 
-  const getContentProgress = (contentId: string) => {
-    return progress.find(p => p.content_id === contentId);
+  const getContentProgress = (contentId: string): ContentProgress => {
+    const foundProgress = progress.find(p => p.content_id === contentId);
+    // Return default progress object if not found
+    return foundProgress || {
+      id: '',
+      user_id: '',
+      content_id: contentId,
+      completed: false,
+      progress_percentage: 0,
+      time_spent: 0,
+      last_accessed: '',
+      created_at: ''
+    };
   };
 
   return {

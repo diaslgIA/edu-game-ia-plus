@@ -128,7 +128,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                     <div className="flex items-center space-x-4">
                       <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
                         <BookOpen size={24} />
-                        {progress.completed && (
+                        {progress && progress.completed && (
                           <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                             <CheckCircle size={16} className="text-white" />
                           </div>
@@ -149,7 +149,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                               {getDifficultyText(content.difficulty_level)}
                             </span>
                           </div>
-                          {progress.progress_percentage > 0 && (
+                          {progress && progress.progress_percentage > 0 && (
                             <div className="flex items-center space-x-1">
                               <span className="text-green-400 text-xs">
                                 {progress.progress_percentage}% concluído
