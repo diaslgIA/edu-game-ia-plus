@@ -7,6 +7,7 @@ export interface Mentor {
   color: string;
   backgroundColor: string;
   subject: string;
+  description: string;
   welcomeMessage: string;
   catchPhrase: string;
   hintStyle: string;
@@ -22,6 +23,7 @@ const mentors: Mentor[] = [
     color: '#3B82F6',
     backgroundColor: '#EBF8FF',
     subject: 'Matemática',
+    description: 'Filósofo e matemático grego, fundador da escola pitagórica. Acreditava que os números eram a essência de todas as coisas e que a harmonia matemática governava o universo.',
     welcomeMessage: 'Bem-vindo, buscador da ordem. Que segredo cósmico os números nos revelarão hoje?',
     catchPhrase: 'Tudo é número, proporção e harmonia.',
     hintStyle: 'Observe as proporções e padrões...',
@@ -39,6 +41,7 @@ const mentors: Mentor[] = [
     color: '#7C3AED',
     backgroundColor: '#F3E8FF',
     subject: 'Física',
+    description: 'Físico teórico alemão, desenvolveu a teoria da relatividade e revolucionou nossa compreensão do espaço, tempo e gravidade. Ganhador do Prêmio Nobel de Física.',
     welcomeMessage: 'Ah, olá! Estava aqui pensando... que grande quebra-cabeça cósmico vamos tentar resolver juntos hoje?',
     catchPhrase: 'A imaginação é mais importante que o conhecimento.',
     hintStyle: 'Imagine um experimento mental...',
@@ -56,6 +59,7 @@ const mentors: Mentor[] = [
     color: '#F59E0B',
     backgroundColor: '#FEF3C7',
     subject: 'Química',
+    description: 'Física e química polonesa, primeira mulher a ganhar um Prêmio Nobel e única pessoa a ganhar Nobel em duas áreas científicas diferentes. Pioneira no estudo da radioatividade.',
     welcomeMessage: 'Olá, jovem cientista! Pronto para explorar os mistérios da matéria?',
     catchPhrase: 'Nada na vida deve ser temido, apenas compreendido.',
     hintStyle: 'Pense nas reações e transformações...',
@@ -73,6 +77,7 @@ const mentors: Mentor[] = [
     color: '#10B981',
     backgroundColor: '#D1FAE5',
     subject: 'Biologia',
+    description: 'Naturalista britânico que propôs a teoria da evolução por seleção natural, revolucionando nossa compreensão sobre a origem e desenvolvimento das espécies.',
     welcomeMessage: 'Saudações, jovem naturalista! Vamos explorar os mistérios da vida juntos?',
     catchPhrase: 'Não é o mais forte que sobrevive, mas o que melhor se adapta.',
     hintStyle: 'Observe a natureza e suas adaptações...',
@@ -90,6 +95,7 @@ const mentors: Mentor[] = [
     color: '#059669',
     backgroundColor: '#ECFDF5',
     subject: 'Português',
+    description: 'Poeta português do século XVI, autor de Os Lusíadas, considerado uma das maiores obras da literatura em língua portuguesa e um marco do Renascimento.',
     welcomeMessage: 'Salve, amante das letras! Que aventura literária viveremos hoje?',
     catchPhrase: 'Amor é fogo que arde sem se ver.',
     hintStyle: 'Preste atenção às palavras e seus significados...',
@@ -107,6 +113,7 @@ const mentors: Mentor[] = [
     color: '#D97706',
     backgroundColor: '#FEF3C7',
     subject: 'História',
+    description: 'Historiador grego antigo, considerado o "Pai da História" por ser um dos primeiros a investigar sistematicamente eventos históricos e registrá-los de forma organizada.',
     welcomeMessage: 'Salve, jovem historiador! Que páginas do passado descobriremos hoje?',
     catchPhrase: 'A história é mestra da vida.',
     hintStyle: 'Conecte os eventos e suas consequências...',
