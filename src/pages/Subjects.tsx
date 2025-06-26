@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import SubjectContent from '@/components/SubjectContent';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Play, Target, Clock, Star, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Star, ChevronRight } from 'lucide-react';
 
 const Subjects = () => {
   const navigate = useNavigate();
@@ -71,124 +72,13 @@ const Subjects = () => {
     }
   ];
 
-  // Conteúdos para cada matéria
-  const subjectContents = {
-    'portugues': [
-      { title: 'Interpretação de Texto', description: 'Técnicas de leitura e compreensão', type: 'content' },
-      { title: 'Gramática', description: 'Sintaxe, morfologia e semântica', type: 'content' },
-      { title: 'Literatura Brasileira', description: 'Escolas literárias e autores', type: 'content' },
-      { title: 'Quiz de Português', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'matematica': [
-      { title: 'Álgebra', description: 'Equações e funções', type: 'content' },
-      { title: 'Geometria', description: 'Figuras planas e espaciais', type: 'content' },
-      { title: 'Estatística', description: 'Análise de dados e probabilidade', type: 'content' },
-      { title: 'Quiz de Matemática', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'fisica': [
-      { title: 'Mecânica', description: 'Cinemática e dinâmica', type: 'content' },
-      { title: 'Eletromagnetismo', description: 'Eletricidade e magnetismo', type: 'content' },
-      { title: 'Ondas e Óptica', description: 'Propagação e fenômenos', type: 'content' },
-      { title: 'Quiz de Física', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'quimica': [
-      { title: 'Química Geral', description: 'Estrutura atômica e ligações', type: 'content' },
-      { title: 'Química Orgânica', description: 'Compostos de carbono', type: 'content' },
-      { title: 'Físico-Química', description: 'Termoquímica e cinética', type: 'content' },
-      { title: 'Quiz de Química', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'biologia': [
-      { title: 'Citologia', description: 'Estrutura e função celular', type: 'content' },
-      { title: 'Genética', description: 'Hereditariedade e evolução', type: 'content' },
-      { title: 'Ecologia', description: 'Meio ambiente e sustentabilidade', type: 'content' },
-      { title: 'Quiz de Biologia', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'historia': [
-      { title: 'História do Brasil', description: 'Colônia, Império e República', type: 'content' },
-      { title: 'História Geral', description: 'Antiguidade aos tempos modernos', type: 'content' },
-      { title: 'História Contemporânea', description: 'Século XX e XXI', type: 'content' },
-      { title: 'Quiz de História', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'geografia': [
-      { title: 'Geografia Física', description: 'Relevo, clima e hidrografia', type: 'content' },
-      { title: 'Geografia Humana', description: 'População e urbanização', type: 'content' },
-      { title: 'Geopolítica', description: 'Relações internacionais', type: 'content' },
-      { title: 'Quiz de Geografia', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'filosofia': [
-      { title: 'Filosofia Antiga', description: 'Pensadores gregos e romanos', type: 'content' },
-      { title: 'Filosofia Moderna', description: 'Renascimento ao Iluminismo', type: 'content' },
-      { title: 'Ética e Política', description: 'Moral e organização social', type: 'content' },
-      { title: 'Quiz de Filosofia', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ],
-    'sociologia': [
-      { title: 'Teorias Sociológicas', description: 'Durkheim, Weber e Marx', type: 'content' },
-      { title: 'Estrutura Social', description: 'Classes e estratificação', type: 'content' },
-      { title: 'Movimentos Sociais', description: 'Cidadania e participação', type: 'content' },
-      { title: 'Quiz de Sociologia', description: 'Teste seus conhecimentos', type: 'quiz' }
-    ]
-  };
-
-  const handleContentClick = (subject: string, content: any) => {
-    if (content.type === 'quiz') {
-      handleNavigation(`/exercises?subject=${encodeURIComponent(subject)}`);
-    } else {
-      handleNavigation(`/exercises?subject=${encodeURIComponent(subject)}`);
-    }
-  };
-
   if (selectedSubject) {
-    const contents = subjectContents[selectedSubject as keyof typeof subjectContents] || [];
-    
     return (
       <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20">
-          {/* Header */}
-          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setSelectedSubject(null)}
-              className="text-white p-2 hover:bg-white/20 rounded-xl"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <h1 className="text-lg font-semibold">{selectedSubject.charAt(0).toUpperCase() + selectedSubject.slice(1)}</h1>
-          </div>
-
-          <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-            {contents.map((content, index) => (
-              <div
-                key={index}
-                onClick={() => handleContentClick(selectedSubject, content)}
-                className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className={`w-12 h-12 rounded-xl ${content.type === 'quiz' ? 'bg-yellow-500' : 'bg-blue-500'} flex items-center justify-center text-white shadow-lg`}>
-                    {content.type === 'quiz' ? <Target size={20} /> : <BookOpen size={20} />}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="font-bold text-white text-lg mb-1">{content.title}</h3>
-                    <p className="text-white/80 text-sm">{content.description}</p>
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <span className={`text-xs px-2 py-1 rounded-lg text-white ${
-                        content.type === 'quiz' ? 'bg-yellow-500/30' : 'bg-blue-500/30'
-                      }`}>
-                        {content.type === 'quiz' ? 'Quiz' : 'Conteúdo'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-white/60 text-2xl">
-                    <ChevronRight size={20} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SubjectContent 
+          subject={selectedSubject}
+          onBack={() => setSelectedSubject(null)}
+        />
         <BottomNavigation />
       </MobileContainer>
     );
@@ -230,7 +120,7 @@ const Subjects = () => {
                     
                     <div className="flex-1">
                       <h3 className="font-bold text-white text-lg mb-1">{subject.name}</h3>
-                      <p className="text-white/80 text-sm mb-2">{subject.topics} tópicos disponíveis</p>
+                      <p className="text-white/80 text-sm mb-2">Conteúdos e quizzes disponíveis</p>
                       
                       <div className="flex items-center space-x-4 text-xs">
                         <div className="flex items-center space-x-1">

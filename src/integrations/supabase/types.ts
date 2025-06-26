@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      content_progress: {
+        Row: {
+          completed: boolean | null
+          content_id: string
+          created_at: string
+          id: string
+          last_accessed: string | null
+          progress_percentage: number | null
+          time_spent: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          content_id: string
+          created_at?: string
+          id?: string
+          last_accessed?: string | null
+          progress_percentage?: number | null
+          time_spent?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          content_id?: string
+          created_at?: string
+          id?: string
+          last_accessed?: string | null
+          progress_percentage?: number | null
+          time_spent?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_progress_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "subject_contents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_usage: {
         Row: {
           activities_completed: number | null
@@ -468,6 +509,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subject_contents: {
+        Row: {
+          content_data: Json | null
+          content_type: string
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          estimated_time: number | null
+          id: string
+          is_premium: boolean | null
+          order_index: number | null
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_data?: Json | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_time?: number | null
+          id?: string
+          is_premium?: boolean | null
+          order_index?: number | null
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_data?: Json | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_time?: number | null
+          id?: string
+          is_premium?: boolean | null
+          order_index?: number | null
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subject_progress: {
         Row: {
           completed_activities: number
@@ -501,6 +587,42 @@ export type Database = {
           total_activities?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      subject_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          difficulty_level: string | null
+          explanation: string | null
+          id: string
+          options: Json
+          question: string
+          subject: string
+          topic: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          difficulty_level?: string | null
+          explanation?: string | null
+          id?: string
+          options: Json
+          question: string
+          subject: string
+          topic: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          difficulty_level?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json
+          question?: string
+          subject?: string
+          topic?: string
         }
         Relationships: []
       }

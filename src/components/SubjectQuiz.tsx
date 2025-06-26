@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useExpandedQuestions } from '@/hooks/useExpandedQuestions';
+import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
 import QuizHeader from './quiz/QuizHeader';
@@ -17,11 +17,11 @@ interface SubjectQuizProps {
 }
 
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
-  const { generateQuiz } = useExpandedQuestions();
+  const { questions, loading } = useSubjectQuestions(subject);
   const { saveQuizScore, saving } = useQuizScore();
   const { playSound } = useSound();
   
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -32,9 +32,24 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [startTime, setStartTime] = useState<number>(0);
 
   useEffect(() => {
-    const quizQuestions = generateQuiz(subject, 10);
-    setQuestions(quizQuestions);
-  }, [subject, generateQuiz]);
+    if (questions.length > 0) {
+      // Selecionar 10 questões aleatórias
+      const shuffled = [...questions].sort(() => Math.random() - 0.5);
+      const selectedQuestions = shuffled.slice(0, Math.min(10, questions.length));
+      
+      // Converter para o formato esperado pelo quiz
+      const formattedQuestions = selectedQuestions.map(q => ({
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correct_answer,
+        explanation: q.explanation,
+        topic: q.topic,
+        difficulty: q.difficulty_level
+      }));
+      
+      setQuizQuestions(formattedQuestions);
+    }
+  }, [questions]);
 
   useEffect(() => {
     if (gameStarted && timeLeft > 0 && !showResult && !gameCompleted) {
@@ -62,7 +77,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const handleSubmitAnswer = () => {
     if (selectedAnswer !== null) {
       setShowResult(true);
-      const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
+      const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
       const questionScore = isCorrect ? 10 : 0;
       
       if (isCorrect) {
@@ -75,7 +90,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   };
 
   const handleNextQuestion = async () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
@@ -83,19 +98,42 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
-      const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 10 : 0);
+      const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
-      await saveQuizScore(subject, finalScore, questions.length, timeSpent);
+      await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
       onComplete(finalScore, timeSpent);
       playSound('success');
     }
   };
 
+  if (loading) {
+    return (
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
+        <h3 className="text-xl font-bold mb-4">
+          Carregando questões de {subject}...
+        </h3>
+      </div>
+    );
+  }
+
   if (questions.length === 0) {
     return (
       <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
         <h3 className="text-xl font-bold mb-4">
-          Carregando questoes de {subject}...
+          Nenhuma questão disponível para {subject}
+        </h3>
+        <Button onClick={onBack} className="mt-4">
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
+  if (quizQuestions.length === 0) {
+    return (
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
+        <h3 className="text-xl font-bold mb-4">
+          Preparando questões...
         </h3>
       </div>
     );
@@ -105,7 +143,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     return (
       <QuizIntro 
         subject={subject}
-        totalQuestions={questions.length}
+        totalQuestions={quizQuestions.length}
         onStart={startGame}
         onBack={onBack}
       />
@@ -113,20 +151,20 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   }
 
   if (gameCompleted) {
-    const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 10 : 0);
+    const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
     
     return (
       <QuizResults 
         subject={subject}
         score={finalScore}
-        totalQuestions={questions.length}
+        totalQuestions={quizQuestions.length}
         saving={saving}
         onBack={onBack}
       />
     );
   }
 
-  const question = questions[currentQuestion];
+  const question = quizQuestions[currentQuestion];
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
@@ -137,7 +175,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
           subject={subject}
           topic={question.topic}
           currentQuestion={currentQuestion}
-          totalQuestions={questions.length}
+          totalQuestions={quizQuestions.length}
           timeLeft={timeLeft}
           onBack={onBack}
         />
@@ -182,7 +220,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
               disabled={saving}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
-              {currentQuestion < questions.length - 1 ? 'Proxima' : 'Finalizar Quiz'}
+              {currentQuestion < quizQuestions.length - 1 ? 'Próxima' : 'Finalizar Quiz'}
             </Button>
           )}
         </div>
