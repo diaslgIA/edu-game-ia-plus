@@ -5,17 +5,20 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Users, Crown, Trophy, Search, Mail } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Plus, Users, Crown, Trophy, Search, Mail, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import GuildInvites from '@/components/guild/GuildInvites';
+import GuildDiscovery from '@/components/guild/GuildDiscovery';
 
 interface Guild {
   id: string;
   name: string;
   description: string;
+  guild_code: string;
   owner_id: string;
   total_points: number;
   is_public: boolean;
@@ -36,6 +39,7 @@ const Guilds = () => {
   const [showInvitesModal, setShowInvitesModal] = useState(false);
   const [newGuildName, setNewGuildName] = useState('');
   const [newGuildDescription, setNewGuildDescription] = useState('');
+  const [activeTab, setActiveTab] = useState('my-guilds');
 
   const fetchGuilds = async () => {
     try {
@@ -101,15 +105,19 @@ const Guilds = () => {
     try {
       console.log('Criando guilda...', { userId: user.id, guildName: newGuildName });
       
-      // Criar guilda (agora não é mais pública por padrão)
+      // Gerar código único para a guilda
+      const guildCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      // Criar guilda (agora é pública por padrão para permitir descoberta)
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .insert({
           name: newGuildName.trim(),
           description: newGuildDescription.trim() || null,
           owner_id: user.id,
-          is_public: false, // Mudança: guildas não são mais públicas
-          total_points: 0
+          is_public: true, // Mudança: guildas são públicas para descoberta
+          total_points: 0,
+          guild_code: guildCode
         })
         .select()
         .single();
@@ -137,7 +145,7 @@ const Guilds = () => {
 
       toast({
         title: "Guilda criada com sucesso!",
-        description: `A guilda "${newGuildName}" foi criada. Agora você pode convidar membros.`,
+        description: `A guilda "${newGuildName}" foi criada com código ${guildCode}. Agora você pode gerenciar solicitações de entrada.`,
       });
 
       setShowCreateModal(false);
@@ -188,7 +196,7 @@ const Guilds = () => {
             <ArrowLeft size={18} />
           </Button>
           <h1 className="text-base font-semibold flex items-center space-x-2">
-            <span>Minhas Guildas</span>
+            <span>Guildas</span>
             <Users size={18} />
           </h1>
           <div className="flex-1" />
@@ -206,67 +214,93 @@ const Guilds = () => {
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto pb-20">
-          <div className="p-4 space-y-4">
-            {/* Search */}
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar minhas guildas..."
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm pl-10"
-              />
-            </div>
+        {/* Tabs */}
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+            <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-md mx-3 mt-3">
+              <TabsTrigger value="my-guilds" className="text-xs">
+                <Users size={14} className="mr-1" />
+                Minhas Guildas
+              </TabsTrigger>
+              <TabsTrigger value="discover" className="text-xs">
+                <Globe size={14} className="mr-1" />
+                Descobrir
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="flex-1 overflow-y-auto pb-20">
+              <TabsContent value="my-guilds" className="m-0">
+                <div className="p-4 space-y-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Buscar minhas guildas..."
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 text-sm pl-10"
+                    />
+                  </div>
 
-            {/* Guilds List */}
-            <div className="space-y-3">
-              {loading ? (
-                <div className="text-center text-white">Carregando...</div>
-              ) : filteredGuilds.length === 0 ? (
-                <div className="text-center text-white/80 py-8">
-                  <Users size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Você não faz parte de nenhuma guilda ainda</p>
-                  <p className="text-sm opacity-75">Crie uma nova guilda ou aguarde um convite!</p>
-                </div>
-              ) : (
-                filteredGuilds.map((guild) => (
-                  <div
-                    key={guild.id}
-                    className="bg-white/10 backdrop-blur-md rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all"
-                    onClick={() => navigate(`/guilda/${guild.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-bold text-white text-sm">{guild.name}</h3>
-                          {guild.owner_id === user?.id && (
-                            <Crown size={14} className="text-yellow-400" />
-                          )}
-                        </div>
-                        <p className="text-white/80 text-xs mb-2">{guild.description || 'Sem descrição'}</p>
-                        
-                        <div className="flex items-center justify-between text-xs text-white/80">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-1">
-                              <Users size={12} />
-                              <span>{guild.member_count}/20 membros</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Trophy size={12} />
-                              <span>{guild.total_points} pontos</span>
+                  {/* My Guilds List */}
+                  <div className="space-y-3">
+                    {loading ? (
+                      <div className="text-center text-white">Carregando...</div>
+                    ) : filteredGuilds.length === 0 ? (
+                      <div className="text-center text-white/80 py-8">
+                        <Users size={48} className="mx-auto mb-4 opacity-50" />
+                        <p>Você não faz parte de nenhuma guilda ainda</p>
+                        <p className="text-sm opacity-75">Crie uma nova guilda ou descubra guildas existentes!</p>
+                      </div>
+                    ) : (
+                      filteredGuilds.map((guild) => (
+                        <div
+                          key={guild.id}
+                          className="bg-white/10 backdrop-blur-md rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all"
+                          onClick={() => navigate(`/guilda/${guild.id}`)}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <h3 className="font-bold text-white text-sm">{guild.name}</h3>
+                                {guild.owner_id === user?.id && (
+                                  <Crown size={14} className="text-yellow-400" />
+                                )}
+                                <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded">
+                                  {guild.guild_code}
+                                </span>
+                              </div>
+                              <p className="text-white/80 text-xs mb-2">{guild.description || 'Sem descrição'}</p>
+                              
+                              <div className="flex items-center justify-between text-xs text-white/80">
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex items-center space-x-1">
+                                    <Users size={12} />
+                                    <span>{guild.member_count}/20 membros</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Trophy size={12} />
+                                    <span>{guild.total_points} pontos</span>
+                                  </div>
+                                </div>
+                                <span className="text-xs">{guild.owner_name}</span>
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs">{guild.owner_name}</span>
                         </div>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </div>
-                ))
-              )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="discover" className="m-0">
+                <div className="p-4">
+                  <GuildDiscovery onJoinRequest={() => fetchGuilds()} />
+                </div>
+              </TabsContent>
             </div>
-          </div>
+          </Tabs>
         </div>
 
         {/* Create Guild Modal */}
@@ -300,7 +334,7 @@ const Guilds = () => {
 
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    ℹ️ Sua guilda será privada. Você poderá convidar até 20 membros através do sistema de convites.
+                    ℹ️ Sua guilda será visível para todos, mas apenas você poderá aprovar novos membros. Um código único será gerado para facilitar a descoberta.
                   </p>
                 </div>
               </div>

@@ -172,6 +172,51 @@ export type Database = {
           },
         ]
       }
+      guild_join_requests: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          message: string | null
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          message?: string | null
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          message?: string | null
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_join_requests_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_join_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_library_files: {
         Row: {
           created_at: string | null
@@ -302,6 +347,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          guild_code: string
           id: string
           is_public: boolean | null
           name: string
@@ -311,6 +357,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          guild_code: string
           id?: string
           is_public?: boolean | null
           name: string
@@ -320,6 +367,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          guild_code?: string
           id?: string
           is_public?: boolean | null
           name?: string
