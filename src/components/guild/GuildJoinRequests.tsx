@@ -33,6 +33,7 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   const fetchJoinRequests = async () => {
     try {
       setLoading(true);
+      console.log('Buscando solicitações para guilda:', guildId);
       
       const { data, error } = await supabase
         .from('guild_join_requests')
@@ -44,8 +45,12 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
         .eq('status', 'pending')
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar solicitações:', error);
+        throw error;
+      }
 
+      console.log('Solicitações encontradas:', data);
       setRequests(data || []);
     } catch (error) {
       console.error('Erro ao buscar solicitações:', error);
@@ -62,6 +67,7 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   const handleJoinRequest = async (requestId: string, action: 'approved' | 'rejected', requesterName: string) => {
     try {
       setProcessingRequest(requestId);
+      console.log('Processando solicitação:', { requestId, action });
 
       // Atualizar status da solicitação
       const { error: updateError } = await supabase
@@ -69,12 +75,17 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
         .update({ status: action })
         .eq('id', requestId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Erro ao atualizar solicitação:', updateError);
+        throw updateError;
+      }
 
       // Se aprovado, adicionar como membro
       if (action === 'approved') {
         const request = requests.find(r => r.id === requestId);
         if (request) {
+          console.log('Adicionando membro aprovado:', request.requester_id);
+          
           const { error: memberError } = await supabase
             .from('guild_members')
             .insert({
@@ -116,7 +127,9 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   };
 
   useEffect(() => {
-    fetchJoinRequests();
+    if (guildId) {
+      fetchJoinRequests();
+    }
   }, [guildId]);
 
   if (loading) {

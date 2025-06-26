@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Crown, Shield, User, MoreVertical, UserMinus, UserCheck } from 'lucide-react';
+import { Users, Crown, Shield, User, UserMinus, UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,10 +29,12 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   const { toast } = useToast();
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionMember, setActionMember] = useState<string | null>(null);
+  const [processingMember, setProcessingMember] = useState<string | null>(null);
 
   const fetchMembers = async () => {
     try {
+      console.log('Buscando membros da guilda:', guildId);
+      
       const { data, error } = await supabase
         .from('guild_members')
         .select(`
@@ -44,7 +46,12 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
         .eq('guild_id', guildId)
         .order('joined_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar membros:', error);
+        throw error;
+      }
+
+      console.log('Membros encontrados:', data);
 
       const processedMembers = data?.map(member => ({
         profile_id: member.profile_id,
@@ -57,27 +64,40 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
       setMembers(processedMembers);
     } catch (error) {
       console.error('Erro ao buscar membros:', error);
+      toast({
+        title: "Erro ao carregar membros",
+        description: "Não foi possível carregar os membros da guilda.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const updateMemberRole = async (memberId: string, newRole: string) => {
+  const updateMemberRole = async (memberId: string, newRole: string, memberName: string) => {
+    if (!isOwner) return;
+
     try {
+      setProcessingMember(memberId);
+      console.log('Atualizando papel do membro:', { memberId, newRole });
+
       const { error } = await supabase
         .from('guild_members')
         .update({ role: newRole })
         .eq('guild_id', guildId)
         .eq('profile_id', memberId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar cargo:', error);
+        throw error;
+      }
 
       toast({
         title: "Cargo atualizado",
-        description: `Membro promovido/rebaixado para ${newRole}.`,
+        description: `${memberName} foi promovido/rebaixado para ${newRole}.`,
       });
 
-      fetchMembers();
+      await fetchMembers();
       onMemberUpdate?.();
     } catch (error) {
       console.error('Erro ao atualizar cargo:', error);
@@ -86,25 +106,37 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
         description: "Não foi possível atualizar o cargo.",
         variant: "destructive"
       });
+    } finally {
+      setProcessingMember(null);
     }
   };
 
-  const removeMember = async (memberId: string) => {
+  const removeMember = async (memberId: string, memberName: string) => {
+    if (!isOwner && memberId !== user?.id) return;
+
     try {
+      setProcessingMember(memberId);
+      console.log('Removendo membro:', { memberId, guildId });
+
       const { error } = await supabase
         .from('guild_members')
         .delete()
         .eq('guild_id', guildId)
         .eq('profile_id', memberId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao remover membro:', error);
+        throw error;
+      }
 
       toast({
-        title: "Membro removido",
-        description: "O membro foi removido da guilda.",
+        title: memberId === user?.id ? "Você saiu da guilda" : "Membro removido",
+        description: memberId === user?.id ? 
+          "Você saiu da guilda com sucesso." : 
+          `${memberName} foi removido da guilda.`,
       });
 
-      fetchMembers();
+      await fetchMembers();
       onMemberUpdate?.();
     } catch (error) {
       console.error('Erro ao remover membro:', error);
@@ -113,11 +145,15 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
         description: "Não foi possível remover o membro.",
         variant: "destructive"
       });
+    } finally {
+      setProcessingMember(null);
     }
   };
 
   useEffect(() => {
-    fetchMembers();
+    if (guildId) {
+      fetchMembers();
+    }
   }, [guildId]);
 
   const getRoleIcon = (role: string) => {
@@ -187,32 +223,47 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   <div className="flex items-center space-x-1">
                     {member.role === 'membro' && (
                       <Button
-                        onClick={() => updateMemberRole(member.profile_id, 'moderador')}
+                        onClick={() => updateMemberRole(member.profile_id, 'moderador', member.full_name)}
                         size="sm"
                         className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs"
+                        disabled={processingMember === member.profile_id}
                       >
                         <UserCheck size={12} className="mr-1" />
-                        Promover
+                        {processingMember === member.profile_id ? 'Processando...' : 'Promover'}
                       </Button>
                     )}
                     {member.role === 'moderador' && (
                       <Button
-                        onClick={() => updateMemberRole(member.profile_id, 'membro')}
+                        onClick={() => updateMemberRole(member.profile_id, 'membro', member.full_name)}
                         size="sm"
                         className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 text-xs"
+                        disabled={processingMember === member.profile_id}
                       >
-                        Rebaixar
+                        {processingMember === member.profile_id ? 'Processando...' : 'Rebaixar'}
                       </Button>
                     )}
                     <Button
-                      onClick={() => removeMember(member.profile_id)}
+                      onClick={() => removeMember(member.profile_id, member.full_name)}
                       size="sm"
                       className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs"
+                      disabled={processingMember === member.profile_id}
                     >
                       <UserMinus size={12} className="mr-1" />
-                      Remover
+                      {processingMember === member.profile_id ? 'Processando...' : 'Remover'}
                     </Button>
                   </div>
+                )}
+
+                {/* Botão de sair para membros não-donos */}
+                {!isOwner && member.profile_id === user?.id && (
+                  <Button
+                    onClick={() => removeMember(member.profile_id, member.full_name)}
+                    size="sm"
+                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs"
+                    disabled={processingMember === member.profile_id}
+                  >
+                    {processingMember === member.profile_id ? 'Saindo...' : 'Sair da Guilda'}
+                  </Button>
                 )}
 
                 {/* Indicador de você mesmo */}
