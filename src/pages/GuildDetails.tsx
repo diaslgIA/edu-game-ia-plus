@@ -172,9 +172,9 @@ const GuildDetails = () => {
   }
 
   const isOwner = guild.owner_id === user?.id;
-  const canInvite = isOwner || guild.user_role === 'líder';
+  const canInvite = isOwner || guild.user_role === 'líder' || guild.user_role === 'moderador';
   const canInviteMore = (guild.member_count || 0) < 20;
-  const canManageRequests = isOwner || guild.user_role === 'líder';
+  const canManageRequests = isOwner || guild.user_role === 'líder' || guild.user_role === 'moderador';
 
   return (
     <MobileContainer background="gradient">

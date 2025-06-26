@@ -29,27 +29,6 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string>('membro');
-
-  const fetchUserRole = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('guild_members')
-        .select('role')
-        .eq('guild_id', guildId)
-        .eq('profile_id', user?.id)
-        .single();
-
-      if (error) {
-        console.error('Erro ao buscar papel do usuário:', error);
-        return;
-      }
-
-      setUserRole(data?.role || 'membro');
-    } catch (error) {
-      console.error('Erro ao buscar papel do usuário:', error);
-    }
-  };
 
   const fetchJoinRequests = async () => {
     try {
@@ -86,25 +65,6 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   };
 
   const handleJoinRequest = async (requestId: string, action: 'approved' | 'rejected', requesterName: string) => {
-    // Verificar se o usuário tem permissão para aprovar solicitações
-    const { data: guildData } = await supabase
-      .from('guilds')
-      .select('owner_id')
-      .eq('id', guildId)
-      .single();
-
-    const isOwner = guildData?.owner_id === user?.id;
-    const canApprove = isOwner || userRole === 'líder';
-
-    if (!canApprove) {
-      toast({
-        title: "Sem permissão",
-        description: "Apenas donos e líderes podem aprovar solicitações.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       setProcessingRequest(requestId);
       console.log('Processando solicitação:', { requestId, action });
@@ -167,11 +127,10 @@ const GuildJoinRequests: React.FC<GuildJoinRequestsProps> = ({ guildId, onReques
   };
 
   useEffect(() => {
-    if (guildId && user?.id) {
-      fetchUserRole();
+    if (guildId) {
       fetchJoinRequests();
     }
-  }, [guildId, user?.id]);
+  }, [guildId]);
 
   if (loading) {
     return (

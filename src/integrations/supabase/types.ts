@@ -590,15 +590,7 @@ export type Database = {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean
       }
-      is_guild_member_safe: {
-        Args: { target_guild_id: string; target_user_id: string }
-        Returns: boolean
-      }
       is_guild_owner: {
-        Args: { target_guild_id: string; target_user_id: string }
-        Returns: boolean
-      }
-      is_guild_owner_safe: {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean
       }

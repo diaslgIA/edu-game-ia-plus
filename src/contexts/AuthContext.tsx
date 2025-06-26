@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -284,7 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error('Erro inesperado no login com Google:', error);
       
-      // Re-throw provider errors for better error handling
+      // Re-throw provider errors para serem tratados no componente
       if (error.message?.includes('provider is not enabled') || 
           error.message?.includes('Unsupported provider') ||
           error.message?.includes('validation_failed')) {
@@ -305,42 +306,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
+      const { error } = await supabase.auth.signOut();
       
-      // Clear local state first
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      
-      // Only attempt signout if we have a session
-      if (session) {
-        const { error } = await supabase.auth.signOut();
-        
-        if (error) {
-          console.error('Signout error:', error);
-          // Don't show error for session missing, as we already cleared state
-          if (!error.message.includes('Auth session missing')) {
-            toast({
-              title: "Erro ao sair",
-              description: error.message,
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-      }
-      
-      toast({
-        title: "Logout realizado com sucesso!",
-        description: "Até logo!",
-      });
-      
-      // Force redirect to home page
-      window.location.href = '/';
-    } catch (error: any) {
-      console.error('Signout error:', error);
-      
-      // If it's just a session missing error, still consider it successful
-      if (error?.message?.includes('Auth session missing')) {
+      if (error) {
+        console.error('Signout error:', error);
+        toast({
+          title: "Erro ao sair",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        // Clear local state
         setUser(null);
         setProfile(null);
         setSession(null);
@@ -350,14 +326,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: "Até logo!",
         });
         
+        // Redirect to home page
         window.location.href = '/';
-      } else {
-        toast({
-          title: "Erro ao sair",
-          description: "Ocorreu um erro inesperado.",
-          variant: "destructive",
-        });
       }
+    } catch (error) {
+      console.error('Signout error:', error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

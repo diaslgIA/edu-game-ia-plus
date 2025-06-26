@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Crown, Shield, User, UserMinus, UserCheck, ArrowDown } from 'lucide-react';
+import { Users, Crown, Shield, User, UserMinus, UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +30,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingMember, setProcessingMember] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string>('membro');
 
   const fetchMembers = async () => {
     try {
@@ -63,12 +62,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
       })) || [];
 
       setMembers(processedMembers);
-
-      // Encontrar o papel do usuário atual
-      const currentUserMember = processedMembers.find(m => m.profile_id === user?.id);
-      if (currentUserMember) {
-        setUserRole(currentUserMember.role);
-      }
     } catch (error) {
       console.error('Erro ao buscar membros:', error);
       toast({
@@ -82,15 +75,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   };
 
   const updateMemberRole = async (memberId: string, newRole: string, memberName: string) => {
-    // Verificar se o usuário tem permissão (dono ou líder)
-    if (!isOwner && userRole !== 'líder') {
-      toast({
-        title: "Sem permissão",
-        description: "Apenas donos e líderes podem promover/rebaixar membros.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!isOwner) return;
 
     try {
       setProcessingMember(memberId);
@@ -109,7 +94,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
 
       toast({
         title: "Cargo atualizado",
-        description: `${memberName} foi ${newRole === 'líder' ? 'promovido a' : 'rebaixado para'} ${newRole}.`,
+        description: `${memberName} foi promovido/rebaixado para ${newRole}.`,
       });
 
       await fetchMembers();
@@ -127,15 +112,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   };
 
   const removeMember = async (memberId: string, memberName: string) => {
-    // Verificar permissões - dono/líder pode remover outros, qualquer um pode sair
-    if (!isOwner && userRole !== 'líder' && memberId !== user?.id) {
-      toast({
-        title: "Sem permissão",
-        description: "Apenas donos e líderes podem remover membros.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!isOwner && memberId !== user?.id) return;
 
     try {
       setProcessingMember(memberId);
@@ -201,8 +178,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
     }
   };
 
-  const canManageMembers = isOwner || userRole === 'líder';
-
   if (loading) {
     return <div className="text-center py-4 text-white/80">Carregando membros...</div>;
   }
@@ -235,11 +210,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                       <span className={`text-xs ${getRoleColor(member.role)}`}>
                         {member.role}
                       </span>
-                      {member.profile_id === user?.id && (
-                        <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded">
-                          Você
-                        </span>
-                      )}
                     </div>
                     <div className="flex items-center space-x-3 text-xs text-white/60">
                       <span>{member.points} pontos</span>
@@ -248,28 +218,27 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   </div>
                 </div>
 
-                {/* Ações disponíveis para donos e líderes */}
-                {canManageMembers && member.profile_id !== user?.id && (
+                {/* Ações do dono */}
+                {isOwner && member.profile_id !== user?.id && (
                   <div className="flex items-center space-x-1">
                     {member.role === 'membro' && (
                       <Button
-                        onClick={() => updateMemberRole(member.profile_id, 'líder', member.full_name)}
+                        onClick={() => updateMemberRole(member.profile_id, 'moderador', member.full_name)}
                         size="sm"
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 text-xs"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs"
                         disabled={processingMember === member.profile_id}
                       >
                         <UserCheck size={12} className="mr-1" />
-                        {processingMember === member.profile_id ? 'Processando...' : 'Promover a Líder'}
+                        {processingMember === member.profile_id ? 'Processando...' : 'Promover'}
                       </Button>
                     )}
-                    {member.role === 'líder' && (
+                    {member.role === 'moderador' && (
                       <Button
                         onClick={() => updateMemberRole(member.profile_id, 'membro', member.full_name)}
                         size="sm"
                         className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 text-xs"
                         disabled={processingMember === member.profile_id}
                       >
-                        <ArrowDown size={12} className="mr-1" />
                         {processingMember === member.profile_id ? 'Processando...' : 'Rebaixar'}
                       </Button>
                     )}
@@ -285,7 +254,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   </div>
                 )}
 
-                {/* Botão de sair para o próprio usuário (se não for dono) */}
+                {/* Botão de sair para membros não-donos */}
                 {!isOwner && member.profile_id === user?.id && (
                   <Button
                     onClick={() => removeMember(member.profile_id, member.full_name)}
@@ -295,6 +264,13 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   >
                     {processingMember === member.profile_id ? 'Saindo...' : 'Sair da Guilda'}
                   </Button>
+                )}
+
+                {/* Indicador de você mesmo */}
+                {member.profile_id === user?.id && (
+                  <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                    Você
+                  </span>
                 )}
               </div>
             </div>
