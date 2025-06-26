@@ -39,7 +39,7 @@ export const useMentorAffinity = () => {
         return;
       }
 
-      setAffinities(data as MentorAffinity[] || []);
+      setAffinities(data || []);
     } catch (error) {
       console.error('Error fetching mentor affinities:', error);
     } finally {

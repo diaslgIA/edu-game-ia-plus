@@ -38,9 +38,9 @@ const QuizMentorGuide: React.FC<QuizMentorGuideProps> = ({
         message = "Comece com calma. Os fundamentos são sempre o melhor caminho.";
       }
       setEncouragementMessage(message);
-      playSound('click');
+      if (playSound) playSound('click');
     }
-  }, [mentor, isVisible, questionDifficulty]);
+  }, [mentor, isVisible, questionDifficulty, playSound]);
 
   if (!mentor || !isVisible) return null;
 

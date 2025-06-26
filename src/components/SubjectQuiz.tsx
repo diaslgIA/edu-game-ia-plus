@@ -48,11 +48,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       // Converter para o formato esperado pelo quiz
       const formattedQuestions = selectedQuestions.map(q => ({
         question: q.question,
-        options: q.options,
+        options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
         correctAnswer: q.correct_answer,
         explanation: q.explanation,
         topic: q.topic,
-        difficulty: q.difficulty_level
+        difficulty: q.difficulty_level || 'medium'
       }));
       
       setQuizQuestions(formattedQuestions);
@@ -82,13 +82,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     setGameStarted(true);
     setStartTime(Date.now());
     setTimeLeft(180);
-    playSound('click');
+    if (playSound) playSound('click');
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (!showResult) {
       setSelectedAnswer(answerIndex);
-      playSound('click');
+      if (playSound) playSound('click');
     }
   };
 
@@ -121,9 +121,14 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
-      await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
-      onComplete(finalScore, timeSpent);
-      playSound('success');
+      try {
+        await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        onComplete(finalScore, timeSpent);
+        if (playSound) playSound('success');
+      } catch (error) {
+        console.error('Error saving quiz score:', error);
+        onComplete(finalScore, timeSpent);
+      }
     }
   };
 
@@ -201,22 +206,26 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   return (
     <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg relative">
       {/* Guia do Mentor */}
-      <QuizMentorGuide
-        subject={subject}
-        questionDifficulty={question.difficulty}
-        isVisible={showMentorGuide}
-        onClose={() => setShowMentorGuide(false)}
-        onHintRequest={handleHintRequest}
-      />
+      {showMentorGuide && (
+        <QuizMentorGuide
+          subject={subject}
+          questionDifficulty={question.difficulty}
+          isVisible={showMentorGuide}
+          onClose={() => setShowMentorGuide(false)}
+          onHintRequest={handleHintRequest}
+        />
+      )}
 
       {/* Dica do Mentor */}
-      <QuizMentorHint
-        subject={subject}
-        hint={question.explanation || "Esta questão requer atenção aos detalhes. Analise cada opção cuidadosamente."}
-        onUseHint={handleUseHint}
-        onClose={() => setShowMentorHint(false)}
-        isVisible={showMentorHint}
-      />
+      {showMentorHint && (
+        <QuizMentorHint
+          subject={subject}
+          hint={question.explanation || "Esta questão requer atenção aos detalhes. Analise cada opção cuidadosamente."}
+          onUseHint={handleUseHint}
+          onClose={() => setShowMentorHint(false)}
+          isVisible={showMentorHint}
+        />
+      )}
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
