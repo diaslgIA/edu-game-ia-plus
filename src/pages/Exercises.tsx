@@ -5,12 +5,13 @@ import BottomNavigation from '@/components/BottomNavigation';
 import SubjectQuiz from '@/components/SubjectQuiz';
 import ContentSlides from '@/components/ContentSlides';
 import VirtualTeacher from '@/components/VirtualTeacher';
+import MentorWelcome from '@/components/MentorWelcome';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Target, Trophy, Clock, Play, Star, CheckCircle } from 'lucide-react';
 
-type ExerciseMode = 'selection' | 'slides' | 'teacher' | 'quiz';
+type ExerciseMode = 'selection' | 'slides' | 'teacher' | 'quiz' | 'mentor-welcome';
 
 const Exercises = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Exercises = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
   const [currentActivity, setCurrentActivity] = useState<'slides' | 'teacher' | 'quiz' | null>(null);
+  const [showMentorWelcome, setShowMentorWelcome] = useState(false);
 
   useEffect(() => {
     const subjectFromUrl = searchParams.get('subject');
@@ -48,6 +50,13 @@ const Exercises = () => {
 
   const handleSubjectSelect = (subjectName: string) => {
     setSelectedSubject(subjectName);
+    setShowMentorWelcome(true);
+    setExerciseMode('mentor-welcome');
+  };
+
+  const handleMentorWelcomeClose = () => {
+    setShowMentorWelcome(false);
+    setExerciseMode('selection');
   };
 
   const handleActivitySelect = (activity: 'slides' | 'teacher' | 'quiz') => {
@@ -67,9 +76,7 @@ const Exercises = () => {
     } else if (activity === 'teacher') {
       setExerciseMode('quiz');
       setCurrentActivity('quiz');
-    } 
-    // Para 'quiz', não fazemos nada para evitar o redirecionamento automático.
-    // O usuário permanecerá na tela de resultados e navegará clicando no botão.
+    }
   };
 
   const handleQuizComplete = (score: number, timeSpent: number) => {
@@ -79,11 +86,24 @@ const Exercises = () => {
   const handleBackToSelection = () => {
     setExerciseMode('selection');
     setCurrentActivity(null);
-    // O `selectedSubject` não é limpo para que o usuário retorne
-    // à tela de seleção de atividades da matéria atual.
   };
 
   const currentSubject = subjects.find(s => s.name === selectedSubject);
+
+  // Tela de Boas-vindas do Mentor
+  if (exerciseMode === 'mentor-welcome' && selectedSubject && currentSubject) {
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          <MentorWelcome
+            subject={selectedSubject}
+            onClose={handleMentorWelcomeClose}
+          />
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
   if (exerciseMode === 'slides' && selectedSubject && currentSubject) {
     return (

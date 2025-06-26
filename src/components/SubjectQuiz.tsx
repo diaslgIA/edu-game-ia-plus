@@ -9,6 +9,9 @@ import QuizQuestion from './quiz/QuizQuestion';
 import QuizExplanation from './quiz/QuizExplanation';
 import QuizIntro from './quiz/QuizIntro';
 import QuizResults from './quiz/QuizResults';
+import QuizMentorGuide from './quiz/QuizMentorGuide';
+import QuizMentorFeedback from './quiz/QuizMentorFeedback';
+import QuizMentorHint from './quiz/QuizMentorHint';
 
 interface SubjectQuizProps {
   subject: string;
@@ -30,6 +33,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
+  
+  // Estados dos mentores
+  const [showMentorGuide, setShowMentorGuide] = useState(false);
+  const [showMentorHint, setShowMentorHint] = useState(false);
+  const [showMentorFeedback, setShowMentorFeedback] = useState(false);
 
   useEffect(() => {
     if (questions.length > 0) {
@@ -60,10 +68,20 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     }
   }, [timeLeft, gameStarted, showResult, gameCompleted]);
 
+  // Mostrar guia do mentor nas questões difíceis
+  useEffect(() => {
+    if (gameStarted && !showResult && quizQuestions.length > 0 && currentQuestion < quizQuestions.length) {
+      const question = quizQuestions[currentQuestion];
+      if (question.difficulty === 'hard' && timeLeft < 120) {
+        setShowMentorGuide(true);
+      }
+    }
+  }, [gameStarted, showResult, currentQuestion, timeLeft, quizQuestions]);
+
   const startGame = () => {
     setGameStarted(true);
     setStartTime(Date.now());
-    setTimeLeft(180); // 3 minutos para cada questão
+    setTimeLeft(180);
     playSound('click');
   };
 
@@ -77,24 +95,27 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const handleSubmitAnswer = () => {
     if (selectedAnswer !== null) {
       setShowResult(true);
+      setShowMentorGuide(false);
+      
       const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
       const questionScore = isCorrect ? 10 : 0;
       
       if (isCorrect) {
         setScore(score + questionScore);
-        playSound('success');
-      } else {
-        playSound('error');
       }
+      
+      setShowMentorFeedback(true);
     }
   };
 
   const handleNextQuestion = async () => {
+    setShowMentorFeedback(false);
+    
     if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
-      setTimeLeft(180); // Resetar para 3 minutos
+      setTimeLeft(180);
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -104,6 +125,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       onComplete(finalScore, timeSpent);
       playSound('success');
     }
+  };
+
+  const handleHintRequest = () => {
+    setShowMentorGuide(false);
+    setShowMentorHint(true);
+  };
+
+  const handleUseHint = () => {
+    setShowMentorHint(false);
   };
 
   if (loading) {
@@ -166,9 +196,28 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   const question = quizQuestions[currentQuestion];
   const isCorrect = selectedAnswer === question.correctAnswer;
+  const xpGained = isCorrect ? 10 : 3;
 
   return (
-    <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg">
+    <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg relative">
+      {/* Guia do Mentor */}
+      <QuizMentorGuide
+        subject={subject}
+        questionDifficulty={question.difficulty}
+        isVisible={showMentorGuide}
+        onClose={() => setShowMentorGuide(false)}
+        onHintRequest={handleHintRequest}
+      />
+
+      {/* Dica do Mentor */}
+      <QuizMentorHint
+        subject={subject}
+        hint={question.explanation || "Esta questão requer atenção aos detalhes. Analise cada opção cuidadosamente."}
+        onUseHint={handleUseHint}
+        onClose={() => setShowMentorHint(false)}
+        isVisible={showMentorHint}
+      />
+
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <QuizHeader 
@@ -187,14 +236,26 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
           onAnswerSelect={handleAnswerSelect}
         />
 
-        {showResult && (
+        {showMentorFeedback && showResult && (
+          <div className="mt-4">
+            <QuizMentorFeedback
+              subject={subject}
+              isCorrect={isCorrect}
+              explanation={question.explanation}
+              xpGained={xpGained}
+              isVisible={showMentorFeedback}
+            />
+          </div>
+        )}
+
+        {showResult && !showMentorFeedback && (
           <QuizExplanation 
             explanation={question.explanation}
             isCorrect={isCorrect}
           />
         )}
 
-        {/* Pontuação Atual - Sempre visível */}
+        {/* Pontuação Atual */}
         <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 border-2 border-blue-500 rounded-lg">
           <div className="text-center">
             <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">Pontos: </span>
@@ -203,7 +264,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
         </div>
       </div>
 
-      {/* Botões de Ação - Sempre visíveis no final */}
+      {/* Botões de Ação */}
       <div className="pt-4 border-t border-gray-300 dark:border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (
