@@ -1,15 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Lock, Unlock } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import GuildCard from '@/components/guild/GuildCard';
 import GuildCreateModal from '@/components/guild/GuildCreateModal';
 
@@ -43,6 +43,7 @@ const Guilds = () => {
   const fetchGuilds = async () => {
     try {
       setLoading(true);
+      console.log('Buscando guildas...');
 
       let query = supabase
         .from('guilds')
@@ -57,12 +58,17 @@ const Guilds = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar guildas:', error);
+        throw error;
+      }
 
-      const guildsWithMemberCount = data.map(guild => ({
+      console.log('Guildas encontradas:', data);
+
+      const guildsWithMemberCount = data?.map(guild => ({
         ...guild,
         member_count: guild.guild_members ? guild.guild_members.length : 0,
-      }));
+      })) || [];
 
       setGuilds(guildsWithMemberCount);
     } catch (error) {
@@ -88,6 +94,7 @@ const Guilds = () => {
 
   const createGuild = async () => {
     if (!user) {
+      console.error('Usuário não autenticado');
       toast({
         title: "Erro",
         description: "Você precisa estar logado para criar uma guilda.",
@@ -107,48 +114,70 @@ const Guilds = () => {
 
     try {
       setCreatingGuild(true);
-      console.log('Iniciando criação de guilda...', { userId: user.id, guildData: newGuildData });
+      console.log('Iniciando criação de guilda...', { 
+        userId: user.id, 
+        userEmail: user.email,
+        guildData: newGuildData 
+      });
 
       // Gerar código único da guilda
       const guildCode = generateGuildCode();
       console.log('Código da guilda gerado:', guildCode);
 
       // Criar a guilda
+      const guildInsertData = {
+        name: newGuildData.name.trim(),
+        description: newGuildData.description.trim(),
+        guild_code: guildCode,
+        owner_id: user.id,
+        is_public: newGuildData.isPublic,
+        total_points: 0
+      };
+
+      console.log('Dados para inserir na guilda:', guildInsertData);
+
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
-        .insert({
-          name: newGuildData.name.trim(),
-          description: newGuildData.description.trim(),
-          guild_code: guildCode,
-          owner_id: user.id,
-          is_public: newGuildData.isPublic,
-          total_points: 0
-        })
+        .insert(guildInsertData)
         .select()
         .single();
 
       if (guildError) {
         console.error('Erro ao criar guilda:', guildError);
-        throw guildError;
+        toast({
+          title: "Erro ao criar guilda",
+          description: `Erro: ${guildError.message}`,
+          variant: "destructive"
+        });
+        return;
       }
 
       console.log('Guilda criada com sucesso:', guild);
 
       // Adicionar o criador como primeiro membro com papel de dono
+      const memberInsertData = {
+        guild_id: guild.id,
+        profile_id: user.id,
+        role: 'dono',
+        joined_at: new Date().toISOString()
+      };
+
+      console.log('Dados para inserir membro dono:', memberInsertData);
+
       const { error: memberError } = await supabase
         .from('guild_members')
-        .insert({
-          guild_id: guild.id,
-          profile_id: user.id,
-          role: 'dono',
-          joined_at: new Date().toISOString()
-        });
+        .insert(memberInsertData);
 
       if (memberError) {
         console.error('Erro ao adicionar membro dono:', memberError);
         // Se falhar ao adicionar como membro, tentar deletar a guilda criada
         await supabase.from('guilds').delete().eq('id', guild.id);
-        throw memberError;
+        toast({
+          title: "Erro ao criar guilda",
+          description: `Erro ao adicionar como membro: ${memberError.message}`,
+          variant: "destructive"
+        });
+        return;
       }
 
       console.log('Membro dono adicionado com sucesso');
@@ -164,17 +193,9 @@ const Guilds = () => {
     } catch (error: any) {
       console.error('Erro completo na criação da guilda:', error);
       
-      let errorMessage = 'Não foi possível criar a guilda.';
-      
-      if (error.message?.includes('permission')) {
-        errorMessage = 'Você não tem permissão para criar guildas. Verifique se está logado corretamente.';
-      } else if (error.code === '23505') {
-        errorMessage = 'Já existe uma guilda com esse nome ou código.';
-      }
-      
       toast({
         title: "Erro ao criar guilda",
-        description: errorMessage,
+        description: `Erro inesperado: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive"
       });
     } finally {
@@ -206,6 +227,7 @@ const Guilds = () => {
             <Button 
               onClick={() => setShowCreateModal(true)}
               className="bg-green-500 hover:bg-green-600 text-white"
+              disabled={!user}
             >
               <Plus size={16} className="mr-2" />
               Criar Guilda
@@ -225,11 +247,26 @@ const Guilds = () => {
 
         {/* Guild List */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {guilds.map((guild) => (
-              <GuildCard key={guild.id} guild={guild} />
-            ))}
-          </div>
+          {guilds.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-white/80 mb-4">Nenhuma guilda encontrada</div>
+              {user && (
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Criar primeira guilda
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {guilds.map((guild) => (
+                <GuildCard key={guild.id} guild={guild} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Create Guild Modal */}
