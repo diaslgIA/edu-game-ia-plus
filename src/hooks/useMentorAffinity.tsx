@@ -3,12 +3,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface MentorAffinity {
+export interface MentorAffinity {
+  id: string;
+  user_id: string;
   mentor_id: string;
   affinity_level: number;
   experience_points: number;
-  unlocked_content: string[];
-  last_interaction: string;
+  unlocked_content: any[];
+  last_interaction: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useMentorAffinity = () => {
@@ -16,99 +20,122 @@ export const useMentorAffinity = () => {
   const [affinities, setAffinities] = useState<MentorAffinity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadAffinities();
+  const fetchAffinities = async () => {
+    if (!user) {
+      setAffinities([]);
+      setLoading(false);
+      return;
     }
-  }, [user]);
-
-  const loadAffinities = async () => {
-    if (!user) return;
 
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('mentor_affinities')
         .select('*')
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error loading mentor affinities:', error);
+        console.error('Error fetching mentor affinities:', error);
         return;
       }
 
-      setAffinities(data || []);
+      setAffinities(data as MentorAffinity[] || []);
     } catch (error) {
-      console.error('Error loading mentor affinities:', error);
+      console.error('Error fetching mentor affinities:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateAffinity = async (mentorId: string, experienceGained: number) => {
+  useEffect(() => {
+    fetchAffinities();
+  }, [user]);
+
+  const getMentorAffinity = (mentorId: string): MentorAffinity => {
+    const existing = affinities.find(a => a.mentor_id === mentorId);
+    if (existing) return existing;
+    
+    // Return default values if no affinity exists yet
+    return {
+      id: '',
+      user_id: user?.id || '',
+      mentor_id: mentorId,
+      affinity_level: 1,
+      experience_points: 0,
+      unlocked_content: [],
+      last_interaction: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  };
+
+  const updateAffinity = async (mentorId: string, xpGained: number) => {
     if (!user) return;
 
     try {
-      const currentAffinity = affinities.find(a => a.mentor_id === mentorId);
-      const newExperience = (currentAffinity?.experience_points || 0) + experienceGained;
-      const newLevel = Math.floor(newExperience / 100) + 1; // 100 XP por nível
+      const existing = affinities.find(a => a.mentor_id === mentorId);
+      const newXP = (existing?.experience_points || 0) + xpGained;
+      const newLevel = Math.floor(newXP / 100) + 1;
 
-      const { error } = await supabase
-        .from('mentor_affinities')
-        .upsert({
-          user_id: user.id,
-          mentor_id: mentorId,
-          affinity_level: newLevel,
-          experience_points: newExperience,
-          last_interaction: new Date().toISOString()
-        });
+      if (existing) {
+        // Update existing affinity
+        const { error } = await supabase
+          .from('mentor_affinities')
+          .update({
+            experience_points: newXP,
+            affinity_level: newLevel,
+            last_interaction: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
 
-      if (error) {
-        console.error('Error updating mentor affinity:', error);
-        return;
+        if (error) {
+          console.error('Error updating mentor affinity:', error);
+          return;
+        }
+      } else {
+        // Create new affinity
+        const { error } = await supabase
+          .from('mentor_affinities')
+          .insert({
+            user_id: user.id,
+            mentor_id: mentorId,
+            experience_points: newXP,
+            affinity_level: newLevel,
+            last_interaction: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error creating mentor affinity:', error);
+          return;
+        }
       }
 
-      await loadAffinities();
+      // Refresh affinities
+      await fetchAffinities();
     } catch (error) {
       console.error('Error updating mentor affinity:', error);
     }
   };
 
-  const getMentorAffinity = (mentorId: string) => {
-    return affinities.find(a => a.mentor_id === mentorId) || {
-      mentor_id: mentorId,
-      affinity_level: 1,
-      experience_points: 0,
-      unlocked_content: [],
-      last_interaction: ''
-    };
-  };
-
-  const getAffinityTitle = (mentorId: string) => {
+  const getAffinityTitle = (mentorId: string): string => {
     const affinity = getMentorAffinity(mentorId);
     const level = affinity.affinity_level;
 
-    const titles: { [key: string]: string[] } = {
-      'pitagoras': ['Iniciante dos Números', 'Discípulo de Pitágoras', 'Mestre da Harmonia'],
-      'einstein': ['Curioso Científico', 'Aprendiz de Einstein', 'Gênio da Física'],
-      'marie_curie': ['Jovem Cientista', 'Discípulo de Marie', 'Pioneiro da Química'],
-      'darwin': ['Observador da Natureza', 'Aprendiz de Darwin', 'Naturalista Evoluído'],
-      'zumbi': ['Guerreiro Iniciante', 'Seguidor de Zumbi', 'Líder da História'],
-      'rui_barbosa': ['Estudante das Palavras', 'Discípulo da Eloquência', 'Águia das Letras'],
-      'pedro_teixeira': ['Explorador Novato', 'Bandeirante Aprendiz', 'Desbravador Mestre'],
-      'socrates': ['Questionador Iniciante', 'Discípulo de Sócrates', 'Filósofo Sábio'],
-      'florestan': ['Observador Social', 'Aprendiz Sociólogo', 'Transformador da Sociedade']
-    };
-
-    const mentorTitles = titles[mentorId] || ['Iniciante', 'Aprendiz', 'Mestre'];
-    return mentorTitles[Math.min(level - 1, mentorTitles.length - 1)];
+    if (level >= 10) return 'Mestre Supremo';
+    if (level >= 8) return 'Discípulo Iluminado';
+    if (level >= 6) return 'Seguidor Dedicado';
+    if (level >= 4) return 'Aprendiz Aplicado';
+    if (level >= 2) return 'Estudante Interessado';
+    return 'Novo Conhecedor';
   };
 
   return {
     affinities,
     loading,
-    updateAffinity,
     getMentorAffinity,
+    updateAffinity,
     getAffinityTitle,
-    refreshAffinities: loadAffinities
+    refetch: fetchAffinities
   };
 };

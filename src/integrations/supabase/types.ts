@@ -425,6 +425,42 @@ export type Database = {
           },
         ]
       }
+      mentor_affinities: {
+        Row: {
+          affinity_level: number
+          created_at: string
+          experience_points: number
+          id: string
+          last_interaction: string | null
+          mentor_id: string
+          unlocked_content: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affinity_level?: number
+          created_at?: string
+          experience_points?: number
+          id?: string
+          last_interaction?: string | null
+          mentor_id: string
+          unlocked_content?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affinity_level?: number
+          created_at?: string
+          experience_points?: number
+          id?: string
+          last_interaction?: string | null
+          mentor_id?: string
+          unlocked_content?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
