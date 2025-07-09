@@ -35,7 +35,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   }, [isAuthenticated, navigate]);
 
@@ -50,7 +50,7 @@ const Auth = () => {
     setFormLoading(true);
     const success = await signIn(loginEmail, loginPassword);
     if (success) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
     setFormLoading(false);
   };

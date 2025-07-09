@@ -1,8 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSound } from '@/contexts/SoundContext';
-import { useAuth } from '@/contexts/AuthContext';
 import MobileContainer from '@/components/MobileContainer';
 import Logo from '@/components/Logo';
 import RegistrationForm from '@/components/registration/RegistrationForm';
@@ -11,13 +10,6 @@ import RegistrationFooter from '@/components/registration/RegistrationFooter';
 const Register = () => {
   const navigate = useNavigate();
   const { playSound } = useSound();
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleLogoClick = () => {
     playSound('click');

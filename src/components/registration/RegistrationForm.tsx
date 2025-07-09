@@ -62,10 +62,6 @@ const RegistrationForm: React.FC = () => {
     
     if (success) {
       playSound('success');
-      // Redirect to login page after successful registration
-      setTimeout(() => {
-        navigate('/auth?tab=login');
-      }, 2000);
     } else {
       playSound('error');
     }
