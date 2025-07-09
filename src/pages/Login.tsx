@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,12 +13,18 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, loading } = useAuth();
+  const { signIn, loading, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { playSound } = useSound();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +32,7 @@ const Login = () => {
     const success = await signIn(email, password);
     if (success) {
       playSound('success');
-      navigate('/welcome');
+      navigate('/dashboard');
     } else {
       playSound('error');
     }
