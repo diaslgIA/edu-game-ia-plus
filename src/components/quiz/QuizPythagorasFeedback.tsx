@@ -35,14 +35,14 @@ const QuizPythagorasFeedback: React.FC<QuizPythagorasFeedbackProps> = ({
       </div>
 
       {/* 2. Linha com Personagem + Balão de Fala */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-3">
         {/* Imagem do Pitágoras */}
-        <div className="w-20 h-20 flex-shrink-0">
+        <div className="w-20 h-20 flex-shrink-0 p-1">
           <img 
             src={pythagorasImage} 
             alt="Pitágoras" 
             className="w-full h-full object-contain pixel-art"
-            style={{ imageRendering: 'pixelated' }}
+            style={{ imageRendering: 'pixelated', minHeight: '60px', maxHeight: '80px' }}
           />
         </div>
 
