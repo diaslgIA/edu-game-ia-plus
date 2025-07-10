@@ -11,6 +11,7 @@ import QuizIntro from './quiz/QuizIntro';
 import QuizResults from './quiz/QuizResults';
 import QuizMentorGuide from './quiz/QuizMentorGuide';
 import QuizMentorFeedback from './quiz/QuizMentorFeedback';
+import QuizPythagorasFeedback from './quiz/QuizPythagorasFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
 
 interface SubjectQuizProps {
@@ -295,13 +296,22 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
         {showMentorFeedback && showResult && (
           <div className="mt-4">
-            <QuizMentorFeedback
-              subject={subject}
-              isCorrect={isCorrect}
-              explanation={question.explanation}
-              xpGained={xpGained}
-              isVisible={showMentorFeedback}
-            />
+            {subject.toLowerCase() === 'matemática' ? (
+              <QuizPythagorasFeedback
+                isCorrect={isCorrect}
+                explanation={question.explanation}
+                xpGained={xpGained}
+                isVisible={showMentorFeedback}
+              />
+            ) : (
+              <QuizMentorFeedback
+                subject={subject}
+                isCorrect={isCorrect}
+                explanation={question.explanation}
+                xpGained={xpGained}
+                isVisible={showMentorFeedback}
+              />
+            )}
           </div>
         )}
 
