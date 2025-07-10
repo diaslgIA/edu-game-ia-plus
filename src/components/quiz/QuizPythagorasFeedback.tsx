@@ -37,7 +37,7 @@ const QuizPythagorasFeedback: React.FC<QuizPythagorasFeedbackProps> = ({
       {/* 2. Linha com Personagem + Balão de Fala */}
       <div className="flex items-center gap-3">
         {/* Imagem do Pitágoras */}
-        <div className="w-28 h-28 flex-shrink-0 p-1">
+        <div className="w-32 h-32 flex-shrink-0 p-1">
           <img 
             src={pythagorasImage} 
             alt="Pitágoras" 
