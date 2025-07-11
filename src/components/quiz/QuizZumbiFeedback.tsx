@@ -32,7 +32,7 @@ export const QuizZumbiFeedback = ({
           <img 
             src={isCorrect ? "/lovable-uploads/zumbi_acerto.png" : "/lovable-uploads/zumbi_erro.png"}
             alt={`Zumbi dos Palmares ${isCorrect ? 'comemorando' : 'reflexivo'}`}
-            className="w-full h-full object-cover rounded-lg"
+            className="w-full h-full object-contain rounded-lg"
           />
         </div>
 
