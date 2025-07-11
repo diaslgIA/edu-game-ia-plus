@@ -13,6 +13,7 @@ import QuizMentorGuide from './quiz/QuizMentorGuide';
 import QuizMentorFeedback from './quiz/QuizMentorFeedback';
 import QuizPythagorasFeedback from './quiz/QuizPythagorasFeedback';
 import QuizEinsteinFeedback from './quiz/QuizEinsteinFeedback';
+import QuizMarieCurieFeedback from './quiz/QuizMarieCurieFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
 
 interface SubjectQuizProps {
@@ -306,6 +307,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
               />
             ) : subject.toLowerCase() === 'física' ? (
               <QuizEinsteinFeedback
+                isCorrect={isCorrect}
+                explanation={question.explanation}
+                xpGained={xpGained}
+                isVisible={showMentorFeedback}
+              />
+            ) : subject.toLowerCase() === 'química' ? (
+              <QuizMarieCurieFeedback
                 isCorrect={isCorrect}
                 explanation={question.explanation}
                 xpGained={xpGained}
