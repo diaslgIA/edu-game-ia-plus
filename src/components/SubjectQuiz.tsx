@@ -16,6 +16,7 @@ import QuizEinsteinFeedback from './quiz/QuizEinsteinFeedback';
 import QuizMarieCurieFeedback from './quiz/QuizMarieCurieFeedback';
 import { QuizDarwinFeedback } from './quiz/QuizDarwinFeedback';
 import { QuizFlorestenFeedback } from './quiz/QuizFlorestenFeedback';
+import { QuizRuiBarbosaFeedback } from './quiz/QuizRuiBarbosaFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
 
 interface SubjectQuizProps {
@@ -336,6 +337,14 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
                 points={xpGained}
                 affinityLevel={1}
                 affinityProgress={25}
+              />
+            ) : subject.toLowerCase() === 'português' ? (
+              <QuizRuiBarbosaFeedback
+                isCorrect={isCorrect}
+                explanation={question.explanation}
+                points={xpGained}
+                affinityLevel={1}
+                affinityProgress={40}
               />
             ) : (
               <QuizMentorFeedback
