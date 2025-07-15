@@ -19,6 +19,7 @@ import { QuizFlorestenFeedback } from './quiz/QuizFlorestenFeedback';
 import { QuizRuiBarbosaFeedback } from './quiz/QuizRuiBarbosaFeedback';
 import { QuizZumbiFeedback } from './quiz/QuizZumbiFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
+import ZumbiProfile from './ZumbiProfile';
 
 interface SubjectQuizProps {
   subject: string;
@@ -45,6 +46,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [showMentorGuide, setShowMentorGuide] = useState(false);
   const [showMentorHint, setShowMentorHint] = useState(false);
   const [showMentorFeedback, setShowMentorFeedback] = useState(false);
+  const [showMentorProfile, setShowMentorProfile] = useState(false);
+  
+  // Afinidade fictícia para demonstração
+  const [affinityLevel, setAffinityLevel] = useState(1);
+  const [experience, setExperience] = useState(30);
 
   useEffect(() => {
     if (questions.length > 0) {
@@ -154,6 +160,17 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     
     if (isCorrect) {
       setScore(score + questionScore);
+      // Atualizar experiência por acerto
+      setExperience(prev => Math.min(prev + 10, 100));
+    } else {
+      // Atualizar experiência por tentativa
+      setExperience(prev => Math.min(prev + 3, 100));
+    }
+    
+    // Verificar se deve aumentar o nível
+    if (experience >= 100) {
+      setAffinityLevel(prev => prev + 1);
+      setExperience(0);
     }
     
     setShowMentorFeedback(true);
@@ -192,6 +209,30 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     setShowMentorHint(false);
   };
 
+  const handleShowMentorProfile = () => {
+    setShowMentorProfile(true);
+  };
+
+  const handleCloseMentorProfile = () => {
+    setShowMentorProfile(false);
+  };
+
+  const handleStartQuizFromProfile = () => {
+    setShowMentorProfile(false);
+    setGameStarted(true);
+    setStartTime(Date.now());
+    setTimeLeft(180); // 3 minutos por questão
+    if (playSound) playSound('click');
+  };
+
+  const handleStartQuizFromIntro = () => {
+    if (subject.toLowerCase() === 'história') {
+      handleShowMentorProfile();
+    } else {
+      startGame();
+    }
+  };
+
   if (loading) {
     return (
       <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
@@ -226,11 +267,23 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   }
 
   if (!gameStarted) {
+    // Mostrar perfil do mentor para História
+    if (subject.toLowerCase() === 'história' && showMentorProfile) {
+      return (
+        <ZumbiProfile
+          onClose={handleCloseMentorProfile}
+          onStartQuiz={handleStartQuizFromProfile}
+          affinityLevel={affinityLevel}
+          experience={experience}
+        />
+      );
+    }
+    
     return (
       <QuizIntro 
         subject={subject}
         totalQuestions={quizQuestions.length}
-        onStart={startGame}
+        onStart={subject.toLowerCase() === 'história' ? handleShowMentorProfile : startGame}
         onBack={onBack}
       />
     );
