@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import MobileContainer from '@/components/MobileContainer';
+import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronRight, Layers } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSound } from '@/contexts/SoundContext';
 
-const SubjectThemesDebugger = () => {
-  const { subject } = useParams<{ subject: string }>();
+interface Theme {
+  grande_tema: string;
+}
+
+const SubjectThemes = () => {
+  const { subject = '' } = useParams<{ subject: string }>();
   const navigate = useNavigate();
-  const [debugMessage, setDebugMessage] = useState('Iniciando depuração...');
+  const { playSound, isMuted } = useSound();
+  const [themes, setThemes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const subjectNames: { [key: string]: string } = {
     'matematica': 'Matemática',
@@ -22,70 +30,76 @@ const SubjectThemesDebugger = () => {
     'sociologia': 'Sociologia',
   };
 
+  const capitalizedSubject = subjectNames[subject.toLowerCase()] || subject;
+
   useEffect(() => {
-    if (!subject) {
-      console.error("DEBUG: Parâmetro 'subject' da URL não encontrado.");
-      setDebugMessage("ERRO: Matéria não encontrada na URL.");
-      return;
-    }
-
-    const capitalizedSubject = subjectNames[subject.toLowerCase()];
-
-    if (!capitalizedSubject) {
-      console.error(`DEBUG: Nome de matéria inválido na URL: ${subject}`);
-      setDebugMessage(`ERRO: "${subject}" não é uma matéria válida.`);
-      return;
-    }
-
-    console.log(`DEBUG: Iniciando busca para a matéria: "${capitalizedSubject}"`);
-    setDebugMessage(`Buscando temas para "${capitalizedSubject}"...`);
-
-    const loadThemesForDebug = async () => {
+    const loadThemes = async () => {
+      if (!subject) return;
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
         .eq('subject', capitalizedSubject)
         .not('grande_tema', 'is', null);
 
-      console.log("---------- RESULTADO DO BANCO DE DADOS ----------");
       if (error) {
-        console.error("ERRO DO SUPABASE:", error);
-        setDebugMessage(`Erro ao consultar o banco: ${error.message}`);
+        console.error("Error loading themes:", error);
+        setThemes([]);
       } else {
-        console.log("DADOS RECEBIDOS:", data);
-        const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
-        console.log("TEMAS ÚNICOS FILTRADOS:", temasUnicos);
-        
-        if (temasUnicos.length > 0) {
-            setDebugMessage(`Sucesso! Encontrados ${temasUnicos.length} temas: ${temasUnicos.join(', ')}`);
-        } else {
-            setDebugMessage(`Consulta bem-sucedida, mas nenhum tema encontrado para "${capitalizedSubject}". Verifique se o conteúdo foi inserido corretamente no banco.`);
-        }
+        const uniqueThemes = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+        setThemes(uniqueThemes);
       }
-      console.log("-----------------------------------------------");
+      setLoading(false);
     };
 
-    loadThemesForDebug();
+    loadThemes();
+  }, [subject, capitalizedSubject]);
 
-  }, [subject]);
+  const handleThemeClick = (theme: string) => {
+    if (!isMuted) playSound('click');
+    const encodedTheme = encodeURIComponent(theme);
+    // Esta navegação precisa ser implementada no App.tsx
+    // navigate(`/subjects/${subject}/${encodedTheme}`); 
+    alert(`Navegar para os tópicos de: ${theme}`);
+  };
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full text-white p-4">
-        <Button onClick={() => navigate('/subjects')} className="self-start mb-4">
-          <ArrowLeft className="mr-2" /> Voltar
-        </Button>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Página de Depuração</h1>
-          <p className="text-lg">Abra o console do navegador para ver os resultados.</p>
-          <div className="mt-6 p-4 bg-black/30 rounded-lg">
-            <h2 className="font-semibold mb-2">Status da Busca:</h2>
-            <p className="font-mono text-left whitespace-pre-wrap">{debugMessage}</p>
-          </div>
+      <div className="flex flex-col h-full pb-20">
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/subjects')} className="text-white p-2">
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className="text-lg font-semibold">{capitalizedSubject}</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <h2 className="text-white text-lg font-semibold mb-4 flex items-center"><Layers className="mr-2" />Grandes Temas</h2>
+          {loading ? (
+            <p className="text-white/80 text-center">Carregando temas...</p>
+          ) : themes.length === 0 ? (
+            <div className="text-center text-white/80 py-8">
+              <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+              <p>Nenhum tema encontrado para "{capitalizedSubject}".</p>
+              <p className="text-xs mt-2">Verifique se o conteúdo foi inserido corretamente no banco de dados com a matéria capitalizada.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {themes.map((tema) => (
+                <div key={tema} onClick={() => handleThemeClick(tema)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-white text-lg">{tema}</h3>
+                    <ChevronRight className="text-white/60" size={24} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+      <BottomNavigation />
     </MobileContainer>
   );
 };
 
-export default SubjectThemesDebugger;
+export default SubjectThemes;
