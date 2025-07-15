@@ -19,6 +19,8 @@ import Dashboard from "./pages/Dashboard";
 import Progress from "./pages/Progress";
 import Ranking from "./pages/Ranking";
 import Subjects from "./pages/Subjects";
+import SubjectThemes from "./pages/SubjectThemes";
+import SubjectTopics from "./pages/SubjectTopics";
 import Exercises from "./pages/Exercises";
 import StudyRecommendations from "./pages/StudyRecommendations";
 import Classes from "./pages/Classes";
@@ -53,6 +55,8 @@ const App = () => (
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/ranking" element={<Ranking />} />
                     <Route path="/subjects" element={<Subjects />} />
+                    <Route path="/subjects/:subject" element={<SubjectThemes />} />
+                    <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
                     <Route path="/exercises" element={<Exercises />} />
                     <Route path="/recommendations" element={<StudyRecommendations />} />
                     <Route path="/classes" element={<Classes />} />
