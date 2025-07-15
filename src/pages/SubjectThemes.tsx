@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -20,9 +19,10 @@ const SubjectThemes = () => {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // O mapa de nomes e ícones continua perfeito, não precisa mexer.
   const subjectNames: { [key: string]: string } = {
     'matematica': 'Matemática',
-    'portugues': 'Português', 
+    'portugues': 'Português',
     'fisica': 'Física',
     'quimica': 'Química',
     'biologia': 'Biologia',
@@ -80,13 +80,18 @@ const SubjectThemes = () => {
   }, [subject]);
 
   const loadThemes = async () => {
+    if (!subject) return; // Garante que subject não é undefined
+    
+    setLoading(true);
+    // **A CORREÇÃO ESTÁ AQUI**
+    // Usamos o mapa para obter o nome capitalizado antes de fazer a busca.
+    const capitalizedSubject = subjectNames[subject];
+
     try {
-      setLoading(true);
-      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .eq('subject', subject)
+        .eq('subject', capitalizedSubject) // <-- Usando o nome corrigido!
         .not('grande_tema', 'is', null);
 
       if (error) {
@@ -94,7 +99,7 @@ const SubjectThemes = () => {
         return;
       }
 
-      // Contar conteúdos por tema
+      // O resto da lógica para contar e organizar os temas está perfeita.
       const themeCounts: { [key: string]: number } = {};
       data?.forEach(item => {
         if (item.grande_tema) {
@@ -130,6 +135,7 @@ const SubjectThemes = () => {
     return <div>Matéria não encontrada</div>;
   }
 
+  // O resto do código (a parte de renderização/JSX) pode continuar exatamente igual.
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
