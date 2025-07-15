@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { useQuizScore } from '@/hooks/useQuizScore';
+import { useUserActivities } from '@/hooks/useUserActivities';
 import { useSound } from '@/contexts/SoundContext';
 import QuizHeader from './quiz/QuizHeader';
 import QuizQuestion from './quiz/QuizQuestion';
@@ -30,6 +31,7 @@ interface SubjectQuizProps {
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
   const { questions, loading } = useSubjectQuestions(subject);
   const { saveQuizScore, saving } = useQuizScore();
+  const { recordQuizQuestion, recordQuizComplete } = useUserActivities();
   const { playSound } = useSound();
   
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
@@ -38,6 +40,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutos por questão
+  const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
@@ -118,7 +121,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !showResult) {
       // Tempo esgotado - submeter resposta automaticamente
-      handleSubmitAnswer();
+      const submitAnswer = async () => {
+        await handleSubmitAnswer();
+      };
+      submitAnswer();
     }
   }, [timeLeft, gameStarted, showResult, gameCompleted]);
 
@@ -136,6 +142,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     console.log('Starting game with questions:', quizQuestions);
     setGameStarted(true);
     setStartTime(Date.now());
+    setQuestionStartTime(Date.now()); // Inicializar tempo da primeira questão
     setTimeLeft(180); // 3 minutos por questão
     if (playSound) playSound('click');
   };
@@ -148,15 +155,34 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     }
   };
 
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = async () => {
     console.log('Submitting answer:', selectedAnswer);
     setShowResult(true);
     setShowMentorGuide(false);
     
-    const isCorrect = selectedAnswer === quizQuestions[currentQuestion].correctAnswer;
+    const question = quizQuestions[currentQuestion];
+    const isCorrect = selectedAnswer === question.correctAnswer;
     const questionScore = isCorrect ? 10 : 0;
+    const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
     
     console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
+    
+    // Registrar atividade da questão
+    try {
+      // Gerar um ID único para a questão (baseado no índice e conteúdo)
+      const questionId = `${subject}-${currentQuestion}-${question.question.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}`;
+      
+      await recordQuizQuestion(
+        subject,
+        question.topic,
+        questionId,
+        selectedAnswer || -1,
+        question.correctAnswer,
+        timeSpentOnQuestion
+      );
+    } catch (error) {
+      console.error('Erro ao registrar atividade da questão:', error);
+    }
     
     if (isCorrect) {
       setScore(score + questionScore);
@@ -184,13 +210,19 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       setSelectedAnswer(null);
       setShowResult(false);
       setTimeLeft(180); // Reset para 3 minutos
+      setQuestionStartTime(Date.now()); // Reset tempo para próxima questão
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
       try {
+        // Registrar conclusão do quiz
+        await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
+        
+        // Salvar pontuação no sistema de pontos
         await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        
         onComplete(finalScore, timeSpent);
         if (playSound) playSound('success');
       } catch (error) {
@@ -221,6 +253,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     setShowMentorProfile(false);
     setGameStarted(true);
     setStartTime(Date.now());
+    setQuestionStartTime(Date.now()); // Inicializar tempo da primeira questão
     setTimeLeft(180); // 3 minutos por questão
     if (playSound) playSound('click');
   };

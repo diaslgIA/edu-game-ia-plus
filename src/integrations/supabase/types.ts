@@ -667,6 +667,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activities: {
+        Row: {
+          activity_type: string
+          correct_answer: number | null
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          metadata: Json | null
+          points_earned: number | null
+          question_id: string | null
+          subject: string
+          time_spent: number | null
+          topic: string | null
+          user_answer: number | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          correct_answer?: number | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          metadata?: Json | null
+          points_earned?: number | null
+          question_id?: string | null
+          subject: string
+          time_spent?: number | null
+          topic?: string | null
+          user_answer?: number | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          correct_answer?: number | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          metadata?: Json | null
+          points_earned?: number | null
+          question_id?: string | null
+          subject?: string
+          time_spent?: number | null
+          topic?: string | null
+          user_answer?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed_at: string | null
@@ -769,6 +817,17 @@ export type Database = {
       }
       recalculate_all_rankings: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      register_quiz_question_activity: {
+        Args: {
+          p_subject: string
+          p_topic: string
+          p_question_id: string
+          p_user_answer: number
+          p_correct_answer: number
+          p_time_spent: number
+        }
         Returns: undefined
       }
     }
