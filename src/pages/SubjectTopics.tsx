@@ -23,7 +23,6 @@ const SubjectTopics = () => {
   const { subject, theme } = useParams<{ subject: string; theme: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
-  const { getContentProgress } = useSubjectContents(subject || '');
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
@@ -44,6 +43,9 @@ const SubjectTopics = () => {
     'redacao': 'Redação'
   };
 
+  const capitalizedSubject = subjectNames[subject?.toLowerCase() || ''] || subject;
+  const { getContentProgress } = useSubjectContents(capitalizedSubject || '');
+
   useEffect(() => {
     if (subject && theme) {
       loadTopics();
@@ -60,7 +62,7 @@ const SubjectTopics = () => {
       const { data, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject', subject)
+        .eq('subject', capitalizedSubject)
         .ilike('grande_tema', `%${decodedTheme}%`)
         .order('order_index', { ascending: true });
 
@@ -118,7 +120,7 @@ const SubjectTopics = () => {
     return (
       <MobileContainer background="gradient">
         <ContentViewer
-          subject={subject}
+          subject={capitalizedSubject || ''}
           contentId={selectedTopicId}
           onBack={handleBack}
           onComplete={() => setSelectedTopicId(null)}
@@ -145,7 +147,7 @@ const SubjectTopics = () => {
           </Button>
           <div className="flex-1">
             <h1 className="text-lg font-semibold">{themeDisplayName}</h1>
-            <p className="text-white/80 text-sm">{subjectNames[subject]}</p>
+            <p className="text-white/80 text-sm">{capitalizedSubject}</p>
           </div>
         </div>
 

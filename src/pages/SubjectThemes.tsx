@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -59,9 +60,7 @@ const SubjectThemes = () => {
   const handleThemeClick = (theme: string) => {
     if (!isMuted) playSound('click');
     const encodedTheme = encodeURIComponent(theme);
-    // Esta navegação precisa ser implementada no App.tsx
-    // navigate(`/subjects/${subject}/${encodedTheme}`); 
-    alert(`Navegar para os tópicos de: ${theme}`);
+    navigate(`/subjects/${subject}/${encodedTheme}`);
   };
 
   return (
@@ -81,7 +80,7 @@ const SubjectThemes = () => {
             <div className="text-center text-white/80 py-8">
               <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
               <p>Nenhum tema encontrado para "{capitalizedSubject}".</p>
-              <p className="text-xs mt-2">Verifique se o conteúdo foi inserido corretamente no banco de dados com a matéria capitalizada.</p>
+              <p className="text-xs mt-2">Verifique se o conteúdo foi inserido corretamente no banco de dados.</p>
             </div>
           ) : (
             <div className="space-y-4">
