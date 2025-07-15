@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SubjectContent from '@/components/SubjectContent';
+import HistoryThemes from '@/components/HistoryThemes';
+import HistoryTopics from '@/components/HistoryTopics';
+import TopicContent from '@/components/TopicContent';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
@@ -17,6 +20,8 @@ const Subjects = () => {
   const { playSound, isMuted } = useSound();
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [historyTheme, setHistoryTheme] = useState<string | null>(null);
+  const [historyTopic, setHistoryTopic] = useState<string | null>(null);
 
   const handleNavigation = (path: string) => {
     if (!isMuted) playSound('click');
@@ -72,6 +77,46 @@ const Subjects = () => {
     }
   ];
 
+  // Navegação hierárquica para História
+  if (historyTopic) {
+    return (
+      <MobileContainer background="gradient">
+        <TopicContent 
+          topic={historyTopic}
+          onBack={() => setHistoryTopic(null)}
+        />
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
+
+  if (historyTheme) {
+    return (
+      <MobileContainer background="gradient">
+        <HistoryTopics 
+          theme={historyTheme}
+          onBack={() => setHistoryTheme(null)}
+          onSelectTopic={(topic) => setHistoryTopic(topic)}
+        />
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
+
+  // Para História, mostrar grandes temas
+  if (selectedSubject === 'historia') {
+    return (
+      <MobileContainer background="gradient">
+        <HistoryThemes 
+          onBack={() => setSelectedSubject(null)}
+          onSelectTheme={(theme) => setHistoryTheme(theme)}
+        />
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
+
+  // Para outras matérias, manter comportamento original
   if (selectedSubject) {
     return (
       <MobileContainer background="gradient">

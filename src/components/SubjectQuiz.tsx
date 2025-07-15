@@ -24,11 +24,12 @@ import ZumbiProfile from './ZumbiProfile';
 
 interface SubjectQuizProps {
   subject: string;
+  topic?: string;
   onComplete: (score: number, timeSpent: number) => void;
   onBack: () => void;
 }
 
-const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
+const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, onBack }) => {
   const { questions, loading } = useSubjectQuestions(subject);
   const { saveQuizScore, saving } = useQuizScore();
   const { recordQuizQuestion, recordQuizComplete } = useUserActivities();
@@ -59,9 +60,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     if (questions.length > 0) {
       console.log('Raw questions from database:', questions);
       
-      // Selecionar 15 questões aleatórias (aumentado de 10)
-      const shuffled = [...questions].sort(() => Math.random() - 0.5);
-      const selectedQuestions = shuffled.slice(0, Math.min(15, questions.length));
+      // Filtrar por tópico se especificado
+      let filteredQuestions = questions;
+      if (topic) {
+        filteredQuestions = questions.filter(q => q.topic === topic);
+        console.log(`Filtered questions for topic "${topic}":`, filteredQuestions);
+      }
+      
+      // Selecionar questões aleatórias (máximo 15)
+      const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
+      const selectedQuestions = shuffled.slice(0, Math.min(15, filteredQuestions.length));
       
       // Converter para o formato esperado pelo quiz
       const formattedQuestions = selectedQuestions.map(q => {
@@ -113,7 +121,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       console.log('Final formatted questions:', formattedQuestions);
       setQuizQuestions(formattedQuestions);
     }
-  }, [questions, subject]);
+  }, [questions, subject, topic]);
 
   useEffect(() => {
     if (gameStarted && timeLeft > 0 && !showResult && !gameCompleted) {
