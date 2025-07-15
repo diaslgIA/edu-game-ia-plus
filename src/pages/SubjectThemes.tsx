@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MobileContainer from '@/components/MobileContainer';
-import BottomNavigation from '@/components/BottomNavigation';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, ChevronRight, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSound } from '@/contexts/SoundContext';
+import MobileContainer from '@/components/MobileContainer';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
-interface Theme {
-  grande_tema: string;
-  content_count: number;
-}
-
-const SubjectThemes = () => {
+const SubjectThemesDebugger = () => {
   const { subject } = useParams<{ subject: string }>();
   const navigate = useNavigate();
-  const { playSound, isMuted } = useSound();
-  const [themes, setThemes] = useState<Theme[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [debugMessage, setDebugMessage] = useState('Iniciando depuração...');
 
-  // O mapa de nomes e ícones continua perfeito, não precisa mexer.
   const subjectNames: { [key: string]: string } = {
     'matematica': 'Matemática',
     'portugues': 'Português',
@@ -30,186 +20,72 @@ const SubjectThemes = () => {
     'geografia': 'Geografia',
     'filosofia': 'Filosofia',
     'sociologia': 'Sociologia',
-    'ingles': 'Inglês',
-    'espanhol': 'Espanhol',
-    'literatura': 'Literatura',
-    'redacao': 'Redação'
-  };
-
-  const subjectIcons: { [key: string]: string } = {
-    'matematica': '🔢',
-    'portugues': '📚',
-    'fisica': '⚡',
-    'quimica': '🧪',
-    'biologia': '🧬',
-    'historia': '🏛️',
-    'geografia': '🌍',
-    'filosofia': '🤔',
-    'sociologia': '👥',
-    'ingles': '🌎',
-    'espanhol': '🇪🇸',
-    'literatura': '📖',
-    'redacao': '✍️'
-  };
-
-  const themeColors: { [key: string]: string } = {
-    'Mecânica': 'from-blue-500 to-blue-700',
-    'Termologia': 'from-red-500 to-red-700',
-    'Eletricidade': 'from-yellow-500 to-yellow-700',
-    'Ondulatória': 'from-purple-500 to-purple-700',
-    'Química Geral': 'from-green-500 to-green-700',
-    'Físico-Química': 'from-indigo-500 to-indigo-700',
-    'Química Orgânica': 'from-pink-500 to-pink-700',
-    'Biologia Celular': 'from-teal-500 to-teal-700',
-    'Genética e Evolução': 'from-orange-500 to-orange-700',
-    'Ecologia': 'from-emerald-500 to-emerald-700',
-    'Corpo Humano': 'from-rose-500 to-rose-700',
-    'Geografia Geral': 'from-cyan-500 to-cyan-700',
-    'Geografia do Brasil': 'from-lime-500 to-lime-700',
-    'História da Filosofia': 'from-violet-500 to-violet-700',
-    'Ética e Política': 'from-amber-500 to-amber-700',
-    'Teoria Sociológica': 'from-slate-500 to-slate-700',
-    'Cultura e Sociedade': 'from-stone-500 to-stone-700',
-    'Sociedade Brasileira': 'from-neutral-500 to-neutral-700'
   };
 
   useEffect(() => {
-    if (subject) {
-      loadThemes();
+    if (!subject) {
+      console.error("DEBUG: Parâmetro 'subject' da URL não encontrado.");
+      setDebugMessage("ERRO: Matéria não encontrada na URL.");
+      return;
     }
-  }, [subject]);
 
-  const loadThemes = async () => {
-    if (!subject) return; // Garante que subject não é undefined
-    
-    setLoading(true);
-    // **A CORREÇÃO ESTÁ AQUI**
-    // Usamos o mapa para obter o nome capitalizado antes de fazer a busca.
-    const capitalizedSubject = subjectNames[subject];
+    const capitalizedSubject = subjectNames[subject.toLowerCase()];
 
-    try {
+    if (!capitalizedSubject) {
+      console.error(`DEBUG: Nome de matéria inválido na URL: ${subject}`);
+      setDebugMessage(`ERRO: "${subject}" não é uma matéria válida.`);
+      return;
+    }
+
+    console.log(`DEBUG: Iniciando busca para a matéria: "${capitalizedSubject}"`);
+    setDebugMessage(`Buscando temas para "${capitalizedSubject}"...`);
+
+    const loadThemesForDebug = async () => {
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .eq('subject', capitalizedSubject) // <-- Usando o nome corrigido!
+        .eq('subject', capitalizedSubject)
         .not('grande_tema', 'is', null);
 
+      console.log("---------- RESULTADO DO BANCO DE DADOS ----------");
       if (error) {
-        console.error('Error loading themes:', error);
-        return;
-      }
-
-      // O resto da lógica para contar e organizar os temas está perfeita.
-      const themeCounts: { [key: string]: number } = {};
-      data?.forEach(item => {
-        if (item.grande_tema) {
-          themeCounts[item.grande_tema] = (themeCounts[item.grande_tema] || 0) + 1;
+        console.error("ERRO DO SUPABASE:", error);
+        setDebugMessage(`Erro ao consultar o banco: ${error.message}`);
+      } else {
+        console.log("DADOS RECEBIDOS:", data);
+        const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+        console.log("TEMAS ÚNICOS FILTRADOS:", temasUnicos);
+        
+        if (temasUnicos.length > 0) {
+            setDebugMessage(`Sucesso! Encontrados ${temasUnicos.length} temas: ${temasUnicos.join(', ')}`);
+        } else {
+            setDebugMessage(`Consulta bem-sucedida, mas nenhum tema encontrado para "${capitalizedSubject}". Verifique se o conteúdo foi inserido corretamente no banco.`);
         }
-      });
+      }
+      console.log("-----------------------------------------------");
+    };
 
-      const uniqueThemes = Object.keys(themeCounts).map(theme => ({
-        grande_tema: theme,
-        content_count: themeCounts[theme]
-      }));
+    loadThemesForDebug();
 
-      setThemes(uniqueThemes);
-    } catch (error) {
-      console.error('Error loading themes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [subject]);
 
-  const handleThemeClick = (theme: string) => {
-    if (!isMuted) playSound('click');
-    const encodedTheme = encodeURIComponent(theme.toLowerCase().replace(/\s+/g, '-'));
-    navigate(`/subjects/${subject}/${encodedTheme}`);
-  };
-
-  const handleBack = () => {
-    if (!isMuted) playSound('click');
-    navigate('/subjects');
-  };
-
-  if (!subject) {
-    return <div>Matéria não encontrada</div>;
-  }
-
-  // O resto do código (a parte de renderização/JSX) pode continuar exatamente igual.
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleBack}
-            className="text-white p-2 hover:bg-white/20 rounded-xl"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">{subjectIcons[subject]}</span>
-            <h1 className="text-lg font-semibold">{subjectNames[subject]}</h1>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-4">
-            <h2 className="text-white text-lg font-semibold mb-4 flex items-center space-x-2">
-              <Layers size={20} />
-              <span>Grandes Temas</span>
-            </h2>
-
-            {loading ? (
-              <div className="text-white text-center py-8">Carregando temas...</div>
-            ) : themes.length === 0 ? (
-              <div className="text-white text-center py-8">
-                <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Nenhum tema encontrado para esta matéria ainda.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {themes.map((theme, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleThemeClick(theme.grande_tema)}
-                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${themeColors[theme.grande_tema] || 'from-gray-500 to-gray-700'} flex items-center justify-center text-white shadow-lg`}>
-                        <Layers size={24} />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-bold text-white text-lg mb-1">{theme.grande_tema}</h3>
-                        <p className="text-white/80 text-sm mb-2">
-                          {theme.content_count} {theme.content_count === 1 ? 'tópico disponível' : 'tópicos disponíveis'}
-                        </p>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
-                            {subjectNames[subject]}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="text-white/60">
-                        <ChevronRight size={20} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <div className="flex flex-col h-full text-white p-4">
+        <Button onClick={() => navigate('/subjects')} className="self-start mb-4">
+          <ArrowLeft className="mr-2" /> Voltar
+        </Button>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Página de Depuração</h1>
+          <p className="text-lg">Abra o console do navegador para ver os resultados.</p>
+          <div className="mt-6 p-4 bg-black/30 rounded-lg">
+            <h2 className="font-semibold mb-2">Status da Busca:</h2>
+            <p className="font-mono text-left whitespace-pre-wrap">{debugMessage}</p>
           </div>
         </div>
       </div>
-      
-      <BottomNavigation />
     </MobileContainer>
   );
 };
 
-export default SubjectThemes;
+export default SubjectThemesDebugger;
