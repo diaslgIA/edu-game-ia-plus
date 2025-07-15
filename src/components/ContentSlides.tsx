@@ -179,27 +179,27 @@ const getIntroductoryContent = (subject: string): Slide[] => {
     'História': [
       {
         id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A História nos ajuda a compreender o presente através do passado. Estudaremos eventos importantes do Brasil e do mundo.`,
-        concepts: ['História do Brasil', 'História mundial', 'Análise de fontes históricas']
+        title: 'Introdução à História',
+        content: `A História é o estudo do passado para compreender o presente e construir o futuro.\n\nPor meio da análise de documentos, monumentos, objetos e relatos, conseguimos entender as transformações da sociedade ao longo do tempo.\n\nEstudaremos os principais acontecimentos do Brasil e do mundo, analisando suas causas, consequências e conexões.`,
+        concepts: ['Estudo do passado', 'Análise de fontes históricas', 'Transformações sociais', 'Conexões históricas']
       },
       {
         id: 2,
-        title: 'Brasil Colonial',
-        content: `O período colonial brasileiro (1500-1822) foi marcado pela exploração portuguesa e formação da sociedade brasileira.`,
-        concepts: ['Pacto Colonial', 'Ciclo do açúcar', 'Escravidão colonial']
+        title: 'História do Brasil',
+        content: `Vamos estudar desde o período pré-colonial até os dias atuais.\n\nTemas como a colonização, escravidão, independência, república, ditadura e democracia serão abordados de forma contextualizada.\n\nA ideia é compreender como se formou a identidade brasileira e como as desigualdades sociais e raciais foram sendo construídas e mantidas.`,
+        concepts: ['Período pré-colonial', 'Colonização e escravidão', 'Independência e república', 'Formação da identidade brasileira']
       },
       {
         id: 3,
-        title: 'República Brasileira',
-        content: `A República no Brasil passou por diferentes fases, desde a Proclamação até os dias atuais.`,
-        concepts: ['República Velha', 'Era Vargas', 'Regime Militar']
+        title: 'História Mundial',
+        content: `Essa parte aborda os grandes marcos da história global: Antiguidade, feudalismo, revoluções, guerras mundiais e movimentos sociais.\n\nVamos entender como diferentes civilizações influenciaram o mundo e como os conflitos e transformações moldaram a sociedade atual.`,
+        concepts: ['Antiguidade e feudalismo', 'Revoluções históricas', 'Guerras mundiais', 'Civilizações e influências globais']
       },
       {
         id: 4,
-        title: 'História Contemporânea',
-        content: `O século XX foi marcado por guerras mundiais, Guerra Fria e transformações sociais globais.`,
-        concepts: ['Guerras Mundiais', 'Guerra Fria', 'Globalização']
+        title: 'Análise de Fontes Históricas',
+        content: `A fonte histórica é tudo aquilo que nos ajuda a entender o passado: cartas, jornais, pinturas, vídeos, entrevistas, ruínas...\n\nAprenderemos a identificar e interpretar essas fontes para construir argumentos históricos bem fundamentados — uma habilidade muito cobrada no ENEM.`,
+        concepts: ['Tipos de fontes históricas', 'Identificação e interpretação', 'Construção de argumentos', 'Preparação para o ENEM']
       }
     ],
     'Geografia': [
