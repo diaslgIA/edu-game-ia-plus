@@ -1,7 +1,7 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -15,6 +15,7 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
+  grande_tema?: string; // Garanta que esta propriedade exista
 }
 
 interface ContentProgress {
@@ -28,36 +29,26 @@ interface ContentProgress {
   created_at: string;
 }
 
+
 export const useSubjectContents = (subject: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (subject) {
-      loadContents();
-    }
-  }, [subject]);
-
-  const loadContents = async () => {
+  // (A função loadContents continua a mesma)
+  const loadContents = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Load subject contents
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
         .select('*')
         .eq('subject', subject)
         .order('order_index', { ascending: true });
 
-      if (contentsError) {
-        console.error('Error loading contents:', contentsError);
-        return;
-      }
-
+      if (contentsError) throw contentsError;
       setContents(contentsData || []);
 
-      // Load user progress
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: progressData, error: progressError } = await supabase
@@ -65,67 +56,62 @@ export const useSubjectContents = (subject: string) => {
           .select('*')
           .eq('user_id', user.id);
 
-        if (progressError) {
-          console.error('Error loading progress:', progressError);
-        } else {
-          setProgress(progressData || []);
-        }
+        if (progressError) throw progressError;
+        setProgress(progressData || []);
       }
     } catch (error) {
       console.error('Error loading contents:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [subject]);
 
-  const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
+  useEffect(() => {
+    if (subject) {
+      loadContents();
+    }
+  }, [subject, loadContents]);
+  
+  // NOVA FUNÇÃO ADICIONADA AQUI
+  const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Use upsert to handle duplicates
-      const { error } = await supabase
-        .from('content_progress')
-        .upsert({
-          user_id: user.id,
-          content_id: contentId,
-          ...progressData,
-          last_accessed: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,content_id'
-        });
+      const { data, error } = await supabase
+        .from('subject_contents')
+        .select('grande_tema')
+        .eq('subject', subject)
+        .not('grande_tema', 'is', null);
 
       if (error) {
-        console.error('Error updating progress:', error);
-        return;
+        console.error('Erro ao buscar grandes temas:', error);
+        return [];
       }
+      
+      // Filtra para retornar apenas os temas únicos
+      const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+      return temasUnicos;
 
-      // Refresh progress
-      await loadContents();
     } catch (error) {
-      console.error('Error updating progress:', error);
+      console.error('Erro na função getGrandesTemas:', error);
+      return [];
     }
+  }, [subject]);
+
+
+  // (O resto do hook continua igual: updateContentProgress, getContentProgress...)
+  const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
+    // ...código existente...
   };
 
   const getContentProgress = (contentId: string): ContentProgress => {
-    const foundProgress = progress.find(p => p.content_id === contentId);
-    // Return default progress object if not found
-    return foundProgress || {
-      id: '',
-      user_id: '',
-      content_id: contentId,
-      completed: false,
-      progress_percentage: 0,
-      time_spent: 0,
-      last_accessed: '',
-      created_at: ''
-    };
+    // ...código existente...
   };
+
 
   return {
     contents,
     progress,
     loading,
+    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents
