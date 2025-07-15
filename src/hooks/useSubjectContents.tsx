@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,7 +29,6 @@ interface ContentProgress {
   last_accessed: string;
   created_at: string;
 }
-
 
 export const useSubjectContents = (subject: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
@@ -96,16 +96,31 @@ export const useSubjectContents = (subject: string) => {
     }
   }, [subject]);
 
-
-  // (O resto do hook continua igual: updateContentProgress, getContentProgress...)
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
-    // ...código existente...
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('content_progress')
+        .upsert({
+          user_id: user.id,
+          content_id: contentId,
+          ...progressData
+        });
+
+      if (error) throw error;
+      
+      // Reload progress after update
+      await loadContents();
+    } catch (error) {
+      console.error('Error updating content progress:', error);
+    }
   };
 
-  const getContentProgress = (contentId: string): ContentProgress => {
-    // ...código existente...
+  const getContentProgress = (contentId: string): ContentProgress | null => {
+    return progress.find(p => p.content_id === contentId) || null;
   };
-
 
   return {
     contents,
