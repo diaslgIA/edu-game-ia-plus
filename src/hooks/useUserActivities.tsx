@@ -10,6 +10,7 @@ export interface UserActivity {
   points_earned: number;
   created_at: string;
   metadata?: any;
+  is_correct?: boolean;
 }
 
 export const useUserActivities = () => {
@@ -66,12 +67,14 @@ export const useUserActivities = () => {
           activity_type: 'quiz_question',
           subject,
           topic,
-          question_id: questionId,
-          user_answer: userAnswer,
-          correct_answer: correctAnswer,
-          is_correct: isCorrect,
           points_earned: pointsEarned,
-          time_spent: timeSpent
+          time_spent: timeSpent,
+          metadata: {
+            question_id: questionId,
+            user_answer: userAnswer,
+            correct_answer: correctAnswer,
+            is_correct: isCorrect
+          }
         });
 
       if (error) {

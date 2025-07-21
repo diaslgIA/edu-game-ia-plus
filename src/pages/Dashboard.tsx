@@ -10,7 +10,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
 import SoundControlPanel from '@/components/SoundControlPanel';
 import UserRankingCard from '@/components/UserRankingCard';
-import RecentActivities from '@/components/RecentActivities';
+import { RecentActivities } from '@/components/RecentActivities';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/Logo';

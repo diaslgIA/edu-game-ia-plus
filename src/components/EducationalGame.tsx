@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Trophy, Clock, Star } from 'lucide-react';
@@ -47,7 +46,7 @@ interface EducationalGameProps {
 }
 
 const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => {
-  const { saveQuizScore, saving } = useQuizScore();
+  const { saveQuizScore, isLoading } = useQuizScore();
   const { isMuted } = useSound();
   const { t, language } = useLanguage();
   
@@ -253,7 +252,7 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
           <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">{finalScore} pontos</div>
           <div className="text-lg text-yellow-500 dark:text-yellow-300">{percentage}% de acertos</div>
           <div className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
-            {saving ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
+            {isLoading ? 'Salvando pontos...' : 'Pontos salvos na sua conta!'}
           </div>
         </div>
         <div className="space-y-3 mb-6">
