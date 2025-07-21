@@ -1,0 +1,239 @@
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Clock, BookOpen, CheckCircle, Play, Target, Lightbulb, TrendingUp, Bookmark } from 'lucide-react';
+import { useSubjectContents } from '@/hooks/useSubjectContents';
+
+interface DetailedContentViewerProps {
+  subject: string;
+  contentId: string;
+  onBack: () => void;
+  onComplete?: (contentId: string) => void;
+}
+
+const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({ 
+  subject, 
+  contentId, 
+  onBack, 
+  onComplete 
+}) => {
+  const { contents, updateContentProgress, getContentProgress } = useSubjectContents(subject);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [currentSection, setCurrentSection] = useState(0);
+
+  const content = contents.find(c => c.id === contentId);
+  const progress = getContentProgress(contentId);
+
+  const sections = [
+    { 
+      title: 'Explicação Base', 
+      content: content?.explanation,
+      icon: BookOpen 
+    },
+    { 
+      title: 'Explicação Detalhada', 
+      content: content?.detailed_explanation,
+      icon: Target 
+    },
+    { 
+      title: 'Exemplos Práticos', 
+      content: content?.examples,
+      icon: Lightbulb 
+    },
+    { 
+      title: 'Aplicações no ENEM', 
+      content: content?.practical_applications,
+      icon: TrendingUp 
+    },
+    { 
+      title: 'Dicas de Estudo', 
+      content: content?.study_tips,
+      icon: Bookmark 
+    }
+  ].filter(section => section.content);
+
+  useEffect(() => {
+    setStartTime(Date.now());
+  }, [currentSection]);
+
+  const handleComplete = async () => {
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+    
+    await updateContentProgress(contentId, {
+      completed: true,
+      progress_percentage: 100,
+      time_spent: (progress?.time_spent || 0) + timeSpent
+    });
+
+    if (onComplete) {
+      onComplete(contentId);
+    }
+  };
+
+  const handleSectionComplete = async () => {
+    if (!content) return;
+
+    const progressPercentage = Math.round(((currentSection + 1) / sections.length) * 100);
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+
+    await updateContentProgress(contentId, {
+      completed: progressPercentage === 100,
+      progress_percentage: progressPercentage,
+      time_spent: (progress?.time_spent || 0) + timeSpent
+    });
+
+    if (currentSection < sections.length - 1) {
+      setCurrentSection(currentSection + 1);
+      setStartTime(Date.now());
+    } else {
+      handleComplete();
+    }
+  };
+
+  if (!content) {
+    return (
+      <div className="p-6 text-center">
+        <h3 className="text-xl font-bold text-white mb-4">Conteúdo não encontrado</h3>
+        <Button onClick={onBack} variant="outline">
+          <ArrowLeft className="mr-2" size={16} />
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
+  const currentSectionData = sections[currentSection];
+  const IconComponent = currentSectionData?.icon || BookOpen;
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'hard': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={onBack}
+          className="text-white p-2 hover:bg-white/20 rounded-xl"
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-lg font-semibold">{content.title}</h1>
+          <div className="flex items-center space-x-4 text-sm text-white/80">
+            <div className="flex items-center space-x-1">
+              <Clock size={14} />
+              <span>{content.estimated_time} min</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <BookOpen size={14} />
+              <span className={getDifficultyColor(content.difficulty_level)}>
+                {content.difficulty_level === 'easy' ? 'Fácil' : 
+                 content.difficulty_level === 'medium' ? 'Médio' : 'Difícil'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="p-4">
+        <div className="bg-white/20 rounded-full h-2 mb-2">
+          <div 
+            className="bg-green-500 h-full rounded-full transition-all duration-300"
+            style={{ width: `${((currentSection + 1) / sections.length) * 100}%` }}
+          />
+        </div>
+        <p className="text-white/80 text-sm text-center">
+          Seção {currentSection + 1} de {sections.length}: {currentSectionData?.title}
+        </p>
+      </div>
+
+      {/* Key Concepts */}
+      {content.key_concepts && currentSection === 0 && (
+        <div className="px-6 pb-4">
+          <div className="bg-blue-500/20 rounded-xl p-4 border border-blue-500/30">
+            <h3 className="text-white font-semibold mb-2 flex items-center">
+              <Target size={16} className="mr-2" />
+              Conceitos-chave
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {Array.isArray(content.key_concepts) ? 
+                content.key_concepts.map((concept, index) => (
+                  <span key={index} className="bg-blue-500/30 text-blue-100 px-2 py-1 rounded-lg text-sm">
+                    {concept}
+                  </span>
+                )) :
+                typeof content.key_concepts === 'string' ?
+                  JSON.parse(content.key_concepts).map((concept: string, index: number) => (
+                    <span key={index} className="bg-blue-500/30 text-blue-100 px-2 py-1 rounded-lg text-sm">
+                      {concept}
+                    </span>
+                  )) : null
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {currentSectionData && (
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
+            <div className="flex items-center mb-4">
+              <IconComponent size={24} className="text-blue-400 mr-3" />
+              <h2 className="text-xl font-bold text-white">{currentSectionData.title}</h2>
+            </div>
+            <div className="text-white/90 text-base leading-relaxed whitespace-pre-line">
+              {currentSectionData.content}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="p-6 border-t border-white/10">
+        <div className="flex space-x-3">
+          {currentSection > 0 && (
+            <Button 
+              onClick={() => setCurrentSection(currentSection - 1)}
+              variant="outline"
+              className="flex-1 border-white/20 text-white hover:bg-white/20"
+            >
+              <ArrowLeft className="mr-2" size={16} />
+              Anterior
+            </Button>
+          )}
+          
+          {currentSection < sections.length - 1 ? (
+            <Button 
+              onClick={handleSectionComplete}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
+            >
+              <Play className="mr-2" size={16} />
+              Próxima Seção
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleSectionComplete}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3"
+            >
+              <CheckCircle className="mr-2" size={16} />
+              Concluir Tópico
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DetailedContentViewer;
