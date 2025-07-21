@@ -9,7 +9,7 @@ interface TopicCardProps {
     description: string;
     difficulty_level: string;
     estimated_time: number;
-    key_concepts?: string[] | string | null;
+    key_concepts?: any; // Changed to any to handle Json type from Supabase
     explanation?: string;
   };
   index: number;
@@ -45,7 +45,7 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, index, progress, onTopicCl
     }
   };
 
-  const parseKeyConcepts = (concepts: string[] | string | null): string[] => {
+  const parseKeyConcepts = (concepts: any): string[] => {
     if (!concepts) return [];
     if (Array.isArray(concepts)) return concepts;
     if (typeof concepts === 'string') {

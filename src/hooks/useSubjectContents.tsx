@@ -21,7 +21,7 @@ interface SubjectContent {
   examples?: string;
   practical_applications?: string;
   study_tips?: string;
-  key_concepts?: string[] | string | null; // Fixed type definition
+  key_concepts?: any; // Changed to any to handle Json type from Supabase
 }
 
 interface ContentProgress {
@@ -56,7 +56,8 @@ export const useSubjectContents = (subject: string) => {
       }
       
       console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
-      setContents(contentsData || []);
+      // Type assertion to handle the Json type conversion
+      setContents((contentsData || []) as SubjectContent[]);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {

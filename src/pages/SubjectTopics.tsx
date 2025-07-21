@@ -19,7 +19,7 @@ interface Topic {
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
-  key_concepts: string[] | string | null;
+  key_concepts: any; // Changed to any to handle Json type from Supabase
   explanation?: string;
 }
 
@@ -77,7 +77,8 @@ const SubjectTopics = () => {
       }
 
       console.log('Loaded topics:', data);
-      setTopics(data || []);
+      // Type assertion to handle the Json type conversion
+      setTopics((data || []) as Topic[]);
     } catch (error) {
       console.error('Error loading topics:', error);
       setTopics([]);
