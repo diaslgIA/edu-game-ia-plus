@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,7 +20,7 @@ interface SubjectContent {
   examples?: string;
   practical_applications?: string;
   study_tips?: string;
-  key_concepts?: string[] | string;
+  key_concepts?: any;
 }
 
 interface ContentProgress {
@@ -53,7 +52,7 @@ export const useSubjectContents = (subject: string) => {
       if (contentsError) throw contentsError;
       
       console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
-      setContents(contentsData || []);
+      setContents((contentsData || []) as SubjectContent[]);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
