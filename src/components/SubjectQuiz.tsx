@@ -223,13 +223,17 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
       try {
-        // Salvar pontuação no sistema de pontos
-        await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        console.log('Finalizando quiz com pontuação:', finalScore);
         
+        // Salvar pontuação no sistema de pontos
+        await saveQuizScore(subject, finalScore / 10, quizQuestions.length, timeSpent, topic);
+        
+        console.log('Quiz finalizado e pontuação salva com sucesso');
         onComplete(finalScore, timeSpent);
         if (playSound) playSound('success');
       } catch (error) {
         console.error('Error saving quiz score:', error);
+        // Mesmo com erro, completar o quiz para o usuário
         onComplete(finalScore, timeSpent);
       }
     }

@@ -195,10 +195,19 @@ const EducationalGame: React.FC<EducationalGameProps> = ({ onGameComplete }) => 
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === sampleQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
-      // Salvar pontuação no banco de dados
-      await saveQuizScore('Quiz Geral', finalScore, sampleQuestions.length, timeSpent);
-      
-      onGameComplete(finalScore, timeSpent);
+      try {
+        console.log('Finalizando jogo educacional com pontuação:', finalScore);
+        
+        // Salvar pontuação no banco de dados - passando a pontuação em questões corretas
+        await saveQuizScore('Quiz Geral', finalScore / 10, sampleQuestions.length, timeSpent);
+        
+        console.log('Jogo finalizado e pontuação salva com sucesso');
+        onGameComplete(finalScore, timeSpent);
+      } catch (error) {
+        console.error('Erro ao salvar pontuação do jogo:', error);
+        // Mesmo com erro, completar o jogo para o usuário
+        onGameComplete(finalScore, timeSpent);
+      }
     }
   };
 
