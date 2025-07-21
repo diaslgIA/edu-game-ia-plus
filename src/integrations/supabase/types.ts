@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      Answers: {
+        Row: {
+          answer_text: string
+          created_at: string | null
+          id: string
+          is_correct: boolean
+          question_id: string
+        }
+        Insert: {
+          answer_text: string
+          created_at?: string | null
+          id?: string
+          is_correct: boolean
+          question_id: string
+        }
+        Update: {
+          answer_text?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "Questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_progress: {
         Row: {
           completed: boolean | null
@@ -520,6 +552,35 @@ export type Database = {
         }
         Relationships: []
       }
+      Questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_text: string
+          quiz_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_text: string
+          quiz_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_text?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "Quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_scores: {
         Row: {
           completed_at: string | null
@@ -550,21 +611,56 @@ export type Database = {
         }
         Relationships: []
       }
+      Quizzes: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          title: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Quizzes_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "Topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subject_contents: {
         Row: {
           content_data: Json | null
           content_type: string
           created_at: string
           description: string | null
+          detailed_explanation: string | null
           difficulty_level: string | null
           estimated_time: number | null
+          examples: string | null
           explanation: string | null
           grande_tema: string | null
           id: string
           is_premium: boolean | null
+          key_concepts: Json | null
           order_index: number | null
+          practical_applications: string | null
+          study_tips: string | null
           subject: string
           title: string
+          topic_name: string | null
           updated_at: string
         }
         Insert: {
@@ -572,15 +668,21 @@ export type Database = {
           content_type?: string
           created_at?: string
           description?: string | null
+          detailed_explanation?: string | null
           difficulty_level?: string | null
           estimated_time?: number | null
+          examples?: string | null
           explanation?: string | null
           grande_tema?: string | null
           id?: string
           is_premium?: boolean | null
+          key_concepts?: Json | null
           order_index?: number | null
+          practical_applications?: string | null
+          study_tips?: string | null
           subject: string
           title: string
+          topic_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -588,15 +690,21 @@ export type Database = {
           content_type?: string
           created_at?: string
           description?: string | null
+          detailed_explanation?: string | null
           difficulty_level?: string | null
           estimated_time?: number | null
+          examples?: string | null
           explanation?: string | null
           grande_tema?: string | null
           id?: string
           is_premium?: boolean | null
+          key_concepts?: Json | null
           order_index?: number | null
+          practical_applications?: string | null
+          study_tips?: string | null
           subject?: string
           title?: string
+          topic_name?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -678,6 +786,88 @@ export type Database = {
           topic?: string
         }
         Relationships: []
+      }
+      Subjects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      Themes: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Themes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "Subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Topics: {
+        Row: {
+          created_at: string | null
+          explanation: string | null
+          id: string
+          name: string
+          theme_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          name: string
+          theme_id: string
+        }
+        Update: {
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          name?: string
+          theme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Topics_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "Themes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_activities: {
         Row: {

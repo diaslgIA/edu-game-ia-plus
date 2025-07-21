@@ -3,75 +3,108 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { SoundProvider } from "./contexts/SoundContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from "@/integrations/supabase/client";
+import { SoundProvider } from "@/contexts/SoundContext";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Verification from "./pages/Verification";
-import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
 import Subjects from "./pages/Subjects";
 import SubjectThemes from "./pages/SubjectThemes";
-import SubjectTopics from "./pages/SubjectTopics";
-import Exercises from "./pages/Exercises";
-import Progress from "./pages/Progress";
+import ThemeTopics from "./pages/ThemeTopics";
+import TopicDetail from "./pages/TopicDetail";
+import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import Guilds from "./pages/Guilds";
 import GuildDetails from "./pages/GuildDetails";
-import Ranking from "./pages/Ranking";
-import Subscriptions from "./pages/Subscriptions";
-import Support from "./pages/Support";
-import StudyRecommendations from "./pages/StudyRecommendations";
-import MentorImages from "./pages/MentorImages";
-import NotFound from "./pages/NotFound";
+import CreateGuild from "./pages/CreateGuild";
+import Rankings from "./pages/Rankings";
+import StudyPlans from "./pages/StudyPlans";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <LanguageProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SessionContextProvider supabaseClient={supabase}>
         <SoundProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/verification" element={<Verification />} />
-                  <Route path="/welcome" element={<Welcome />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/subjects" element={<Subjects />} />
-                  <Route path="/subjects/:subject" element={<SubjectThemes />} />
-                  <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
-                  <Route path="/exercises" element={<Exercises />} />
-                  <Route path="/progress" element={<Progress />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/guilds" element={<Guilds />} />
-                  <Route path="/guilds/:id" element={<GuildDetails />} />
-                  <Route path="/ranking" element={<Ranking />} />
-                  <Route path="/subscriptions" element={<Subscriptions />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/recommendations" element={<StudyRecommendations />} />
-                  <Route path="/mentor-images" element={<MentorImages />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subjects" element={
+                  <ProtectedRoute>
+                    <Subjects />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subjects/:subject" element={
+                  <ProtectedRoute>
+                    <SubjectThemes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subjects/:subject/:theme" element={
+                  <ProtectedRoute>
+                    <ThemeTopics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subjects/:subject/:theme/:topicId" element={
+                  <ProtectedRoute>
+                    <TopicDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/quiz/:subject" element={
+                  <ProtectedRoute>
+                    <Quiz />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/guilds" element={
+                  <ProtectedRoute>
+                    <Guilds />
+                  </ProtectedRoute>
+                } />
+                <Route path="/guilds/:guildId" element={
+                  <ProtectedRoute>
+                    <GuildDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/create-guild" element={
+                  <ProtectedRoute>
+                    <CreateGuild />
+                  </ProtectedRoute>
+                } />
+                <Route path="/rankings" element={
+                  <ProtectedRoute>
+                    <Rankings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/study-plans" element={
+                  <ProtectedRoute>
+                    <StudyPlans />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
         </SoundProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+      </SessionContextProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
