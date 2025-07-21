@@ -1,259 +1,243 @@
 
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, BookOpen, Clock, Target, Lightbulb, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useSound } from '@/contexts/SoundContext';
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, BookOpen, Target, Lightbulb, Users, Clock } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const TopicDetail = () => {
-  const { subject = '', theme = '', topicId = '' } = useParams<{ 
-    subject: string; 
-    theme: string; 
-    topicId: string; 
-  }>();
+  const { subject, theme, topicId } = useParams();
   const navigate = useNavigate();
-  const { playSound, isMuted } = useSound();
+  const { t } = useLanguage();
 
-  const decodedTheme = decodeURIComponent(theme);
-  const decodedSubject = decodeURIComponent(subject);
-
-  const { data: topic, isLoading, error } = useQuery({
+  const { data: topic, isLoading } = useQuery({
     queryKey: ['topic-detail', topicId],
     queryFn: async () => {
-      console.log('Fetching topic detail for:', topicId);
-      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('*')
         .eq('id', topicId)
         .single();
-
-      if (error) {
-        console.error('Error fetching topic:', error);
-        throw error;
-      }
-
-      console.log('Found topic:', data);
+      
+      if (error) throw error;
       return data;
     },
-    enabled: !!topicId,
+    enabled: !!topicId
   });
 
-  const handleBackClick = () => {
-    if (!isMuted) playSound('click');
-    navigate(`/subjects/${subject}/${theme}`);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+        <div className="container mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-32 bg-muted rounded"></div>
+            <div className="h-48 bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!topic) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+        <div className="container mx-auto text-center">
+          <h1 className="text-2xl font-bold text-muted-foreground">Tópico não encontrado</h1>
+          <Button onClick={() => navigate('/subjects')} className="mt-4">
+            Voltar às Matérias
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const getDifficultyColor = (level: string) => {
     switch (level) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'easy': return 'bg-green-500/20 text-green-700 border-green-200';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-700 border-yellow-200';
+      case 'hard': return 'bg-red-500/20 text-red-700 border-red-200';
+      default: return 'bg-gray-500/20 text-gray-700 border-gray-200';
     }
   };
 
-  const getDifficultyLabel = (level: string) => {
+  const getDifficultyText = (level: string) => {
     switch (level) {
       case 'easy': return 'Fácil';
       case 'medium': return 'Médio';
       case 'hard': return 'Difícil';
-      default: return level;
+      default: return 'Não especificado';
     }
   };
-
-  const getKeyConcepts = (keyConcepts: any): string[] => {
-    if (Array.isArray(keyConcepts)) {
-      return keyConcepts;
-    }
-    return [];
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-8 w-64" />
-          </div>
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !topic) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <p className="text-red-600">Erro ao carregar o conteúdo. Tente novamente.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const keyConcepts = getKeyConcepts(topic.key_concepts);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
+      <div className="container mx-auto p-6 max-w-4xl">
+        {/* Cabeçalho */}
         <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="outline"
+          <Button 
+            variant="ghost" 
             size="sm"
-            onClick={handleBackClick}
+            onClick={() => navigate(`/subjects/${subject}/${theme}`)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{topic.title}</h1>
-            <p className="text-gray-600">{decodedTheme} • {decodedSubject}</p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{subject}</span>
+            <span>→</span>
+            <span>{decodeURIComponent(theme || '')}</span>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="space-y-6">
-          {/* Topic Overview */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-xl mb-2">Visão Geral</CardTitle>
-                  <CardDescription className="text-base">
-                    {topic.description}
-                  </CardDescription>
-                </div>
-                <div className="flex flex-col gap-2 ml-4">
+        {/* Título e Informações Básicas */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <CardTitle className="text-2xl mb-2">{topic.title}</CardTitle>
+                <p className="text-muted-foreground text-lg mb-4">{topic.description}</p>
+                <div className="flex items-center gap-4 text-sm">
                   <Badge className={getDifficultyColor(topic.difficulty_level)}>
-                    {getDifficultyLabel(topic.difficulty_level)}
+                    {getDifficultyText(topic.difficulty_level)}
                   </Badge>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{topic.estimated_time} min</span>
+                  </div>
+                  {topic.grande_tema && (
+                    <Badge variant="outline">{topic.grande_tema}</Badge>
+                  )}
                 </div>
               </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Explicação Principal */}
+        {topic.explanation && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Explicação
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{topic.estimated_time} minutos</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Target className="h-4 w-4" />
-                  <span>Conteúdo Teórico</span>
-                </div>
-                {keyConcepts.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Lightbulb className="h-4 w-4" />
-                    <span>{keyConcepts.length} conceitos principais</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-gray-700 text-lg leading-relaxed">
-                {topic.explanation}
-              </p>
+              <p className="text-base leading-relaxed">{topic.explanation}</p>
             </CardContent>
           </Card>
+        )}
 
-          {/* Detailed Explanation */}
-          {topic.detailed_explanation && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Explicação Detalhada
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {topic.detailed_explanation}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* Explicação Detalhada */}
+        {topic.detailed_explanation && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Conteúdo Completo para Estudo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-base leading-relaxed whitespace-pre-wrap">{topic.detailed_explanation}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Examples */}
-          {topic.examples && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  Exemplos Práticos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {topic.examples}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* Exemplos */}
+        {topic.examples && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Exemplos Práticos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-base leading-relaxed whitespace-pre-wrap">{topic.examples}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Key Concepts */}
-          {keyConcepts.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5" />
-                  Conceitos-Chave
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {keyConcepts.map((concept: string, index: number) => (
-                    <Badge key={index} variant="secondary" className="text-sm">
-                      {concept}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* Conceitos-Chave */}
+        {topic.key_concepts && Array.isArray(topic.key_concepts) && topic.key_concepts.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5" />
+                Conceitos-Chave
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {topic.key_concepts.map((concept: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="text-sm">
+                    {concept}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Practical Applications */}
-          {topic.practical_applications && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Aplicações Práticas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
-                  {topic.practical_applications}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* Aplicações Práticas */}
+        {topic.practical_applications && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Como isso aparece no ENEM
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-base leading-relaxed whitespace-pre-wrap">{topic.practical_applications}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Study Tips */}
-          {topic.study_tips && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-800">
-                  <AlertCircle className="h-5 w-5" />
-                  Dicas de Estudo
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-blue-700 leading-relaxed">
-                  {topic.study_tips}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* Dicas de Estudo */}
+        {topic.study_tips && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5" />
+                Dicas de Estudo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-base leading-relaxed whitespace-pre-wrap">{topic.study_tips}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Ações */}
+        <div className="flex gap-4 mt-8">
+          <Button 
+            onClick={() => navigate(`/subjects/${subject}/${theme}`)}
+            variant="outline"
+            className="flex-1"
+          >
+            Voltar aos Tópicos
+          </Button>
+          <Button 
+            onClick={() => navigate(`/subjects/${subject}`)}
+            className="flex-1"
+          >
+            Fazer Quiz desta Matéria
+          </Button>
         </div>
       </div>
     </div>
