@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, BookOpen, Clock, Target, Lightbulb, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSound } from '@/contexts/SoundContext';
@@ -68,6 +67,13 @@ const TopicDetail = () => {
     }
   };
 
+  const getKeyConcepts = (keyConcepts: any): string[] => {
+    if (Array.isArray(keyConcepts)) {
+      return keyConcepts;
+    }
+    return [];
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -95,6 +101,8 @@ const TopicDetail = () => {
       </div>
     );
   }
+
+  const keyConcepts = getKeyConcepts(topic.key_concepts);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -145,10 +153,10 @@ const TopicDetail = () => {
                   <Target className="h-4 w-4" />
                   <span>Conteúdo Teórico</span>
                 </div>
-                {topic.key_concepts && topic.key_concepts.length > 0 && (
+                {keyConcepts.length > 0 && (
                   <div className="flex items-center gap-1">
                     <Lightbulb className="h-4 w-4" />
-                    <span>{topic.key_concepts.length} conceitos principais</span>
+                    <span>{keyConcepts.length} conceitos principais</span>
                   </div>
                 )}
               </div>
@@ -193,7 +201,7 @@ const TopicDetail = () => {
           )}
 
           {/* Key Concepts */}
-          {topic.key_concepts && topic.key_concepts.length > 0 && (
+          {keyConcepts.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -203,7 +211,7 @@ const TopicDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {topic.key_concepts.map((concept: string, index: number) => (
+                  {keyConcepts.map((concept: string, index: number) => (
                     <Badge key={index} variant="secondary" className="text-sm">
                       {concept}
                     </Badge>

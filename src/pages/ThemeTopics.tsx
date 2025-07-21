@@ -69,6 +69,13 @@ const ThemeTopics = () => {
     }
   };
 
+  const getKeyConcepts = (keyConcepts: any): string[] => {
+    if (Array.isArray(keyConcepts)) {
+      return keyConcepts;
+    }
+    return [];
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -131,53 +138,57 @@ const ThemeTopics = () => {
           </Card>
         ) : (
           <div className="grid gap-6">
-            {topics.map((topic) => (
-              <Card 
-                key={topic.id} 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
-                onClick={() => handleTopicClick(topic.id)}
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-2">{topic.title}</CardTitle>
-                      <CardDescription className="text-base mb-3">
-                        {topic.description}
-                      </CardDescription>
-                    </div>
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Badge className={getDifficultyColor(topic.difficulty_level)}>
-                        {getDifficultyLabel(topic.difficulty_level)}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-gray-700 line-clamp-3">
-                      {topic.explanation}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{topic.estimated_time} min</span>
+            {topics.map((topic) => {
+              const keyConcepts = getKeyConcepts(topic.key_concepts);
+              
+              return (
+                <Card 
+                  key={topic.id} 
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                  onClick={() => handleTopicClick(topic.id)}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <CardTitle className="text-xl mb-2">{topic.title}</CardTitle>
+                        <CardDescription className="text-base mb-3">
+                          {topic.description}
+                        </CardDescription>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Target className="h-4 w-4" />
-                        <span>Conteúdo Teórico</span>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Badge className={getDifficultyColor(topic.difficulty_level)}>
+                          {getDifficultyLabel(topic.difficulty_level)}
+                        </Badge>
                       </div>
-                      {topic.key_concepts && topic.key_concepts.length > 0 && (
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <p className="text-gray-700 line-clamp-3">
+                        {topic.explanation}
+                      </p>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
-                          <Lightbulb className="h-4 w-4" />
-                          <span>{topic.key_concepts.length} conceitos</span>
+                          <Clock className="h-4 w-4" />
+                          <span>{topic.estimated_time} min</span>
                         </div>
-                      )}
+                        <div className="flex items-center gap-1">
+                          <Target className="h-4 w-4" />
+                          <span>Conteúdo Teórico</span>
+                        </div>
+                        {keyConcepts.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Lightbulb className="h-4 w-4" />
+                            <span>{keyConcepts.length} conceitos</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
