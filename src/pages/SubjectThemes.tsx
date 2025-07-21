@@ -10,12 +10,6 @@ import { ArrowLeft, BookOpen, ChevronRight, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSound } from '@/contexts/SoundContext';
 
-interface Theme {
-  id: string;
-  name: string;
-  subject_id: string;
-}
-
 const SubjectThemes = () => {
   const { subject = '' } = useParams<{ subject: string }>();
   const navigate = useNavigate();
@@ -37,50 +31,42 @@ const SubjectThemes = () => {
 
   const capitalizedSubject = subjectNames[subject.toLowerCase()] || subject;
 
-  // Query to fetch themes for the selected subject
+  // Query to fetch unique themes (grande_tema) for the selected subject
   const { data: themes = [], isLoading, error } = useQuery({
     queryKey: ['themes', capitalizedSubject],
     queryFn: async () => {
       console.log('Fetching themes for subject:', capitalizedSubject);
       
-      // First, get the subject ID
-      const { data: subjectData, error: subjectError } = await supabase
-        .from('Subjects')
-        .select('id')
-        .eq('name', capitalizedSubject)
-        .single();
-
-      if (subjectError) {
-        console.error('Error fetching subject:', subjectError);
-        throw subjectError;
-      }
-
-      if (!subjectData) {
-        console.log('No subject found for:', capitalizedSubject);
-        return [];
-      }
-
-      console.log('Found subject ID:', subjectData.id);
-
-      // Then, get all themes for this subject
+      // Get unique themes (grande_tema) from subject_contents
       const { data: themesData, error: themesError } = await supabase
-        .from('Themes')
-        .select('id, name, subject_id')
-        .eq('subject_id', subjectData.id)
-        .order('name');
+        .from('subject_contents')
+        .select('grande_tema')
+        .eq('subject', capitalizedSubject)
+        .not('grande_tema', 'is', null);
 
       if (themesError) {
         console.error('Error fetching themes:', themesError);
         throw themesError;
       }
 
-      console.log('Found themes:', themesData);
-      return themesData || [];
+      console.log('Raw themes data:', themesData);
+
+      // Extract unique themes
+      const uniqueThemes = Array.from(
+        new Set(themesData?.map(item => item.grande_tema).filter(Boolean))
+      ).map(themeName => ({
+        id: themeName, // Use theme name as ID since we don't have separate theme table
+        name: themeName,
+        subject: capitalizedSubject
+      }));
+
+      console.log('Unique themes found:', uniqueThemes);
+      return uniqueThemes;
     },
     enabled: !!capitalizedSubject,
   });
 
-  const handleThemeClick = (theme: Theme) => {
+  const handleThemeClick = (theme: { id: string; name: string; subject: string }) => {
     if (!isMuted) playSound('click');
     const encodedTheme = encodeURIComponent(theme.name);
     navigate(`/subjects/${subject}/${encodedTheme}`);
