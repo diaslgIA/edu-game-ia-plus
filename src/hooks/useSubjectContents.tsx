@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,7 +53,7 @@ export const useSubjectContents = (subject: string) => {
       if (contentsError) throw contentsError;
       
       console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
-      setContents((contentsData || []) as SubjectContent[]);
+      setContents(contentsData || []);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
