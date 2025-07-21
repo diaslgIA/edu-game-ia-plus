@@ -558,6 +558,7 @@ export type Database = {
           description: string | null
           difficulty_level: string | null
           estimated_time: number | null
+          explanation: string | null
           grande_tema: string | null
           id: string
           is_premium: boolean | null
@@ -573,6 +574,7 @@ export type Database = {
           description?: string | null
           difficulty_level?: string | null
           estimated_time?: number | null
+          explanation?: string | null
           grande_tema?: string | null
           id?: string
           is_premium?: boolean | null
@@ -588,6 +590,7 @@ export type Database = {
           description?: string | null
           difficulty_level?: string | null
           estimated_time?: number | null
+          explanation?: string | null
           grande_tema?: string | null
           id?: string
           is_premium?: boolean | null
@@ -644,6 +647,7 @@ export type Database = {
           id: string
           options: Json
           question: string
+          quiz_title: string | null
           subject: string
           topic: string
         }
@@ -656,6 +660,7 @@ export type Database = {
           id?: string
           options: Json
           question: string
+          quiz_title?: string | null
           subject: string
           topic: string
         }
@@ -668,6 +673,7 @@ export type Database = {
           id?: string
           options?: Json
           question?: string
+          quiz_title?: string | null
           subject?: string
           topic?: string
         }
