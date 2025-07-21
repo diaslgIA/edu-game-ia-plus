@@ -21,7 +21,7 @@ interface SubjectContent {
   examples?: string;
   practical_applications?: string;
   study_tips?: string;
-  key_concepts?: any;
+  key_concepts?: any; // Changed to any to handle Json type from Supabase
 }
 
 interface ContentProgress {
