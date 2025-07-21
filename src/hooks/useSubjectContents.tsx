@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -15,13 +16,7 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
-  grande_tema?: string;
-  explanation?: string;
-  detailed_explanation?: string;
-  examples?: string;
-  practical_applications?: string;
-  study_tips?: string;
-  key_concepts?: any; // Changed to any to handle Json type from Supabase
+  grande_tema?: string; // Garanta que esta propriedade exista
 }
 
 interface ContentProgress {
@@ -40,6 +35,7 @@ export const useSubjectContents = (subject: string) => {
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // (A função loadContents continua a mesma)
   const loadContents = useCallback(async () => {
     try {
       setLoading(true);
@@ -50,14 +46,8 @@ export const useSubjectContents = (subject: string) => {
         .eq('subject', subject)
         .order('order_index', { ascending: true });
 
-      if (contentsError) {
-        console.error('Error loading contents:', contentsError);
-        throw contentsError;
-      }
-      
-      console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
-      // Type assertion to handle the Json type conversion
-      setContents((contentsData || []) as SubjectContent[]);
+      if (contentsError) throw contentsError;
+      setContents(contentsData || []);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -66,15 +56,11 @@ export const useSubjectContents = (subject: string) => {
           .select('*')
           .eq('user_id', user.id);
 
-        if (progressError) {
-          console.error('Error loading progress:', progressError);
-        } else {
-          setProgress(progressData || []);
-        }
+        if (progressError) throw progressError;
+        setProgress(progressData || []);
       }
     } catch (error) {
       console.error('Error loading contents:', error);
-      setContents([]);
     } finally {
       setLoading(false);
     }
@@ -86,6 +72,7 @@ export const useSubjectContents = (subject: string) => {
     }
   }, [subject, loadContents]);
   
+  // NOVA FUNÇÃO ADICIONADA AQUI
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
       const { data, error } = await supabase
@@ -99,8 +86,8 @@ export const useSubjectContents = (subject: string) => {
         return [];
       }
       
+      // Filtra para retornar apenas os temas únicos
       const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
-      console.log(`Found ${temasUnicos.length} unique themes for ${subject}:`, temasUnicos);
       return temasUnicos;
 
     } catch (error) {
@@ -109,32 +96,22 @@ export const useSubjectContents = (subject: string) => {
     }
   }, [subject]);
 
-  const getContentsByTheme = useCallback((theme: string) => {
-    return contents.filter(content => content.grande_tema === theme);
-  }, [contents]);
-
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('User not authenticated');
-        return;
-      }
+      if (!user) return;
 
       const { error } = await supabase
         .from('content_progress')
         .upsert({
           user_id: user.id,
           content_id: contentId,
-          last_accessed: new Date().toISOString(),
           ...progressData
         });
 
-      if (error) {
-        console.error('Error updating progress:', error);
-        throw error;
-      }
+      if (error) throw error;
       
+      // Reload progress after update
       await loadContents();
     } catch (error) {
       console.error('Error updating content progress:', error);
@@ -149,8 +126,7 @@ export const useSubjectContents = (subject: string) => {
     contents,
     progress,
     loading,
-    getGrandesTemas,
-    getContentsByTheme,
+    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents

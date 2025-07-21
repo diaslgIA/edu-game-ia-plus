@@ -3,11 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import DetailedContentViewer from '@/components/DetailedContentViewer';
-import TopicCard from '@/components/TopicCard';
-import EmptyTopicsState from '@/components/EmptyTopicsState';
+import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
@@ -19,8 +17,6 @@ interface Topic {
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
-  key_concepts: any; // Changed to any to handle Json type from Supabase
-  explanation?: string;
 }
 
 const SubjectTopics = () => {
@@ -60,30 +56,44 @@ const SubjectTopics = () => {
     try {
       setLoading(true);
       
+      // Decodificar o tema da URL
       const decodedTheme = decodeURIComponent(theme || '').replace(/-/g, ' ');
-      console.log('Loading topics for theme:', decodedTheme, 'subject:', capitalizedSubject);
       
       const { data, error } = await supabase
         .from('subject_contents')
-        .select('id, title, description, difficulty_level, estimated_time, grande_tema, key_concepts, explanation')
+        .select('id, title, description, difficulty_level, estimated_time, grande_tema')
         .eq('subject', capitalizedSubject)
-        .eq('grande_tema', decodedTheme)
+        .ilike('grande_tema', `%${decodedTheme}%`)
         .order('order_index', { ascending: true });
 
       if (error) {
         console.error('Error loading topics:', error);
-        setTopics([]);
         return;
       }
 
-      console.log('Loaded topics:', data);
-      // Type assertion to handle the Json type conversion
-      setTopics((data || []) as Topic[]);
+      setTopics(data || []);
     } catch (error) {
       console.error('Error loading topics:', error);
-      setTopics([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'hard': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getDifficultyText = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'Fácil';
+      case 'medium': return 'Médio';
+      case 'hard': return 'Difícil';
+      default: return 'Médio';
     }
   };
 
@@ -102,23 +112,14 @@ const SubjectTopics = () => {
   };
 
   if (!subject || !theme) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="p-6 text-center text-white">
-          <h2 className="text-xl font-bold mb-4">Parâmetros inválidos</h2>
-          <Button onClick={() => navigate('/subjects')} variant="outline">
-            Voltar às Matérias
-          </Button>
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
-    );
+    return <div>Parâmetros inválidos</div>;
   }
 
+  // Se um tópico foi selecionado, mostrar o ContentViewer
   if (selectedTopicId) {
     return (
       <MobileContainer background="gradient">
-        <DetailedContentViewer
+        <ContentViewer
           subject={capitalizedSubject || ''}
           contentId={selectedTopicId}
           onBack={handleBack}
@@ -152,43 +153,74 @@ const SubjectTopics = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="text-white text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-              <p>Carregando tópicos...</p>
-            </div>
-          ) : topics.length === 0 ? (
-            <EmptyTopicsState 
-              themeName={themeDisplayName}
-              subjectName={capitalizedSubject || ''}
-              onBack={handleBack}
-            />
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h2 className="text-white text-xl font-bold mb-2">Tópicos de Estudo</h2>
-                <p className="text-white/80 text-sm">
-                  Conteúdo completo para sua preparação no ENEM
-                </p>
-              </div>
+          <div className="space-y-4">
+            <h2 className="text-white text-lg font-semibold mb-4 flex items-center space-x-2">
+              <BookOpen size={20} />
+              <span>Tópicos de Estudo</span>
+            </h2>
 
+            {loading ? (
+              <div className="text-white text-center py-8">Carregando tópicos...</div>
+            ) : topics.length === 0 ? (
+              <div className="text-white text-center py-8">
+                <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+                <p>Nenhum tópico encontrado para este tema ainda.</p>
+              </div>
+            ) : (
               <div className="space-y-4">
-                {topics.map((topic, index) => {
+                {topics.map((topic) => {
                   const progress = getContentProgress(topic.id);
                   
                   return (
-                    <TopicCard
+                    <div
                       key={topic.id}
-                      topic={topic}
-                      index={index}
-                      progress={progress}
-                      onTopicClick={handleTopicClick}
-                    />
+                      onClick={() => handleTopicClick(topic.id)}
+                      className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
+                          <BookOpen size={24} />
+                          {progress && progress.completed && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                              <CheckCircle size={16} className="text-white" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
+                          <p className="text-white/80 text-sm mb-2">{topic.description}</p>
+                          
+                          <div className="flex items-center space-x-4 text-xs">
+                            <div className="flex items-center space-x-1">
+                              <Clock size={12} className="text-blue-400" />
+                              <span className="text-white/80">{topic.estimated_time} min</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
+                                {getDifficultyText(topic.difficulty_level)}
+                              </span>
+                            </div>
+                            {progress && progress.progress_percentage > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-green-400 text-xs">
+                                  {progress.progress_percentage}% concluído
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-white/60">
+                          <Play size={20} />
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
       

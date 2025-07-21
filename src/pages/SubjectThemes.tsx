@@ -1,23 +1,27 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, BookOpen, ChevronRight, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSound } from '@/contexts/SoundContext';
+
+interface Theme {
+  grande_tema: string;
+}
 
 const SubjectThemes = () => {
   const { subject = '' } = useParams<{ subject: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
+  const [themes, setThemes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const subjectNames: { [key: string]: string } = {
     'matematica': 'Matemática',
-    'portugues': 'Português e Literatura',
+    'portugues': 'Português',
     'fisica': 'Física',
     'quimica': 'Química',
     'biologia': 'Biologia',
@@ -25,56 +29,39 @@ const SubjectThemes = () => {
     'geografia': 'Geografia',
     'filosofia': 'Filosofia',
     'sociologia': 'Sociologia',
-    'ingles': 'Inglês',
-    'espanhol': 'Espanhol',
   };
 
   const capitalizedSubject = subjectNames[subject.toLowerCase()] || subject;
 
-  // Query to fetch unique themes (grande_tema) for the selected subject
-  const { data: themes = [], isLoading, error } = useQuery({
-    queryKey: ['themes', capitalizedSubject],
-    queryFn: async () => {
-      console.log('Fetching themes for subject:', capitalizedSubject);
+  useEffect(() => {
+    const loadThemes = async () => {
+      if (!subject) return;
+      setLoading(true);
       
-      // Get unique themes (grande_tema) from subject_contents
-      const { data: themesData, error: themesError } = await supabase
+      const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
         .eq('subject', capitalizedSubject)
         .not('grande_tema', 'is', null);
 
-      if (themesError) {
-        console.error('Error fetching themes:', themesError);
-        throw themesError;
+      if (error) {
+        console.error("Error loading themes:", error);
+        setThemes([]);
+      } else {
+        const uniqueThemes = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+        setThemes(uniqueThemes);
       }
+      setLoading(false);
+    };
 
-      console.log('Raw themes data:', themesData);
+    loadThemes();
+  }, [subject, capitalizedSubject]);
 
-      // Extract unique themes
-      const uniqueThemes = Array.from(
-        new Set(themesData?.map(item => item.grande_tema).filter(Boolean))
-      ).map(themeName => ({
-        id: themeName, // Use theme name as ID since we don't have separate theme table
-        name: themeName,
-        subject: capitalizedSubject
-      }));
-
-      console.log('Unique themes found:', uniqueThemes);
-      return uniqueThemes;
-    },
-    enabled: !!capitalizedSubject,
-  });
-
-  const handleThemeClick = (theme: { id: string; name: string; subject: string }) => {
+  const handleThemeClick = (theme: string) => {
     if (!isMuted) playSound('click');
-    const encodedTheme = encodeURIComponent(theme.name);
+    const encodedTheme = encodeURIComponent(theme);
     navigate(`/subjects/${subject}/${encodedTheme}`);
   };
-
-  if (error) {
-    console.error('Error loading themes:', error);
-  }
 
   return (
     <MobileContainer background="gradient">
@@ -85,41 +72,22 @@ const SubjectThemes = () => {
           </Button>
           <h1 className="text-lg font-semibold">{capitalizedSubject}</h1>
         </div>
-        
         <div className="flex-1 overflow-y-auto p-6">
-          <h2 className="text-white text-lg font-semibold mb-4 flex items-center">
-            <Layers className="mr-2" />
-            Grandes Temas
-          </h2>
-          
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-2xl bg-white/15" />
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center text-white/80 py-8">
-              <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Erro ao carregar temas para "{capitalizedSubject}".</p>
-              <p className="text-xs mt-2">Verifique sua conexão com a internet.</p>
-            </div>
+          <h2 className="text-white text-lg font-semibold mb-4 flex items-center"><Layers className="mr-2" />Grandes Temas</h2>
+          {loading ? (
+            <p className="text-white/80 text-center">Carregando temas...</p>
           ) : themes.length === 0 ? (
             <div className="text-center text-white/80 py-8">
               <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
               <p>Nenhum tema encontrado para "{capitalizedSubject}".</p>
-              <p className="text-xs mt-2">Os temas para esta matéria ainda estão sendo preparados.</p>
+              <p className="text-xs mt-2">Verifique se o conteúdo foi inserido corretamente no banco de dados.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {themes.map((theme) => (
-                <div 
-                  key={theme.id} 
-                  onClick={() => handleThemeClick(theme)} 
-                  className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
-                >
+              {themes.map((tema) => (
+                <div key={tema} onClick={() => handleThemeClick(tema)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-white text-lg">{theme.name}</h3>
+                    <h3 className="font-bold text-white text-lg">{tema}</h3>
                     <ChevronRight className="text-white/60" size={24} />
                   </div>
                 </div>
