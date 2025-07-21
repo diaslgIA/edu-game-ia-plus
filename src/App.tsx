@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SoundProvider } from "@/contexts/SoundContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -24,29 +25,31 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <SoundProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/subjects" element={<Subjects />} />
-                  <Route path="/subjects/:subject" element={<SubjectThemes />} />
-                  <Route path="/subjects/:subject/:theme" element={<ThemeTopics />} />
-                  <Route path="/subjects/:subject/:theme/:topicId" element={<TopicDetail />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/guilds" element={<Guilds />} />
-                  <Route path="/guilds/:guildId" element={<GuildDetails />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </SoundProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <SoundProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/subjects" element={<Subjects />} />
+                    <Route path="/subjects/:subject" element={<SubjectThemes />} />
+                    <Route path="/subjects/:subject/:theme" element={<ThemeTopics />} />
+                    <Route path="/subjects/:subject/:theme/:topicId" element={<TopicDetail />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/guilds" element={<Guilds />} />
+                    <Route path="/guilds/:guildId" element={<GuildDetails />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </SoundProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
