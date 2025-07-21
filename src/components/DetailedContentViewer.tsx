@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, BookOpen, CheckCircle, Play, Target, Lightbulb, TrendingUp, Bookmark } from 'lucide-react';
+import { ArrowLeft, Clock, BookOpen, CheckCircle, Play, Target } from 'lucide-react';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
+import ContentSection from './ContentSection';
 
 interface DetailedContentViewerProps {
   subject: string;
@@ -28,29 +29,29 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
     { 
       title: 'Explicação Base', 
       content: content?.explanation,
-      icon: BookOpen 
+      type: 'explanation' as const
     },
     { 
       title: 'Explicação Detalhada', 
       content: content?.detailed_explanation,
-      icon: Target 
+      type: 'detailed_explanation' as const
     },
     { 
       title: 'Exemplos Práticos', 
       content: content?.examples,
-      icon: Lightbulb 
+      type: 'examples' as const
     },
     { 
       title: 'Aplicações no ENEM', 
       content: content?.practical_applications,
-      icon: TrendingUp 
+      type: 'practical_applications' as const
     },
     { 
       title: 'Dicas de Estudo', 
       content: content?.study_tips,
-      icon: Bookmark 
+      type: 'study_tips' as const
     }
-  ].filter(section => section.content);
+  ].filter(section => section.content && section.content.trim() !== '');
 
   useEffect(() => {
     setStartTime(Date.now());
@@ -95,9 +96,9 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
     if (typeof concepts === 'string') {
       try {
         const parsed = JSON.parse(concepts);
-        return Array.isArray(parsed) ? parsed : [];
+        return Array.isArray(parsed) ? parsed : [concepts];
       } catch {
-        return [];
+        return [concepts];
       }
     }
     return [];
@@ -107,7 +108,20 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
     return (
       <div className="p-6 text-center">
         <h3 className="text-xl font-bold text-white mb-4">Conteúdo não encontrado</h3>
-        <Button onClick={onBack} variant="outline">
+        <Button onClick={onBack} variant="outline" className="border-white/20 text-white hover:bg-white/20">
+          <ArrowLeft className="mr-2" size={16} />
+          Voltar
+        </Button>
+      </div>
+    );
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <h3 className="text-xl font-bold text-white mb-4">Conteúdo em preparação</h3>
+        <p className="text-white/80 mb-4">Este tópico ainda está sendo preparado pela nossa equipe.</p>
+        <Button onClick={onBack} variant="outline" className="border-white/20 text-white hover:bg-white/20">
           <ArrowLeft className="mr-2" size={16} />
           Voltar
         </Button>
@@ -116,7 +130,6 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
   }
 
   const currentSectionData = sections[currentSection];
-  const IconComponent = currentSectionData?.icon || BookOpen;
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -144,7 +157,7 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
           <div className="flex items-center space-x-4 text-sm text-white/80">
             <div className="flex items-center space-x-1">
               <Clock size={14} />
-              <span>{content.estimated_time} min</span>
+              <span>{content.estimated_time || 15} min</span>
             </div>
             <div className="flex items-center space-x-1">
               <BookOpen size={14} />
@@ -192,15 +205,11 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         {currentSectionData && (
-          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
-            <div className="flex items-center mb-4">
-              <IconComponent size={24} className="text-blue-400 mr-3" />
-              <h2 className="text-xl font-bold text-white">{currentSectionData.title}</h2>
-            </div>
-            <div className="text-white/90 text-base leading-relaxed whitespace-pre-line">
-              {currentSectionData.content}
-            </div>
-          </div>
+          <ContentSection
+            title={currentSectionData.title}
+            content={currentSectionData.content || ''}
+            type={currentSectionData.type}
+          />
         )}
       </div>
 

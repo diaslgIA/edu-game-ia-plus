@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Clock, Target, Star, Play, CheckCircle } from 'lucide-react';
 
 interface TopicCardProps {
@@ -10,7 +9,7 @@ interface TopicCardProps {
     description: string;
     difficulty_level: string;
     estimated_time: number;
-    key_concepts: any;
+    key_concepts?: string[] | string | null;
     explanation?: string;
   };
   index: number;
@@ -46,14 +45,15 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, index, progress, onTopicCl
     }
   };
 
-  const parseKeyConcepts = (concepts: any): string[] => {
+  const parseKeyConcepts = (concepts: string[] | string | null): string[] => {
+    if (!concepts) return [];
     if (Array.isArray(concepts)) return concepts;
     if (typeof concepts === 'string') {
       try {
         const parsed = JSON.parse(concepts);
-        return Array.isArray(parsed) ? parsed : [];
+        return Array.isArray(parsed) ? parsed : [concepts];
       } catch {
-        return [];
+        return [concepts];
       }
     }
     return [];
@@ -93,16 +93,16 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic, index, progress, onTopicCl
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
                 <Clock size={12} className="text-blue-400" />
-                <span className="text-white/80">{topic.estimated_time} min</span>
+                <span className="text-white/80">{topic.estimated_time || 15} min</span>
               </div>
               
               <div className="flex items-center space-x-1">
                 <Target size={12} className="text-purple-400" />
-                <span className={`${getDifficultyColor(topic.difficulty_level)} font-medium`}>
-                  {getDifficultyText(topic.difficulty_level)}
+                <span className={`${getDifficultyColor(topic.difficulty_level || 'medium')} font-medium`}>
+                  {getDifficultyText(topic.difficulty_level || 'medium')}
                 </span>
-                <span className={getDifficultyColor(topic.difficulty_level)}>
-                  {getDifficultyIcon(topic.difficulty_level)}
+                <span className={getDifficultyColor(topic.difficulty_level || 'medium')}>
+                  {getDifficultyIcon(topic.difficulty_level || 'medium')}
                 </span>
               </div>
             </div>

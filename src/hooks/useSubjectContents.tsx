@@ -21,7 +21,7 @@ interface SubjectContent {
   examples?: string;
   practical_applications?: string;
   study_tips?: string;
-  key_concepts?: any; // Changed to any to handle Json type from Supabase
+  key_concepts?: string[] | string | null; // Fixed type definition
 }
 
 interface ContentProgress {
@@ -50,7 +50,10 @@ export const useSubjectContents = (subject: string) => {
         .eq('subject', subject)
         .order('order_index', { ascending: true });
 
-      if (contentsError) throw contentsError;
+      if (contentsError) {
+        console.error('Error loading contents:', contentsError);
+        throw contentsError;
+      }
       
       console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
       setContents(contentsData || []);
@@ -62,11 +65,15 @@ export const useSubjectContents = (subject: string) => {
           .select('*')
           .eq('user_id', user.id);
 
-        if (progressError) throw progressError;
-        setProgress(progressData || []);
+        if (progressError) {
+          console.error('Error loading progress:', progressError);
+        } else {
+          setProgress(progressData || []);
+        }
       }
     } catch (error) {
       console.error('Error loading contents:', error);
+      setContents([]);
     } finally {
       setLoading(false);
     }
@@ -108,17 +115,24 @@ export const useSubjectContents = (subject: string) => {
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.error('User not authenticated');
+        return;
+      }
 
       const { error } = await supabase
         .from('content_progress')
         .upsert({
           user_id: user.id,
           content_id: contentId,
+          last_accessed: new Date().toISOString(),
           ...progressData
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating progress:', error);
+        throw error;
+      }
       
       await loadContents();
     } catch (error) {

@@ -19,7 +19,7 @@ interface Topic {
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
-  key_concepts: any;
+  key_concepts: string[] | string | null;
   explanation?: string;
 }
 
@@ -61,22 +61,26 @@ const SubjectTopics = () => {
       setLoading(true);
       
       const decodedTheme = decodeURIComponent(theme || '').replace(/-/g, ' ');
+      console.log('Loading topics for theme:', decodedTheme, 'subject:', capitalizedSubject);
       
       const { data, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema, key_concepts, explanation')
         .eq('subject', capitalizedSubject)
-        .ilike('grande_tema', `%${decodedTheme}%`)
+        .eq('grande_tema', decodedTheme)
         .order('order_index', { ascending: true });
 
       if (error) {
         console.error('Error loading topics:', error);
+        setTopics([]);
         return;
       }
 
+      console.log('Loaded topics:', data);
       setTopics(data || []);
     } catch (error) {
       console.error('Error loading topics:', error);
+      setTopics([]);
     } finally {
       setLoading(false);
     }
@@ -97,7 +101,17 @@ const SubjectTopics = () => {
   };
 
   if (!subject || !theme) {
-    return <div>Parâmetros inválidos</div>;
+    return (
+      <MobileContainer background="gradient">
+        <div className="p-6 text-center text-white">
+          <h2 className="text-xl font-bold mb-4">Parâmetros inválidos</h2>
+          <Button onClick={() => navigate('/subjects')} variant="outline">
+            Voltar às Matérias
+          </Button>
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
   }
 
   if (selectedTopicId) {
