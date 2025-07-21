@@ -90,6 +90,19 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
     }
   };
 
+  const parseKeyConcepts = (concepts: any): string[] => {
+    if (Array.isArray(concepts)) return concepts;
+    if (typeof concepts === 'string') {
+      try {
+        const parsed = JSON.parse(concepts);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   if (!content) {
     return (
       <div className="p-6 text-center">
@@ -135,7 +148,7 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
             </div>
             <div className="flex items-center space-x-1">
               <BookOpen size={14} />
-              <span className={getDifficultyColor(content.difficulty_level)}>
+              <span className={getDifficultyColor(content.difficulty_level || 'medium')}>
                 {content.difficulty_level === 'easy' ? 'Fácil' : 
                  content.difficulty_level === 'medium' ? 'Médio' : 'Difícil'}
               </span>
@@ -166,19 +179,11 @@ const DetailedContentViewer: React.FC<DetailedContentViewerProps> = ({
               Conceitos-chave
             </h3>
             <div className="flex flex-wrap gap-2">
-              {Array.isArray(content.key_concepts) ? 
-                content.key_concepts.map((concept, index) => (
-                  <span key={index} className="bg-blue-500/30 text-blue-100 px-2 py-1 rounded-lg text-sm">
-                    {concept}
-                  </span>
-                )) :
-                typeof content.key_concepts === 'string' ?
-                  JSON.parse(content.key_concepts).map((concept: string, index: number) => (
-                    <span key={index} className="bg-blue-500/30 text-blue-100 px-2 py-1 rounded-lg text-sm">
-                      {concept}
-                    </span>
-                  )) : null
-              }
+              {parseKeyConcepts(content.key_concepts).map((concept, index) => (
+                <span key={index} className="bg-blue-500/30 text-blue-100 px-2 py-1 rounded-lg text-sm">
+                  {concept}
+                </span>
+              ))}
             </div>
           </div>
         </div>

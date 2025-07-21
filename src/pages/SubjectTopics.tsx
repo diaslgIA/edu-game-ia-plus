@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -17,7 +16,7 @@ interface Topic {
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
-  key_concepts: string[] | string;
+  key_concepts: any; // Changed to any to handle Json type from Supabase
 }
 
 const SubjectTopics = () => {
@@ -120,11 +119,12 @@ const SubjectTopics = () => {
     }
   };
 
-  const parseKeyConcepts = (concepts: string[] | string): string[] => {
+  const parseKeyConcepts = (concepts: any): string[] => {
     if (Array.isArray(concepts)) return concepts;
     if (typeof concepts === 'string') {
       try {
-        return JSON.parse(concepts);
+        const parsed = JSON.parse(concepts);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }

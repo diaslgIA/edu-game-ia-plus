@@ -17,6 +17,11 @@ interface SubjectContent {
   updated_at: string;
   grande_tema?: string;
   explanation?: string;
+  detailed_explanation?: string;
+  examples?: string;
+  practical_applications?: string;
+  study_tips?: string;
+  key_concepts?: string[] | string;
 }
 
 interface ContentProgress {
