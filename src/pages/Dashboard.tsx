@@ -10,6 +10,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
 import SoundControlPanel from '@/components/SoundControlPanel';
 import UserRankingCard from '@/components/UserRankingCard';
+import RecentActivities from '@/components/RecentActivities';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings, LogOut } from 'lucide-react';
 import Logo from '@/components/Logo';
@@ -197,26 +198,7 @@ const Dashboard = () => {
           {/* Recent Activity */}
           <div className="px-2 sm:px-3 py-1 sm:py-2 mb-3">
             <h2 className="text-white text-xs sm:text-sm font-semibold mb-2 sm:mb-3">Atividade Recente</h2>
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-                <div className="flex items-center space-x-2">
-                  <Star className="text-yellow-400 flex-shrink-0" size={14} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-xs sm:text-sm truncate">Matemática - Função Quadrática</p>
-                    <p className="text-xs opacity-80 truncate">Concluído • 85 pontos</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-                <div className="flex items-center space-x-2">
-                  <Star className="text-blue-400 flex-shrink-0" size={14} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-xs sm:text-sm truncate">Português - Interpretação de Texto</p>
-                    <p className="text-xs opacity-80 truncate">Em progresso • 42 pontos</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <RecentActivities />
           </div>
         </div>
       </div>

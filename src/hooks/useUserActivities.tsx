@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,24 +19,39 @@ export const useUserActivities = () => {
 
     try {
       setRecording(true);
+      console.log('Registrando questão:', { subject, topic, questionId, userAnswer, correctAnswer, timeSpent });
 
-      const { error } = await supabase.rpc('register_quiz_question_activity', {
-        p_subject: subject,
-        p_topic: topic,
-        p_question_id: questionId,
-        p_user_answer: userAnswer,
-        p_correct_answer: correctAnswer,
-        p_time_spent: timeSpent
-      });
+      // Gerar UUID válido para a questão
+      const questionUuid = crypto.randomUUID();
+
+      const { error } = await supabase
+        .from('user_activities')
+        .insert({
+          user_id: user.id,
+          activity_type: 'quiz_question',
+          subject,
+          topic,
+          question_id: questionUuid,
+          user_answer: userAnswer,
+          correct_answer: correctAnswer,
+          is_correct: userAnswer === correctAnswer,
+          points_earned: userAnswer === correctAnswer ? 10 : 0,
+          time_spent: timeSpent,
+          metadata: {
+            question_text: questionId,
+            topic: topic
+          }
+        });
 
       if (error) {
-        console.error('Erro ao registrar atividade:', error);
+        console.error('Erro ao registrar atividade da questão:', error);
         return false;
       }
 
+      console.log('Questão registrada com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao registrar atividade:', error);
+      console.error('Erro ao registrar atividade da questão:', error);
       return false;
     } finally {
       setRecording(false);
@@ -51,6 +67,8 @@ export const useUserActivities = () => {
     if (!user) return false;
 
     try {
+      console.log('Registrando conclusão do quiz:', { subject, finalScore, totalQuestions, totalTimeSpent });
+
       const { error } = await supabase
         .from('user_activities')
         .insert({
@@ -61,7 +79,8 @@ export const useUserActivities = () => {
           time_spent: totalTimeSpent,
           metadata: {
             total_questions: totalQuestions,
-            average_time_per_question: totalTimeSpent / totalQuestions
+            score_percentage: Math.round((finalScore / (totalQuestions * 10)) * 100),
+            average_time_per_question: Math.round(totalTimeSpent / totalQuestions)
           }
         });
 
@@ -70,6 +89,7 @@ export const useUserActivities = () => {
         return false;
       }
 
+      console.log('Conclusão do quiz registrada com sucesso');
       return true;
     } catch (error) {
       console.error('Erro ao registrar conclusão do quiz:', error);
@@ -131,7 +151,9 @@ export const useUserActivities = () => {
       const totalQuestions = activities.length;
       const correctAnswers = activities.filter(a => a.is_correct).length;
       const totalPoints = activities.reduce((sum, a) => sum + (a.points_earned || 0), 0);
-      const avgTimePerQuestion = activities.reduce((sum, a) => sum + (a.time_spent || 0), 0) / totalQuestions;
+      const avgTimePerQuestion = totalQuestions > 0 
+        ? activities.reduce((sum, a) => sum + (a.time_spent || 0), 0) / totalQuestions 
+        : 0;
 
       return {
         totalQuestions,
