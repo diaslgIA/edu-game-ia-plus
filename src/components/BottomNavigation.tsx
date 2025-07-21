@@ -1,19 +1,17 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, BarChart3, DollarSign, Headphones, User } from 'lucide-react';
+import { Home, DollarSign, Headphones, User } from 'lucide-react';
+
 const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  
   const navItems = [{
     id: 'home',
     label: 'Home',
     icon: Home,
     path: '/dashboard'
-  }, {
-    id: 'classe',
-    label: 'Classe',
-    icon: BarChart3,
-    path: '/classes'
   }, {
     id: 'assinaturas',
     label: 'Assinaturas',
@@ -30,6 +28,7 @@ const BottomNavigation: React.FC = () => {
     icon: User,
     path: '/profile'
   }];
+  
   return <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-slate-800 text-white z-50">
       <div className="flex justify-around items-center py-0">
         {navItems.map(item => {
@@ -43,4 +42,5 @@ const BottomNavigation: React.FC = () => {
       </div>
     </div>;
 };
+
 export default BottomNavigation;

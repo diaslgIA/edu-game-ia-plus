@@ -23,7 +23,6 @@ import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Guilds from "./pages/Guilds";
 import GuildDetails from "./pages/GuildDetails";
-import Classes from "./pages/Classes";
 import Ranking from "./pages/Ranking";
 import Subscriptions from "./pages/Subscriptions";
 import Support from "./pages/Support";
@@ -59,7 +58,6 @@ const App = () => (
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/guilds" element={<Guilds />} />
                   <Route path="/guilds/:id" element={<GuildDetails />} />
-                  <Route path="/classes" element={<Classes />} />
                   <Route path="/ranking" element={<Ranking />} />
                   <Route path="/subscriptions" element={<Subscriptions />} />
                   <Route path="/support" element={<Support />} />
