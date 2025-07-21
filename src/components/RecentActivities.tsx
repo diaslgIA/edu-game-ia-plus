@@ -1,99 +1,135 @@
 
-import React, { useState, useEffect } from 'react';
-import { useUserActivities } from '@/hooks/useUserActivities';
-import { Star, Trophy, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useUserActivities } from "@/hooks/useUserActivities";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { BookOpen, Trophy, Clock } from "lucide-react";
 
-const RecentActivities = () => {
-  const { getUserActivities } = useUserActivities();
-  const [activities, setActivities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export const RecentActivities = () => {
+  const { activities, isLoading } = useUserActivities();
 
-  useEffect(() => {
-    const loadActivities = async () => {
-      try {
-        const data = await getUserActivities(undefined, 5); // Últimas 5 atividades
-        const recentActivities = data.filter(activity => 
-          activity.activity_type === 'quiz_complete'
-        );
-        setActivities(recentActivities);
-      } catch (error) {
-        console.error('Erro ao carregar atividades recentes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadActivities();
-  }, [getUserActivities]);
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-1.5 sm:space-y-2">
-        <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 animate-pulse">
-          <div className="h-4 bg-white/20 rounded mb-2"></div>
-          <div className="h-3 bg-white/20 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activities.length === 0) {
-    return (
-      <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-        <div className="flex items-center space-x-2">
-          <Star className="text-yellow-400 flex-shrink-0" size={14} />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-xs sm:text-sm truncate">Nenhuma atividade recente</p>
-            <p className="text-xs opacity-80 truncate">Complete um quiz para ver suas atividades</p>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Atividades Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-16 bg-muted rounded-lg"></div>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Agora mesmo';
-    if (diffInHours < 24) return `${diffInHours}h atrás`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d atrás`;
+  if (!activities || activities.length === 0) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Atividades Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              Nenhuma atividade realizada ainda.
+              <br />
+              Complete um quiz para ver suas atividades aqui!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'quiz_complete':
+        return <Trophy className="h-4 w-4" />;
+      case 'quiz_question':
+        return <BookOpen className="h-4 w-4" />;
+      default:
+        return <BookOpen className="h-4 w-4" />;
+    }
+  };
+
+  const getActivityDescription = (activity: any) => {
+    if (activity.activity_type === 'quiz_complete') {
+      const accuracy = activity.metadata?.accuracy || 0;
+      return `Quiz completo - ${accuracy.toFixed(0)}% de acertos`;
+    }
+    if (activity.activity_type === 'quiz_question') {
+      return activity.is_correct ? 'Questão respondida corretamente' : 'Questão respondida incorretamente';
+    }
+    return 'Atividade realizada';
   };
 
   return (
-    <div className="space-y-1.5 sm:space-y-2">
-      {activities.map((activity, index) => {
-        const scorePercentage = activity.metadata?.score_percentage || 0;
-        const isGoodScore = scorePercentage >= 70;
-        
-        return (
-          <div key={activity.id || index} className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-            <div className="flex items-center space-x-2">
-              {isGoodScore ? (
-                <Trophy className="text-yellow-400 flex-shrink-0" size={14} />
-              ) : (
-                <Star className="text-blue-400 flex-shrink-0" size={14} />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-xs sm:text-sm truncate">
-                  {activity.subject} - Quiz Completo
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Atividades Recentes
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {activities.slice(0, 5).map((activity) => (
+            <div
+              key={activity.id}
+              className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+            >
+              <div className="flex-shrink-0">
+                {getActivityIcon(activity.activity_type)}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="secondary" className="text-xs">
+                    {activity.subject}
+                  </Badge>
+                  {activity.topic && (
+                    <span className="text-xs text-muted-foreground">
+                      {activity.topic}
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  {getActivityDescription(activity)}
                 </p>
-                <div className="flex items-center space-x-2 text-xs opacity-80">
-                  <span>{activity.points_earned} pontos</span>
-                  <span>•</span>
-                  <span>{scorePercentage}% acertos</span>
-                  <span>•</span>
-                  <span>{formatTimeAgo(activity.created_at)}</span>
+                
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(activity.created_at), {
+                      addSuffix: true,
+                      locale: ptBR
+                    })}
+                  </span>
+                  
+                  {activity.points_earned > 0 && (
+                    <Badge variant="default" className="text-xs">
+                      +{activity.points_earned} pts
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
-
-export default RecentActivities;

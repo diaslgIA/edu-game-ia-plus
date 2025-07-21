@@ -1,25 +1,32 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useQuizScore = () => {
-  const [saving, setSaving] = useState(false);
-  const { user, refreshProfile } = useAuth();
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const saveQuizScore = async (subject: string, score: number, totalQuestions: number, timeSpent: number) => {
-    if (!user) {
-      console.error('Usuário não autenticado');
-      return false;
-    }
-
+  const saveQuizScore = async (
+    subject: string,
+    score: number,
+    totalQuestions: number,
+    timeSpent?: number,
+    topic?: string
+  ) => {
+    setIsLoading(true);
+    
     try {
-      setSaving(true);
-      console.log('Salvando pontuação:', { subject, score, totalQuestions, timeSpent });
+      console.log('Iniciando salvamento da pontuação:', { subject, score, totalQuestions, timeSpent, topic });
       
-      // Salvar na tabela quiz_scores
+      // Verificar se o usuário está autenticado
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error('Erro de autenticação:', authError);
+        throw new Error('Usuário não autenticado');
+      }
+
+      // 1. Salvar pontuação do quiz
       const { error: scoreError } = await supabase
         .from('quiz_scores')
         .insert({
@@ -27,37 +34,35 @@ export const useQuizScore = () => {
           subject,
           score,
           total_questions: totalQuestions,
-          time_spent: timeSpent
+          time_spent: timeSpent || 0
         });
 
       if (scoreError) {
         console.error('Erro ao salvar pontuação:', scoreError);
-        toast({
-          title: "Erro ao salvar pontuação",
-          description: "Não foi possível salvar sua pontuação.",
-          variant: "destructive"
-        });
-        return false;
+        throw scoreError;
       }
 
-      // Atualizar pontos do usuário no perfil
-      const { data: currentProfile, error: profileFetchError } = await supabase
+      console.log('Pontuação salva com sucesso');
+
+      // 2. Atualizar pontos do perfil
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('points, level')
         .eq('id', user.id)
         .single();
 
-      if (profileFetchError) {
-        console.error('Erro ao buscar perfil atual:', profileFetchError);
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        throw profileError;
       }
 
-      const currentPoints = currentProfile?.points || 0;
-      const newPoints = currentPoints + score;
-      const newLevel = Math.floor(newPoints / 100) + 1;
+      const currentPoints = profile?.points || 0;
+      const newPoints = currentPoints + (score * 10); // 10 pontos por acerto
+      const newLevel = Math.max(1, Math.floor(newPoints / 100) + 1);
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
+        .update({ 
           points: newPoints,
           level: newLevel,
           updated_at: new Date().toISOString()
@@ -66,91 +71,97 @@ export const useQuizScore = () => {
 
       if (updateError) {
         console.error('Erro ao atualizar perfil:', updateError);
-        toast({
-          title: "Erro ao atualizar pontos",
-          description: "Pontuação salva, mas não foi possível atualizar seus pontos.",
-          variant: "destructive"
-        });
-        return false;
+        throw updateError;
       }
 
-      // Registrar atividade recente
+      console.log('Perfil atualizado com sucesso:', { newPoints, newLevel });
+
+      // 3. Registrar atividade recente
       const { error: activityError } = await supabase
         .from('user_activities')
         .insert({
           user_id: user.id,
           activity_type: 'quiz_complete',
           subject,
-          points_earned: score,
-          time_spent: timeSpent,
+          topic: topic || 'Quiz Geral',
+          points_earned: score * 10,
+          time_spent: timeSpent || 0,
           metadata: {
+            score,
             total_questions: totalQuestions,
-            score_percentage: Math.round((score / (totalQuestions * 10)) * 100)
+            accuracy: (score / totalQuestions) * 100
           }
         });
 
       if (activityError) {
         console.error('Erro ao registrar atividade:', activityError);
+        // Não falhar por causa da atividade, apenas logar
+      } else {
+        console.log('Atividade registrada com sucesso');
       }
 
-      // Atualizar o progresso da matéria
-      const { data: existingProgress } = await supabase
+      // 4. Atualizar progresso da matéria
+      const { data: subjectProgress, error: progressFetchError } = await supabase
         .from('subject_progress')
         .select('*')
         .eq('user_id', user.id)
         .eq('subject', subject)
-        .single();
+        .maybeSingle();
 
-      if (existingProgress) {
-        const newCompletedActivities = existingProgress.completed_activities + 1;
-        const newProgressPercentage = Math.min(
-          Math.round((newCompletedActivities / existingProgress.total_activities) * 100),
-          100
-        );
-
-        await supabase
-          .from('subject_progress')
-          .update({
-            completed_activities: newCompletedActivities,
-            progress_percentage: newProgressPercentage,
-            last_activity_date: new Date().toISOString()
-          })
-          .eq('id', existingProgress.id);
+      if (progressFetchError) {
+        console.error('Erro ao buscar progresso da matéria:', progressFetchError);
       } else {
-        await supabase
-          .from('subject_progress')
-          .insert({
-            user_id: user.id,
-            subject,
-            completed_activities: 1,
-            total_activities: 50,
-            progress_percentage: 2,
-            last_activity_date: new Date().toISOString()
-          });
+        const currentActivities = subjectProgress?.completed_activities || 0;
+        const newCompletedActivities = currentActivities + 1;
+        const progressPercentage = Math.min(100, (newCompletedActivities / 50) * 100);
+
+        if (subjectProgress) {
+          // Atualizar progresso existente
+          const { error: progressUpdateError } = await supabase
+            .from('subject_progress')
+            .update({
+              completed_activities: newCompletedActivities,
+              progress_percentage: progressPercentage,
+              last_activity_date: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', subjectProgress.id);
+
+          if (progressUpdateError) {
+            console.error('Erro ao atualizar progresso:', progressUpdateError);
+          }
+        } else {
+          // Criar novo progresso
+          const { error: progressCreateError } = await supabase
+            .from('subject_progress')
+            .insert({
+              user_id: user.id,
+              subject,
+              completed_activities: newCompletedActivities,
+              progress_percentage: progressPercentage,
+              last_activity_date: new Date().toISOString()
+            });
+
+          if (progressCreateError) {
+            console.error('Erro ao criar progresso:', progressCreateError);
+          }
+        }
       }
 
-      // Atualizar o perfil para mostrar os novos pontos
-      await refreshProfile();
-      
-      toast({
-        title: "Pontuação salva!",
-        description: `+${score} pontos adicionados à sua conta!`,
-      });
+      toast.success(`Parabéns! Você ganhou ${score * 10} pontos!`);
+      return { success: true, pointsEarned: score * 10 };
 
-      console.log('Pontuação salva com sucesso');
-      return true;
     } catch (error) {
-      console.error('Erro ao salvar pontuação:', error);
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao salvar sua pontuação.",
-        variant: "destructive"
-      });
-      return false;
+      console.error('Erro detalhado ao salvar pontuação:', error);
+      toast.error('Erro ao salvar pontuação - Tente novamente');
+      throw error;
     } finally {
-      setSaving(false);
+      setIsLoading(false);
     }
   };
 
-  return { saveQuizScore, saving };
+  return {
+    saveQuizScore,
+    isLoading
+  };
 };
