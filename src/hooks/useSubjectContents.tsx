@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -16,7 +15,8 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
-  grande_tema?: string; // Garanta que esta propriedade exista
+  grande_tema?: string;
+  explanation?: string;
 }
 
 interface ContentProgress {
@@ -35,7 +35,6 @@ export const useSubjectContents = (subject: string) => {
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // (A função loadContents continua a mesma)
   const loadContents = useCallback(async () => {
     try {
       setLoading(true);
@@ -47,6 +46,8 @@ export const useSubjectContents = (subject: string) => {
         .order('order_index', { ascending: true });
 
       if (contentsError) throw contentsError;
+      
+      console.log(`Loaded ${contentsData?.length || 0} contents for ${subject}`);
       setContents(contentsData || []);
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -72,7 +73,6 @@ export const useSubjectContents = (subject: string) => {
     }
   }, [subject, loadContents]);
   
-  // NOVA FUNÇÃO ADICIONADA AQUI
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
       const { data, error } = await supabase
@@ -86,8 +86,8 @@ export const useSubjectContents = (subject: string) => {
         return [];
       }
       
-      // Filtra para retornar apenas os temas únicos
       const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+      console.log(`Found ${temasUnicos.length} unique themes for ${subject}:`, temasUnicos);
       return temasUnicos;
 
     } catch (error) {
@@ -95,6 +95,10 @@ export const useSubjectContents = (subject: string) => {
       return [];
     }
   }, [subject]);
+
+  const getContentsByTheme = useCallback((theme: string) => {
+    return contents.filter(content => content.grande_tema === theme);
+  }, [contents]);
 
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
     try {
@@ -111,7 +115,6 @@ export const useSubjectContents = (subject: string) => {
 
       if (error) throw error;
       
-      // Reload progress after update
       await loadContents();
     } catch (error) {
       console.error('Error updating content progress:', error);
@@ -126,7 +129,8 @@ export const useSubjectContents = (subject: string) => {
     contents,
     progress,
     loading,
-    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
+    getGrandesTemas,
+    getContentsByTheme,
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents
