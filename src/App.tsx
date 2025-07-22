@@ -44,6 +44,7 @@ function App() {
                   <Route path="/subjects/:subject" element={<SubjectThemes />} />
                   <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
                   <Route path="/content/:topicId" element={<TopicContent />} />
+                  <Route path="/quiz/:quizId" element={<TopicContent />} />
                   <Route path="/final-report" element={<FinalReportPage />} />
                   <Route path="/welcome" element={<Welcome />} />
                   <Route path="/verification" element={<Verification />} />
