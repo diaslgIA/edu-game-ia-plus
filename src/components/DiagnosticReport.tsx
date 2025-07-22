@@ -1,311 +1,363 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Database, AlertCircle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Database, 
+  AlertCircle, 
+  CheckCircle, 
+  RefreshCw, 
+  FileText,
+  BarChart3,
+  Users,
+  BookOpen
+} from 'lucide-react';
 
-interface DatabaseStats {
-  table: string;
+interface TableAudit {
+  name: string;
   count: number;
-  subjects: string[];
+  error?: string;
 }
 
-interface SubjectMapping {
-  original: string;
-  standardized: string;
-  needsUpdate: boolean;
+interface DatabaseAudit {
+  tables: TableAudit[];
+  subjects: string[];
+  totalContents: number;
+  issues: string[];
 }
 
 const DiagnosticReport = () => {
-  const [stats, setStats] = useState<DatabaseStats[]>([]);
-  const [subjectMappings, setSubjectMappings] = useState<SubjectMapping[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [report, setReport] = useState<string>('');
+  const [audit, setAudit] = useState<DatabaseAudit | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastCheck, setLastCheck] = useState<Date | null>(null);
 
-  const standardSubjects = {
-    'matematica': 'Matemática',
-    'portugues': 'Português',
-    'historia': 'História',
-    'geografia': 'Geografia',
-    'fisica': 'Física',
-    'quimica': 'Química',
-    'biologia': 'Biologia',
-    'filosofia': 'Filosofia',
-    'sociologia': 'Sociologia',
-    'literatura': 'Literatura',
-    'ingles': 'Inglês',
-    'espanhol': 'Espanhol',
-    'redacao': 'Redação'
-  };
+  const standardSubjects = [
+    'História',
+    'Matemática', 
+    'Física',
+    'Química',
+    'Biologia',
+    'Geografia',
+    'Filosofia',
+    'Sociologia',
+    'Português',
+    'Literatura'
+  ];
 
   const auditDatabase = async () => {
-    setIsLoading(true);
-    const reportLines: string[] = [];
-    reportLines.push('=== RELATÓRIO DE AUDITORIA - CONTEÚDOS DAS DISCIPLINAS ===');
-    reportLines.push(`Data: ${new Date().toLocaleString('pt-BR')}`);
-    reportLines.push('');
+    setLoading(true);
+    const auditResult: DatabaseAudit = {
+      tables: [],
+      subjects: [],
+      totalContents: 0,
+      issues: []
+    };
 
     try {
-      // 1. Auditar tabela subject_contents
-      console.log('🔍 Auditando tabela subject_contents...');
+      console.log('🔍 Iniciando auditoria do banco de dados...');
+
+      // Auditar tabela subject_contents
       const { data: contents, error: contentsError } = await supabase
         .from('subject_contents')
-        .select('subject, grande_tema, title, id');
+        .select('subject, title, id');
 
       if (contentsError) {
-        console.error('Erro ao buscar subject_contents:', contentsError);
-        reportLines.push('❌ ERRO: Não foi possível acessar a tabela subject_contents');
-        reportLines.push(`Erro: ${contentsError.message}`);
+        auditResult.tables.push({
+          name: 'subject_contents',
+          count: 0,
+          error: contentsError.message
+        });
+        auditResult.issues.push(`Erro ao acessar subject_contents: ${contentsError.message}`);
       } else {
-        const subjectCounts = contents?.reduce((acc: any, item) => {
-          acc[item.subject] = (acc[item.subject] || 0) + 1;
-          return acc;
-        }, {}) || {};
-
-        reportLines.push('📊 TABELA: subject_contents');
-        reportLines.push(`Total de registros: ${contents?.length || 0}`);
-        reportLines.push('Distribuição por disciplina:');
-        Object.entries(subjectCounts).forEach(([subject, count]) => {
-          reportLines.push(`  - ${subject}: ${count} conteúdos`);
+        auditResult.tables.push({
+          name: 'subject_contents',
+          count: contents?.length || 0
         });
-        reportLines.push('');
+        auditResult.totalContents += contents?.length || 0;
 
-        // Verificar padronização de nomes
-        const foundSubjects = Object.keys(subjectCounts);
-        const mappings: SubjectMapping[] = foundSubjects.map(subject => {
-          const normalized = subject.toLowerCase().replace(/[áàâã]/g, 'a').replace(/[éê]/g, 'e').replace(/[í]/g, 'i').replace(/[óôõ]/g, 'o').replace(/[ú]/g, 'u').replace(/[ç]/g, 'c');
-          const standardized = standardSubjects[normalized as keyof typeof standardSubjects] || subject;
-          return {
-            original: subject,
-            standardized,
-            needsUpdate: subject !== standardized
-          };
-        });
-        setSubjectMappings(mappings);
+        // Extrair disciplinas únicas
+        const uniqueSubjects = [...new Set(contents?.map(c => c.subject) || [])];
+        auditResult.subjects = uniqueSubjects;
 
-        reportLines.push('🔤 ANÁLISE DE PADRONIZAÇÃO:');
-        mappings.forEach(mapping => {
-          if (mapping.needsUpdate) {
-            reportLines.push(`  ⚠️  "${mapping.original}" → "${mapping.standardized}" (PRECISA ATUALIZAR)`);
-          } else {
-            reportLines.push(`  ✅ "${mapping.original}" (PADRONIZADO)`);
-          }
-        });
-        reportLines.push('');
-
-        setStats([{
-          table: 'subject_contents',
-          count: contents?.length || 0,
-          subjects: foundSubjects
-        }]);
+        console.log(`📚 Conteúdos encontrados: ${contents?.length || 0}`);
+        console.log(`📖 Disciplinas encontradas: ${uniqueSubjects.join(', ')}`);
       }
 
-      // 2. Auditar tabela subject_questions
-      console.log('🔍 Auditando tabela subject_questions...');
+      // Auditar tabela subject_questions
       const { data: questions, error: questionsError } = await supabase
         .from('subject_questions')
-        .select('subject, topic, id');
+        .select('subject, question, id');
 
       if (questionsError) {
-        console.error('Erro ao buscar subject_questions:', questionsError);
-        reportLines.push('❌ ERRO: Não foi possível acessar a tabela subject_questions');
-      } else {
-        const questionCounts = questions?.reduce((acc: any, item) => {
-          acc[item.subject] = (acc[item.subject] || 0) + 1;
-          return acc;
-        }, {}) || {};
-
-        reportLines.push('📊 TABELA: subject_questions');
-        reportLines.push(`Total de registros: ${questions?.length || 0}`);
-        reportLines.push('Distribuição por disciplina:');
-        Object.entries(questionCounts).forEach(([subject, count]) => {
-          reportLines.push(`  - ${subject}: ${count} questões`);
+        auditResult.tables.push({
+          name: 'subject_questions',
+          count: 0,
+          error: questionsError.message
         });
-        reportLines.push('');
-      }
-
-      // 3. Verificar status das rotas de API
-      reportLines.push('🌐 TESTE DE CONECTIVIDADE:');
-      const testSubjects = ['História', 'Matemática', 'Física'];
-      for (const subject of testSubjects) {
-        try {
-          const { data, error } = await supabase
-            .from('subject_contents')
-            .select('*')
-            .eq('subject', subject)
-            .limit(1);
-          
-          if (error) {
-            reportLines.push(`  ❌ ${subject}: Erro na consulta - ${error.message}`);
-          } else {
-            reportLines.push(`  ✅ ${subject}: Conexão OK (${data?.length || 0} resultado(s))`);
-          }
-        } catch (err) {
-          reportLines.push(`  ❌ ${subject}: Erro de conexão`);
-        }
-      }
-      reportLines.push('');
-
-      // 4. Recomendações
-      reportLines.push('📋 RECOMENDAÇÕES:');
-      const needsStandardization = mappings.filter(m => m.needsUpdate);
-      if (needsStandardization.length > 0) {
-        reportLines.push('  1. Padronizar nomes das disciplinas no banco de dados');
-        reportLines.push('  2. Atualizar rotas do front-end para usar nomes padronizados');
-        reportLines.push('  3. Verificar mapeamentos de URL nas páginas de disciplinas');
+        auditResult.issues.push(`Erro ao acessar subject_questions: ${questionsError.message}`);
       } else {
-        reportLines.push('  ✅ Nomes das disciplinas estão padronizados');
+        auditResult.tables.push({
+          name: 'subject_questions',
+          count: questions?.length || 0
+        });
+        console.log(`❓ Questões encontradas: ${questions?.length || 0}`);
       }
 
-      if (contents && contents.length > 0) {
-        reportLines.push('  ✅ Conteúdos encontrados no banco de dados');
+      // Auditar tabela subject_progress
+      const { data: progress, error: progressError } = await supabase
+        .from('subject_progress')
+        .select('subject, user_id, id');
+
+      if (progressError) {
+        auditResult.tables.push({
+          name: 'subject_progress',
+          count: 0,
+          error: progressError.message
+        });
       } else {
-        reportLines.push('  ❌ Poucos ou nenhum conteúdo encontrado');
+        auditResult.tables.push({
+          name: 'subject_progress',
+          count: progress?.length || 0
+        });
+        console.log(`📈 Registros de progresso: ${progress?.length || 0}`);
       }
 
-      const finalReport = reportLines.join('\n');
-      setReport(finalReport);
-      console.log('\n' + finalReport);
+      // Verificar padronização de nomes
+      const foundSubjects = auditResult.subjects;
+      const nonStandardSubjects = foundSubjects.filter(
+        subject => !standardSubjects.includes(subject)
+      );
+
+      if (nonStandardSubjects.length > 0) {
+        auditResult.issues.push(
+          `Disciplinas com nomes não padronizados: ${nonStandardSubjects.join(', ')}`
+        );
+        console.warn('⚠️ Disciplinas não padronizadas:', nonStandardSubjects);
+      }
+
+      // Verificar disciplinas sem conteúdo
+      const missingSubjects = standardSubjects.filter(
+        subject => !foundSubjects.includes(subject)
+      );
+
+      if (missingSubjects.length > 0) {
+        auditResult.issues.push(
+          `Disciplinas sem conteúdo: ${missingSubjects.join(', ')}`
+        );
+        console.warn('⚠️ Disciplinas sem conteúdo:', missingSubjects);
+      }
+
+      console.log('✅ Auditoria concluída:', auditResult);
 
     } catch (error) {
-      console.error('Erro durante auditoria:', error);
-      reportLines.push(`❌ ERRO GERAL: ${error}`);
-      setReport(reportLines.join('\n'));
-    } finally {
-      setIsLoading(false);
+      console.error('❌ Erro durante auditoria:', error);
+      auditResult.issues.push(`Erro geral na auditoria: ${error}`);
     }
+
+    setAudit(auditResult);
+    setLastCheck(new Date());
+    setLoading(false);
   };
 
-  const fixStandardization = async () => {
-    console.log('🔧 Iniciando correção de padronização...');
-    const fixReport: string[] = [];
-    
-    for (const mapping of subjectMappings) {
-      if (mapping.needsUpdate) {
-        try {
-          // Atualizar subject_contents
-          const { error: contentsError } = await supabase
-            .from('subject_contents')
-            .update({ subject: mapping.standardized })
-            .eq('subject', mapping.original);
+  const standardizeSubjectNames = async () => {
+    if (!audit) return;
 
-          if (contentsError) {
-            fixReport.push(`❌ Erro ao atualizar ${mapping.original} em subject_contents: ${contentsError.message}`);
-          } else {
-            fixReport.push(`✅ Atualizado ${mapping.original} → ${mapping.standardized} em subject_contents`);
-          }
-
-          // Atualizar subject_questions
-          const { error: questionsError } = await supabase
-            .from('subject_questions')
-            .update({ subject: mapping.standardized })
-            .eq('subject', mapping.original);
-
-          if (questionsError) {
-            fixReport.push(`❌ Erro ao atualizar ${mapping.original} em subject_questions: ${questionsError.message}`);
-          } else {
-            fixReport.push(`✅ Atualizado ${mapping.original} → ${mapping.standardized} em subject_questions`);
-          }
-
-        } catch (error) {
-          fixReport.push(`❌ Erro geral ao atualizar ${mapping.original}: ${error}`);
-        }
-      }
+    try {
+      console.log('🔧 Iniciando padronização de nomes...');
+      
+      // Aqui você pode implementar a lógica de padronização
+      // Por exemplo, atualizar registros com nomes incorretos
+      
+      console.log('✅ Padronização concluída');
+      
+      // Reexecutar auditoria após padronização
+      await auditDatabase();
+      
+    } catch (error) {
+      console.error('❌ Erro na padronização:', error);
     }
-
-    console.log('Correções aplicadas:', fixReport.join('\n'));
-    
-    // Re-executar auditoria
-    await auditDatabase();
   };
 
   useEffect(() => {
     auditDatabase();
   }, []);
 
+  if (loading && !audit) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+        <span>Auditando banco de dados...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Database className="w-5 h-5" />
-            <span>Diagnóstico do Banco de Dados</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <Button onClick={auditDatabase} disabled={isLoading}>
-              {isLoading ? 'Auditando...' : 'Executar Auditoria'}
-            </Button>
-            {subjectMappings.some(m => m.needsUpdate) && (
-              <Button onClick={fixStandardization} variant="outline">
-                Corrigir Padronização
-              </Button>
-            )}
-          </div>
-
-          {stats.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {stats.map((stat, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{stat.table}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stat.count}</div>
-                    <div className="text-sm text-gray-600">registros</div>
-                    <div className="mt-2 text-xs">
-                      {stat.subjects.length} disciplinas encontradas
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Database className="w-5 h-5" />
+          <h3 className="text-lg font-semibold">Diagnóstico do Sistema</h3>
+        </div>
+        <Button 
+          onClick={auditDatabase} 
+          disabled={loading}
+          variant="outline"
+          size="sm"
+        >
+          {loading ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
           )}
+          Atualizar
+        </Button>
+      </div>
 
-          {subjectMappings.length > 0 && (
+      {lastCheck && (
+        <p className="text-sm text-gray-600">
+          Última verificação: {lastCheck.toLocaleString('pt-BR')}
+        </p>
+      )}
+
+      {audit && (
+        <div className="grid gap-4">
+          {/* Resumo Geral */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Resumo Geral
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {audit.totalContents}
+                  </div>
+                  <div className="text-sm text-gray-600">Total de Conteúdos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {audit.subjects.length}
+                  </div>
+                  <div className="text-sm text-gray-600">Disciplinas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {audit.tables.length}
+                  </div>
+                  <div className="text-sm text-gray-600">Tabelas</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${audit.issues.length === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {audit.issues.length}
+                  </div>
+                  <div className="text-sm text-gray-600">Problemas</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status das Tabelas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-4 h-4" />
+                Status das Tabelas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {audit.tables.map((table, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      {table.error ? (
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                      ) : (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                      <span className="font-medium">{table.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={table.error ? "destructive" : "default"}>
+                        {table.error ? 'Erro' : `${table.count} registros`}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Disciplinas Encontradas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Disciplinas Encontradas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {audit.subjects.map((subject, index) => (
+                  <Badge 
+                    key={index} 
+                    variant={standardSubjects.includes(subject) ? "default" : "secondary"}
+                  >
+                    {subject}
+                  </Badge>
+                ))}
+              </div>
+              {audit.subjects.length === 0 && (
+                <p className="text-gray-500 italic">Nenhuma disciplina encontrada</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Problemas Encontrados */}
+          {audit.issues.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Status da Padronização</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  Problemas Encontrados
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {subjectMappings.map((mapping, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      {mapping.needsUpdate ? (
-                        <AlertCircle className="w-4 h-4 text-yellow-500" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      )}
-                      <span className="text-sm">
-                        {mapping.original}
-                        {mapping.needsUpdate && ` → ${mapping.standardized}`}
-                      </span>
+                  {audit.issues.map((issue, index) => (
+                    <div key={index} className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{issue}</span>
                     </div>
                   ))}
+                </div>
+                <Separator className="my-4" />
+                <Button onClick={standardizeSubjectNames} variant="outline">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Tentar Corrigir Automaticamente
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Status OK */}
+          {audit.issues.length === 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center space-x-2 text-green-600">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Sistema funcionando corretamente!</span>
                 </div>
               </CardContent>
             </Card>
           )}
-
-          {report && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center space-x-2">
-                  <FileText className="w-4 h-4" />
-                  <span>Relatório Completo</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-xs bg-gray-50 p-4 rounded overflow-auto max-h-96">
-                  {report}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 };

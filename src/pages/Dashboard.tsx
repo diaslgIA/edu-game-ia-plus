@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import WelcomeMessage from '@/components/WelcomeMessage';
 import { RecentActivities } from '@/components/RecentActivities';
 import DiagnosticReport from '@/components/DiagnosticReport';
 import DetailedStats from '@/components/DetailedStats';
@@ -10,6 +10,7 @@ import { useUserProgress } from '@/hooks/useUserProgress';
 import { useUserActivities } from '@/hooks/useUserActivities';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -31,6 +32,7 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { 
     stats, 
     recentProgress, 
@@ -136,7 +138,14 @@ const Dashboard = () => {
               </Button>
             </div>
           </div>
-          <WelcomeMessage />
+          <div className="text-white">
+            <h2 className="text-lg font-semibold">
+              Bem-vindo, {profile?.full_name || 'Estudante'}! 👋
+            </h2>
+            <p className="text-white/80 text-sm">
+              Continue sua jornada de aprendizado
+            </p>
+          </div>
         </div>
 
         {/* Content */}
@@ -255,7 +264,7 @@ const Dashboard = () => {
           <RecentActivities activities={activities} />
 
           {/* Detailed Stats */}
-          <DetailedStats />
+          <DetailedStats userProgress={recentProgress} quizScores={[]} />
         </div>
       </div>
       
