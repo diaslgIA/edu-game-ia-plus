@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
-import { SoundContext } from './contexts/SoundContext';
+import { SoundProvider } from './contexts/SoundContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Toaster } from '@/components/ui/toaster';
 import Dashboard from './pages/Dashboard';
@@ -28,7 +28,7 @@ function App() {
   return (
     <BrowserRouter>
       <LanguageProvider>
-        <SoundContext>
+        <SoundProvider>
           <AuthProvider>
             <QueryClientProvider client={queryClient}>
               <Routes>
@@ -51,7 +51,7 @@ function App() {
               <Toaster />
             </QueryClientProvider>
           </AuthProvider>
-        </SoundContext>
+        </SoundProvider>
       </LanguageProvider>
     </BrowserRouter>
   );
