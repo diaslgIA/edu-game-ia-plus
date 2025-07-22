@@ -5,7 +5,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Play, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
@@ -25,6 +25,7 @@ const SubjectTopics = () => {
   const { playSound, isMuted } = useSound();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
   const subjectNames: { [key: string]: string } = {
@@ -53,27 +54,85 @@ const SubjectTopics = () => {
   }, [subject, theme]);
 
   const loadTopics = async () => {
+    if (!subject || !theme) {
+      console.log('⚠️ SubjectTopics: subject ou theme não fornecidos');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
       
-      // Decodificar o tema da URL
       const decodedTheme = decodeURIComponent(theme || '').replace(/-/g, ' ');
+      console.log(`🔍 SubjectTopics: Carregando tópicos para "${capitalizedSubject}" - tema: "${decodedTheme}"`);
       
-      const { data, error } = await supabase
+      // Tentar diferentes variações de busca
+      let data = null;
+      let error = null;
+
+      // Primeira tentativa: busca exata
+      const result1 = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
         .eq('subject', capitalizedSubject)
         .ilike('grande_tema', `%${decodedTheme}%`)
         .order('order_index', { ascending: true });
 
+      data = result1.data;
+      error = result1.error;
+
+      // Se não encontrar, tentar com o subject original
+      if (!data || data.length === 0) {
+        console.log(`⚠️ Tentando com subject original: "${subject}"`);
+        const result2 = await supabase
+          .from('subject_contents')
+          .select('id, title, description, difficulty_level, estimated_time, grande_tema')
+          .eq('subject', subject)
+          .ilike('grande_tema', `%${decodedTheme}%`)
+          .order('order_index', { ascending: true });
+        
+        data = result2.data;
+        error = result2.error;
+      }
+
+      // Se ainda não encontrar, buscar por tema sem filtrar por disciplina
+      if (!data || data.length === 0) {
+        console.log(`⚠️ Tentando busca ampla por tema: "${decodedTheme}"`);
+        const result3 = await supabase
+          .from('subject_contents')
+          .select('id, title, description, difficulty_level, estimated_time, grande_tema, subject')
+          .ilike('grande_tema', `%${decodedTheme}%`)
+          .order('order_index', { ascending: true });
+        
+        // Filtrar manualmente os resultados
+        const filtered = result3.data?.filter(item => 
+          item.subject?.toLowerCase().includes(subject?.toLowerCase() || '') ||
+          subject?.toLowerCase().includes(item.subject?.toLowerCase() || '')
+        );
+        
+        data = filtered;
+        error = result3.error;
+      }
+
       if (error) {
-        console.error('Error loading topics:', error);
+        console.error('❌ Erro ao carregar tópicos:', error);
+        setError(`Erro ao carregar tópicos: ${error.message}`);
         return;
       }
 
+      console.log(`✅ Tópicos encontrados: ${data?.length || 0}`);
+      console.log('📄 Primeiros tópicos:', data?.slice(0, 3));
+
       setTopics(data || []);
+
+      if (!data || data.length === 0) {
+        setError(`Nenhum tópico encontrado para o tema "${decodedTheme}" em ${capitalizedSubject}`);
+      }
+
     } catch (error) {
-      console.error('Error loading topics:', error);
+      console.error('❌ Erro geral ao carregar tópicos:', error);
+      setError('Erro inesperado ao carregar tópicos');
     } finally {
       setLoading(false);
     }
@@ -112,10 +171,16 @@ const SubjectTopics = () => {
   };
 
   if (!subject || !theme) {
-    return <div>Parâmetros inválidos</div>;
+    return (
+      <MobileContainer background="gradient">
+        <div className="text-white text-center py-8">
+          <AlertCircle size={48} className="mx-auto mb-4 opacity-50" />
+          <p>Parâmetros inválidos</p>
+        </div>
+      </MobileContainer>
+    );
   }
 
-  // Se um tópico foi selecionado, mostrar o ContentViewer
   if (selectedTopicId) {
     return (
       <MobileContainer background="gradient">
@@ -160,7 +225,23 @@ const SubjectTopics = () => {
             </h2>
 
             {loading ? (
-              <div className="text-white text-center py-8">Carregando tópicos...</div>
+              <div className="text-center text-white py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+                <p>Carregando tópicos...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center text-white py-8">
+                <AlertCircle size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-red-300 mb-4">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={loadTopics}
+                  className="text-white border-white hover:bg-white/20"
+                >
+                  Tentar Novamente
+                </Button>
+              </div>
             ) : topics.length === 0 ? (
               <div className="text-white text-center py-8">
                 <BookOpen size={48} className="mx-auto mb-4 opacity-50" />

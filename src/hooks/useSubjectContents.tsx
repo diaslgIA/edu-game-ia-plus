@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -16,7 +15,7 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
-  grande_tema?: string; // Garanta que esta propriedade exista
+  grande_tema?: string;
 }
 
 interface ContentProgress {
@@ -34,11 +33,20 @@ export const useSubjectContents = (subject: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // (A função loadContents continua a mesma)
   const loadContents = useCallback(async () => {
+    if (!subject) {
+      console.log('⚠️ useSubjectContents: subject é vazio ou undefined');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log(`🔍 Buscando conteúdos para: "${subject}"`);
       
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
@@ -46,9 +54,18 @@ export const useSubjectContents = (subject: string) => {
         .eq('subject', subject)
         .order('order_index', { ascending: true });
 
-      if (contentsError) throw contentsError;
+      if (contentsError) {
+        console.error('❌ Erro ao buscar conteúdos:', contentsError);
+        setError(`Erro ao carregar conteúdos: ${contentsError.message}`);
+        throw contentsError;
+      }
+
+      console.log(`✅ Conteúdos encontrados para "${subject}":`, contentsData?.length || 0);
+      console.log('📄 Primeiros conteúdos:', contentsData?.slice(0, 3));
+      
       setContents(contentsData || []);
 
+      // Buscar progresso do usuário
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: progressData, error: progressError } = await supabase
@@ -56,25 +73,29 @@ export const useSubjectContents = (subject: string) => {
           .select('*')
           .eq('user_id', user.id);
 
-        if (progressError) throw progressError;
-        setProgress(progressData || []);
+        if (progressError) {
+          console.error('⚠️ Erro ao buscar progresso:', progressError);
+        } else {
+          console.log(`📊 Progresso encontrado: ${progressData?.length || 0} registros`);
+          setProgress(progressData || []);
+        }
+      } else {
+        console.log('👤 Usuário não autenticado - progresso não carregado');
       }
     } catch (error) {
-      console.error('Error loading contents:', error);
+      console.error('❌ Erro geral ao carregar conteúdos:', error);
+      setError(error instanceof Error ? error.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
     }
   }, [subject]);
 
-  useEffect(() => {
-    if (subject) {
-      loadContents();
-    }
-  }, [subject, loadContents]);
-  
-  // NOVA FUNÇÃO ADICIONADA AQUI
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
+    if (!subject) return [];
+    
     try {
+      console.log(`🏷️ Buscando grandes temas para: "${subject}"`);
+      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
@@ -82,19 +103,29 @@ export const useSubjectContents = (subject: string) => {
         .not('grande_tema', 'is', null);
 
       if (error) {
-        console.error('Erro ao buscar grandes temas:', error);
+        console.error('❌ Erro ao buscar grandes temas:', error);
         return [];
       }
       
-      // Filtra para retornar apenas os temas únicos
       const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
+      console.log(`✅ Grandes temas encontrados para "${subject}":`, temasUnicos);
       return temasUnicos;
 
     } catch (error) {
-      console.error('Erro na função getGrandesTemas:', error);
+      console.error('❌ Erro na função getGrandesTemas:', error);
       return [];
     }
   }, [subject]);
+
+  useEffect(() => {
+    if (subject) {
+      console.log(`🚀 useSubjectContents iniciado para: "${subject}"`);
+      loadContents();
+    } else {
+      console.log('⚠️ useSubjectContents: subject não fornecido');
+      setLoading(false);
+    }
+  }, [subject, loadContents]);
 
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
     try {
@@ -111,10 +142,9 @@ export const useSubjectContents = (subject: string) => {
 
       if (error) throw error;
       
-      // Reload progress after update
       await loadContents();
     } catch (error) {
-      console.error('Error updating content progress:', error);
+      console.error('Erro ao atualizar progresso do conteúdo:', error);
     }
   };
 
@@ -126,7 +156,8 @@ export const useSubjectContents = (subject: string) => {
     contents,
     progress,
     loading,
-    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
+    error,
+    getGrandesTemas,
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents
