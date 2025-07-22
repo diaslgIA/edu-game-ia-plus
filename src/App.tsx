@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { SoundProvider } from './contexts/SoundContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from '@/components/ui/toaster';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -27,32 +28,34 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <BrowserRouter>
-      <LanguageProvider>
-        <SoundProvider>
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/edit-profile" element={<EditProfile />} />
-                <Route path="/subjects" element={<Subjects />} />
-                <Route path="/subjects/:subject" element={<SubjectThemes />} />
-                <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
-                <Route path="/content/:topicId" element={<TopicContent />} />
-                <Route path="/final-report" element={<FinalReportPage />} />
-                <Route path="/welcome" element={<Welcome />} />
-                <Route path="/verification" element={<Verification />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-              </Routes>
-              <Toaster />
-            </QueryClientProvider>
-          </AuthProvider>
-        </SoundProvider>
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <SoundProvider>
+            <AuthProvider>
+              <QueryClientProvider client={queryClient}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/edit-profile" element={<EditProfile />} />
+                  <Route path="/subjects" element={<Subjects />} />
+                  <Route path="/subjects/:subject" element={<SubjectThemes />} />
+                  <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
+                  <Route path="/content/:topicId" element={<TopicContent />} />
+                  <Route path="/final-report" element={<FinalReportPage />} />
+                  <Route path="/welcome" element={<Welcome />} />
+                  <Route path="/verification" element={<Verification />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                </Routes>
+                <Toaster />
+              </QueryClientProvider>
+            </AuthProvider>
+          </SoundProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
