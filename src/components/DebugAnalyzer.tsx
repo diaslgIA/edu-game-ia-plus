@@ -79,28 +79,32 @@ const DebugAnalyzer = () => {
         console.log(`❓ subject_questions: ${questions?.length || 0} registros`);
       }
 
-      // Verificar outras tabelas relacionadas
-      const tablesToCheck = ['content_progress', 'subject_progress', 'quiz_scores'];
+      // Verificar outras tabelas relacionadas usando type assertions
+      const tablesToCheck = [
+        { name: 'content_progress', table: 'content_progress' as const },
+        { name: 'subject_progress', table: 'subject_progress' as const },
+        { name: 'quiz_scores', table: 'quiz_scores' as const }
+      ];
       
-      for (const tableName of tablesToCheck) {
+      for (const { name, table } of tablesToCheck) {
         try {
           const { data, error } = await supabase
-            .from(tableName)
+            .from(table)
             .select('*');
 
           if (error) {
-            console.error(`❌ Erro ao buscar ${tableName}:`, error);
+            console.error(`❌ Erro ao buscar ${name}:`, error);
             analysis.errors = analysis.errors || [];
-            analysis.errors.push(`${tableName}: ${error.message}`);
+            analysis.errors.push(`${name}: ${error.message}`);
           } else {
-            analysis.tables[tableName] = {
+            analysis.tables[name] = {
               total: data?.length || 0,
               contents: data || []
             };
-            console.log(`📋 ${tableName}: ${data?.length || 0} registros`);
+            console.log(`📋 ${name}: ${data?.length || 0} registros`);
           }
         } catch (err) {
-          console.error(`🚫 Falha ao acessar ${tableName}:`, err);
+          console.error(`🚫 Falha ao acessar ${name}:`, err);
         }
       }
 
