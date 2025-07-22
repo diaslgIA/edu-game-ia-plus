@@ -34,10 +34,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { 
-    stats, 
-    recentProgress, 
-    weeklyGoal, 
-    currentStreak, 
+    stats = { todayXP: 0, todayQuestions: 0, totalPoints: 0, level: 1 }, 
+    recentProgress = [], 
+    weeklyGoal = { completed: 0, target: 20 }, 
+    currentStreak = 0, 
     loading 
   } = useUserProgress();
   const { activities } = useUserActivities();
@@ -84,19 +84,19 @@ const Dashboard = () => {
   const todayStats = [
     {
       label: 'XP Ganho',
-      value: stats.todayXP || 0,
+      value: stats?.todayXP || 0,
       icon: Zap,
       color: 'text-yellow-500'
     },
     {
       label: 'Questões',
-      value: stats.todayQuestions || 0,
+      value: stats?.todayQuestions || 0,
       icon: Brain,
       color: 'text-blue-500'
     },
     {
       label: 'Sequência',
-      value: currentStreak,
+      value: currentStreak || 0,
       icon: Award,
       color: 'text-green-500'
     }
@@ -187,14 +187,14 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <div className="flex justify-between text-white">
                   <span>Progresso</span>
-                  <span>{weeklyGoal.completed}/{weeklyGoal.target}</span>
+                  <span>{weeklyGoal?.completed || 0}/{weeklyGoal?.target || 20}</span>
                 </div>
                 <Progress 
-                  value={(weeklyGoal.completed / weeklyGoal.target) * 100} 
+                  value={((weeklyGoal?.completed || 0) / (weeklyGoal?.target || 20)) * 100} 
                   className="h-2"
                 />
                 <div className="text-xs text-white/80">
-                  {weeklyGoal.target - weeklyGoal.completed} atividades restantes
+                  {(weeklyGoal?.target || 20) - (weeklyGoal?.completed || 0)} atividades restantes
                 </div>
               </div>
             </CardContent>
@@ -223,7 +223,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Progress */}
-          {recentProgress.length > 0 && (
+          {recentProgress && recentProgress.length > 0 && (
             <Card className="bg-white/15 backdrop-blur-md border-white/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-white text-lg flex items-center justify-between">
@@ -261,10 +261,10 @@ const Dashboard = () => {
           )}
 
           {/* Recent Activities */}
-          <RecentActivities activities={activities} />
+          <RecentActivities />
 
           {/* Detailed Stats */}
-          <DetailedStats userProgress={recentProgress} quizScores={[]} />
+          <DetailedStats userProgress={recentProgress || []} quizScores={[]} />
         </div>
       </div>
       
