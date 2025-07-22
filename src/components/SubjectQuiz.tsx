@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
@@ -30,8 +31,8 @@ interface SubjectQuizProps {
 
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, onBack }) => {
   const { questions, loading } = useSubjectQuestions(subject);
-  const { saveQuizScore, isLoading } = useQuizScore();
-  const { registerQuizActivity } = useUserActivities();
+  const { saveQuizScore, saving } = useQuizScore();
+  const { recordQuizQuestion, recordQuizComplete } = useUserActivities();
   const { playSound } = useSound();
   
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
@@ -174,11 +175,12 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     
     console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
     
-    // Registrar atividade da questão usando o método correto
+    // Registrar atividade da questão
     try {
+      // Gerar um ID único para a questão (baseado no índice e conteúdo)
       const questionId = `${subject}-${currentQuestion}-${question.question.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}`;
       
-      await registerQuizActivity(
+      await recordQuizQuestion(
         subject,
         question.topic,
         questionId,
@@ -223,17 +225,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
       try {
-        console.log('Finalizando quiz com pontuação:', finalScore);
+        // Registrar conclusão do quiz
+        await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
         
         // Salvar pontuação no sistema de pontos
-        await saveQuizScore(subject, finalScore / 10, quizQuestions.length, timeSpent, topic);
+        await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
         
-        console.log('Quiz finalizado e pontuação salva com sucesso');
         onComplete(finalScore, timeSpent);
         if (playSound) playSound('success');
       } catch (error) {
         console.error('Error saving quiz score:', error);
-        // Mesmo com erro, completar o quiz para o usuário
         onComplete(finalScore, timeSpent);
       }
     }
@@ -337,7 +338,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         subject={subject}
         score={finalScore}
         totalQuestions={quizQuestions.length}
-        saving={isLoading}
+        saving={saving}
         onBack={onBack}
       />
     );
@@ -490,7 +491,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           ) : (
             <Button 
               onClick={handleNextQuestion}
-              disabled={isLoading}
+              disabled={saving}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
               {currentQuestion < quizQuestions.length - 1 ? 'Próxima' : 'Finalizar Quiz'}
