@@ -1,274 +1,210 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MobileContainer from '@/components/MobileContainer';
-import BottomNavigation from '@/components/BottomNavigation';
-import { RecentActivities } from '@/components/RecentActivities';
-import DiagnosticReport from '@/components/DiagnosticReport';
-import DetailedStats from '@/components/DetailedStats';
-import { useUserProgress } from '@/hooks/useUserProgress';
-import { useUserActivities } from '@/hooks/useUserActivities';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUserProgress } from '@/hooks/useUserProgress';
+import MobileContainer from '@/components/MobileContainer';
+import BottomNavigation from '@/components/BottomNavigation';
+import SettingsModal from '@/components/SettingsModal';
+import SoundControlPanel from '@/components/SoundControlPanel';
+import UserRankingCard from '@/components/UserRankingCard';
+import { RecentActivities } from '@/components/RecentActivities';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  BookOpen, 
-  Target, 
-  Trophy, 
-  TrendingUp, 
-  Users, 
-  Calendar,
-  ChevronRight,
-  Play,
-  Zap,
-  Award,
-  Brain,
-  Settings,
-  Database
-} from 'lucide-react';
+import { ArrowRight, Trophy, Target, BookOpen, Users, Brain, Star, Settings, LogOut } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const { 
-    stats = { todayXP: 0, todayQuestions: 0, totalPoints: 0, level: 1 }, 
-    recentProgress = [], 
-    weeklyGoal = { completed: 0, target: 20 }, 
-    currentStreak = 0, 
-    loading 
-  } = useUserProgress();
-  const { activities } = useUserActivities();
+  const { user, profile, signOut } = useAuth();
   const { t } = useLanguage();
   const { playSound, isMuted } = useSound();
-  const [showDiagnostic, setShowDiagnostic] = React.useState(false);
+  const { getTotalProgress } = useUserProgress();
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleNavigation = (path: string) => {
     if (!isMuted) playSound('click');
     navigate(path);
   };
 
+  const handleSignOut = () => {
+    if (!isMuted) playSound('click');
+    signOut();
+  };
+
+  const handleSettingsClick = () => {
+    if (!isMuted) playSound('click');
+    setShowSettings(true);
+  };
+
+  const totalProgress = getTotalProgress();
+
+  const stats = [
+    { icon: Trophy, label: 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
+    { icon: Target, label: 'Nível', value: profile?.level || 1, color: 'text-blue-500' },
+    { icon: BookOpen, label: 'Progresso', value: `${totalProgress}%`, color: 'text-green-500' },
+  ];
+
   const quickActions = [
     {
-      icon: BookOpen,
-      title: 'Estudar',
-      description: 'Continue seus estudos',
-      action: () => handleNavigation('/subjects'),
-      color: 'from-blue-500 to-blue-700'
+      title: t('subjects'),
+      description: 'Explore conteúdos por área',
+      icon: '📚',
+      color: 'from-blue-400 to-blue-600',
+      path: '/subjects'
     },
     {
-      icon: Target,
-      title: 'Quiz',
-      description: 'Teste seus conhecimentos',
-      action: () => handleNavigation('/exercises'),
-      color: 'from-green-500 to-green-700'
+      title: t('exercises'),
+      description: 'Pratique com atividades',
+      icon: '✏️',
+      color: 'from-green-400 to-green-600',
+      path: '/exercises'
     },
     {
-      icon: Users,
       title: 'Guildas',
-      description: 'Estude com amigos',
-      action: () => handleNavigation('/guilds'),
-      color: 'from-purple-500 to-purple-700'
+      description: 'Colabore e compita',
+      icon: '⚔️',
+      color: 'from-purple-400 to-purple-600',
+      path: '/guilds'
     },
     {
-      icon: Trophy,
       title: 'Ranking',
       description: 'Veja sua posição',
-      action: () => handleNavigation('/ranking'),
-      color: 'from-yellow-500 to-yellow-700'
+      icon: '🏆',
+      color: 'from-yellow-400 to-yellow-600',
+      path: '/ranking'
     }
   ];
-
-  const todayStats = [
-    {
-      label: 'XP Ganho',
-      value: stats?.todayXP || 0,
-      icon: Zap,
-      color: 'text-yellow-500'
-    },
-    {
-      label: 'Questões',
-      value: stats?.todayQuestions || 0,
-      icon: Brain,
-      color: 'text-blue-500'
-    },
-    {
-      label: 'Sequência',
-      value: currentStreak || 0,
-      icon: Award,
-      color: 'text-green-500'
-    }
-  ];
-
-  if (loading) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
-        </div>
-      </MobileContainer>
-    );
-  }
 
   return (
     <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
-        {/* Header */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-4 rounded-b-3xl shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold">Dashboard</h1>
-            <div className="flex space-x-2">
-              <Button
-                variant="ghost"
+      <div className="flex flex-col h-full min-h-screen">
+        {/* Header Compacto e Responsivo */}
+        <div className="bg-white/20 backdrop-blur-lg text-white p-2 sm:p-3 rounded-b-2xl shadow-xl flex-shrink-0 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            {/* Logo e saudação */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20 flex-shrink-0">
+                <Logo size="sm" showText={false} className="transform hover:scale-110 transition-transform duration-300" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xs sm:text-sm font-bold truncate">
+                  Olá, {profile?.full_name?.split(' ')[0] || 'Estudante'}!
+                </h1>
+                <p className="text-white/90 text-xs truncate">
+                  Vamos aprender?
+                </p>
+              </div>
+            </div>
+            
+            {/* Controles no lado direito */}
+            <div className="flex items-center space-x-1 flex-shrink-0">
+              <SoundControlPanel />
+              <Button 
+                variant="ghost" 
                 size="sm"
-                onClick={() => setShowDiagnostic(!showDiagnostic)}
-                className="text-white p-2 hover:bg-white/20 rounded-xl"
+                onClick={handleSettingsClick}
+                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-1.5 min-w-0"
               >
-                <Database size={20} />
+                <Settings size={12} />
               </Button>
-              <Button
-                variant="ghost"
+              <Button 
+                variant="ghost" 
                 size="sm"
-                onClick={() => handleNavigation('/profile')}
-                className="text-white p-2 hover:bg-white/20 rounded-xl"
+                onClick={handleSignOut}
+                className="text-white bg-red-500/40 hover:bg-red-500/60 border border-red-300/50 rounded-lg px-1.5 py-1 text-xs font-medium shadow-md min-w-0"
               >
-                <Settings size={20} />
+                <LogOut size={10} className="mr-0.5" />
+                <span className="hidden xs:inline">Sair</span>
               </Button>
             </div>
           </div>
-          <div className="text-white">
-            <h2 className="text-lg font-semibold">
-              Bem-vindo, {profile?.full_name || 'Estudante'}! 👋
-            </h2>
-            <p className="text-white/80 text-sm">
-              Continue sua jornada de aprendizado
-            </p>
-          </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Diagnostic Panel */}
-          {showDiagnostic && (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white">🔍 Diagnóstico do Sistema</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DiagnosticReport />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {todayStats.map((stat, index) => (
-              <Card key={index} className="bg-white/15 backdrop-blur-md border-white/20">
-                <CardContent className="p-3 text-center">
-                  <stat.icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl font-bold text-white">{stat.value}</div>
-                  <div className="text-xs text-white/80">{stat.label}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Weekly Goal Progress */}
-          <Card className="bg-white/15 backdrop-blur-md border-white/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white text-lg flex items-center">
-                <Calendar className="w-5 h-5 mr-2" />
-                Meta Semanal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-white">
-                  <span>Progresso</span>
-                  <span>{weeklyGoal?.completed || 0}/{weeklyGoal?.target || 20}</span>
-                </div>
-                <Progress 
-                  value={((weeklyGoal?.completed || 0) / (weeklyGoal?.target || 20)) * 100} 
-                  className="h-2"
-                />
-                <div className="text-xs text-white/80">
-                  {(weeklyGoal?.target || 20) - (weeklyGoal?.completed || 0)} atividades restantes
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <div>
-            <h2 className="text-white text-lg font-semibold mb-4">Ações Rápidas</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((action, index) => (
-                <Card
-                  key={index}
-                  className="bg-white/15 backdrop-blur-md border-white/20 cursor-pointer hover:bg-white/25 transition-all hover:scale-105"
-                  onClick={action.action}
-                >
-                  <CardContent className="p-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 shadow-lg`}>
-                      <action.icon className="w-6 h-6 text-white" />
+        {/* Content Scrollable */}
+        <div className="flex-1 overflow-y-auto pb-24">
+          {/* Stats Cards */}
+          <div className="px-2 sm:px-3 py-2 sm:py-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+              {stats.map((stat, index) => (
+                <div key={index} className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
+                  <div className="flex items-center space-x-1.5 sm:space-x-2">
+                    <stat.icon className={`${stat.color} w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs opacity-80 truncate">{stat.label}</p>
+                      <p className="text-xs sm:text-sm font-bold truncate">{stat.value}</p>
                     </div>
-                    <h3 className="font-semibold text-white text-lg mb-1">{action.title}</h3>
-                    <p className="text-white/80 text-sm">{action.description}</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Recent Progress */}
-          {recentProgress && recentProgress.length > 0 && (
-            <Card className="bg-white/15 backdrop-blur-md border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-lg flex items-center justify-between">
-                  <span className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Progresso Recente
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleNavigation('/progress')}
-                    className="text-white hover:bg-white/20"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentProgress.slice(0, 3).map((progress, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="text-white text-sm font-medium">{progress.subject}</div>
-                        <div className="text-white/60 text-xs">{progress.completed_activities} atividades concluídas</div>
-                      </div>
-                      <div className="text-green-400 text-sm font-medium">
-                        {progress.progress_percentage}%
-                      </div>
-                    </div>
-                  ))}
+          {/* User Ranking Card - Novo componente em tempo real */}
+          <div className="px-2 sm:px-3 py-1 sm:py-2">
+            <UserRankingCard />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="px-2 sm:px-3 py-1 sm:py-2">
+            <h2 className="text-white text-xs sm:text-sm font-semibold mb-2 sm:mb-3 flex items-center">
+              <Brain className="mr-1.5 sm:mr-2 flex-shrink-0" size={14} />
+              Área de Estudos
+            </h2>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {quickActions.map((action, index) => (
+                <Button
+                  key={index}
+                  onClick={() => handleNavigation(action.path)}
+                  className={`bg-gradient-to-br ${action.color} text-white p-3 sm:p-4 rounded-lg h-auto hover:scale-105 transition-all duration-200 shadow-lg border border-white/10`}
+                >
+                  <div className="text-center w-full">
+                    <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{action.icon}</div>
+                    <h3 className="font-bold text-xs sm:text-sm truncate">{action.title}</h3>
+                    <p className="text-xs opacity-90 line-clamp-2">{action.description}</p>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Study Streak */}
+          <div className="px-2 sm:px-3 py-1 sm:py-2">
+            <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-xs sm:text-sm truncate">Sequência de Estudos</h3>
+                  <p className="text-xs opacity-80 truncate">Mantenha o ritmo!</p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="text-center flex-shrink-0">
+                  <div className="text-sm sm:text-lg font-bold">7</div>
+                  <div className="text-xs opacity-80">dias</div>
+                </div>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 h-2 rounded-full ${
+                      i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
 
-          {/* Recent Activities */}
-          <RecentActivities />
-
-          {/* Detailed Stats */}
-          <DetailedStats userProgress={recentProgress || []} quizScores={[]} />
+          {/* Recent Activity */}
+          <div className="px-2 sm:px-3 py-1 sm:py-2 mb-3">
+            <h2 className="text-white text-xs sm:text-sm font-semibold mb-2 sm:mb-3">Atividade Recente</h2>
+            <RecentActivities />
+          </div>
         </div>
       </div>
       
       <BottomNavigation />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </MobileContainer>
   );
 };
