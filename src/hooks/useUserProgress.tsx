@@ -1,97 +1,184 @@
-import { create } from 'zustand';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
-interface ProgressData {
-  topic_id: string;
+interface UserProgress {
+  subject: string;
+  completed_activities: number;
+  total_activities: number;
+  progress_percentage: number;
+  last_activity_date: string;
 }
 
-interface UserProgressStore {
-  completedTopics: Set<string>;
-  totalTopics: number;
-  loading: boolean;
-  fetchProgress: (userId: string) => Promise<void>;
-  completeTopic: (topicId: string) => Promise<void>;
-  getTotalProgress: () => number;
-}
+export const useUserProgress = () => {
+  const { user } = useAuth();
+  const [progress, setProgress] = useState<UserProgress[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export const useUserProgress = create<UserProgressStore>((set, get) => ({
-  completedTopics: new Set(),
-  totalTopics: 0,
-  loading: true,
-
-  fetchProgress: async (userId: string) => {
-    set({ loading: true });
-    try {
-      // Busca o número total de tópicos no app
-      const { count: totalTopicsCount, error: countError } = await supabase
-        .from('Topics')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) throw countError;
-
-      // Busca os tópicos que o utilizador já completou
-      const { data, error } = await supabase
-        .from('user_topic_progress')
-        .select('topic_id')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      const completedSet = new Set(data.map(item => item.topic_id));
-      
-      set({
-        completedTopics: completedSet,
-        totalTopics: totalTopicsCount || 0,
-        loading: false,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar progresso do utilizador:", error);
-      set({ loading: false });
-    }
-  },
-
-  completeTopic: async (topicId: string) => {
-    const userId = useAuth.getState().user?.id;
-    if (!userId || get().completedTopics.has(topicId)) {
-      return; // Não faz nada se o utilizador não estiver logado ou já tiver completado o tópico
-    }
-
-    try {
-      const { error } = await supabase
-        .from('user_topic_progress')
-        .insert({ user_id: userId, topic_id: topicId });
-
-      if (error) throw error;
-
-      // Atualiza o estado local para refletir a mudança imediatamente
-      set((state) => ({
-        completedTopics: new Set(state.completedTopics).add(topicId),
-      }));
-
-      // Opcional: Atualizar os pontos do perfil do utilizador
-      // Esta é uma lógica mais avançada que pode ser adicionada aqui
-      // Ex: await supabase.rpc('increment_points', { user_id: userId, amount: 10 });
-
-    } catch (error) {
-      console.error("Erro ao completar tópico:", error);
-    }
-  },
-
-  getTotalProgress: () => {
-    const { completedTopics, totalTopics } = get();
-    if (totalTopics === 0) return 0;
-    const progressPercentage = (completedTopics.size / totalTopics) * 100;
-    return Math.round(progressPercentage);
-  },
-}));
-
-// Adiciona um listener para buscar o progresso quando o utilizador faz login
-useAuth.subscribe(
-  (state) => state.user,
-  (user) => {
+  useEffect(() => {
     if (user) {
-      useUserProgress.getState().fetchProgress(user.id);
+      loadUserProgress();
     }
-  }
-);
+  }, [user]);
+
+  const loadUserProgress = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Buscar progresso do usuário na nova tabela subject_progress
+      const { data: progressData, error } = await supabase
+        .from('subject_progress')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading progress:', error);
+        return;
+      }
+
+      if (progressData && progressData.length > 0) {
+        // Mapear os dados da tabela para o formato esperado
+        const mappedProgress = progressData.map(item => ({
+          subject: item.subject,
+          completed_activities: item.completed_activities,
+          total_activities: item.total_activities,
+          progress_percentage: item.progress_percentage,
+          last_activity_date: item.last_activity_date
+        }));
+        setProgress(mappedProgress);
+      } else {
+        // Criar progresso inicial para novo usuário
+        await initializeUserProgress();
+      }
+    } catch (error) {
+      console.error('Error loading user progress:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initializeUserProgress = async () => {
+    if (!user) return;
+
+    const subjects = [
+      'Matemática',
+      'Português', 
+      'Física',
+      'Química',
+      'Biologia',
+      'História',
+      'Geografia',
+      'Filosofia',
+      'Sociologia'
+    ];
+
+    const initialProgress = subjects.map(subject => ({
+      user_id: user.id,
+      subject,
+      completed_activities: 0,
+      total_activities: 50, // Número padrão de atividades por matéria
+      progress_percentage: 0,
+      last_activity_date: new Date().toISOString()
+    }));
+
+    try {
+      const { data, error } = await supabase
+        .from('subject_progress')
+        .insert(initialProgress)
+        .select();
+
+      if (error) {
+        console.error('Error initializing progress:', error);
+        return;
+      }
+
+      if (data) {
+        // Mapear os dados retornados para o formato esperado
+        const mappedProgress = data.map(item => ({
+          subject: item.subject,
+          completed_activities: item.completed_activities,
+          total_activities: item.total_activities,
+          progress_percentage: item.progress_percentage,
+          last_activity_date: item.last_activity_date
+        }));
+        setProgress(mappedProgress);
+      }
+    } catch (error) {
+      console.error('Error initializing user progress:', error);
+    }
+  };
+
+  const updateProgress = async (subject: string, increment: number = 1) => {
+    if (!user) return;
+
+    try {
+      // Buscar progresso atual da matéria
+      const currentProgress = progress.find(p => p.subject === subject);
+      if (!currentProgress) return;
+
+      const newCompletedActivities = currentProgress.completed_activities + increment;
+      const newProgressPercentage = Math.round((newCompletedActivities / currentProgress.total_activities) * 100);
+
+      const { data, error } = await supabase
+        .from('subject_progress')
+        .update({
+          completed_activities: newCompletedActivities,
+          progress_percentage: newProgressPercentage,
+          last_activity_date: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .eq('subject', subject)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating progress:', error);
+        return;
+      }
+
+      if (data) {
+        // Mapear o dado retornado e atualizar o estado
+        const updatedProgress = {
+          subject: data.subject,
+          completed_activities: data.completed_activities,
+          total_activities: data.total_activities,
+          progress_percentage: data.progress_percentage,
+          last_activity_date: data.last_activity_date
+        };
+
+        setProgress(prev => prev.map(p => 
+          p.subject === subject ? updatedProgress : p
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
+
+  const getSubjectProgress = (subject: string) => {
+    return progress.find(p => p.subject === subject) || {
+      subject,
+      completed_activities: 0,
+      total_activities: 50,
+      progress_percentage: 0,
+      last_activity_date: new Date().toISOString()
+    };
+  };
+
+  const getTotalProgress = () => {
+    if (progress.length === 0) return 0;
+    const totalPercentage = progress.reduce((sum, p) => sum + p.progress_percentage, 0);
+    return Math.round(totalPercentage / progress.length);
+  };
+
+  return {
+    progress,
+    loading,
+    updateProgress,
+    getSubjectProgress,
+    getTotalProgress,
+    refreshProgress: loadUserProgress
+  };
+};
