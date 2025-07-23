@@ -7,22 +7,10 @@ interface SubjectQuestion {
   subject: string;
   topic: string;
   question: string;
-  options: string[] | any;
+  options: string[] | any; // Pode vir como array ou objeto do banco
   correct_answer: number;
   explanation: string;
   difficulty_level: string;
-  quiz_title?: string;
-  grande_tema?: string;
-}
-
-interface QuizQuestion {
-  id: string;
-  question_text: string;
-  answers: {
-    id: string;
-    answer_text: string;
-    is_correct: boolean;
-  }[];
 }
 
 export const useSubjectQuestions = (subject: string) => {
@@ -40,102 +28,27 @@ export const useSubjectQuestions = (subject: string) => {
       setLoading(true);
       console.log('Loading questions for subject:', subject);
       
-      // Primeiro tenta buscar da estrutura nova (Questions + Answers)
-      const { data: newQuizzes, error: quizzesError } = await supabase
-        .from('Quizzes')
-        .select(`
-          id,
-          title,
-          Questions (
-            id,
-            question_text,
-            Answers (
-              id,
-              answer_text,
-              is_correct
-            )
-          ),
-          Topics (
-            name,
-            Themes (
-              name,
-              Subjects (
-                name
-              )
-            )
-          )
-        `);
-
-      if (!quizzesError && newQuizzes && newQuizzes.length > 0) {
-        // Filtra quizzes pela matéria e converte para formato compatível
-        const filteredQuizzes = newQuizzes.filter(quiz => 
-          quiz.Topics?.Themes?.Subjects?.name?.toLowerCase().includes(subject.toLowerCase())
-        );
-
-        if (filteredQuizzes.length > 0) {
-          const convertedQuestions = filteredQuizzes.flatMap(quiz => 
-            quiz.Questions?.map((question: any, index: number) => ({
-              id: question.id,
-              subject: quiz.Topics?.Themes?.Subjects?.name || subject,
-              topic: quiz.Topics?.name || 'Tópico Geral',
-              question: question.question_text,
-              options: question.Answers?.map((answer: any) => answer.answer_text) || [],
-              correct_answer: question.Answers?.findIndex((answer: any) => answer.is_correct) || 0,
-              explanation: `Questão do quiz: ${quiz.title}`,
-              difficulty_level: 'medium',
-              quiz_title: quiz.title,
-              grande_tema: quiz.Topics?.Themes?.name
-            })) || []
-          );
-
-          console.log('Usando questões da nova estrutura:', convertedQuestions);
-          setQuestions(convertedQuestions);
-          return;
-        }
-      }
-
-      // Fallback para a estrutura antiga
-      console.log('Fallback: buscando na estrutura antiga (subject_questions)');
-      const { data: legacyData, error: legacyError } = await supabase
+      const { data, error } = await supabase
         .from('subject_questions')
         .select('*')
-        .ilike('subject', subject);
+        .eq('subject', subject);
 
-      if (legacyError) {
-        console.error('Error loading questions from legacy table:', legacyError);
-        setQuestions([]);
+      if (error) {
+        console.error('Error loading questions:', error);
         return;
       }
 
-      console.log('Loaded questions from legacy structure:', legacyData);
-      
-      // Converte opções se necessário (pode vir como objeto ou array)
-      const processedQuestions = legacyData?.map(q => ({
-        ...q,
-        options: Array.isArray(q.options) ? q.options : Object.values(q.options || {})
-      })) || [];
-
-      setQuestions(processedQuestions);
+      console.log('Loaded questions from database:', data);
+      setQuestions(data || []);
     } catch (error) {
       console.error('Error loading questions:', error);
-      setQuestions([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getQuestionsByTopic = (topic: string) => {
-    return questions.filter(q => 
-      q.topic?.toLowerCase().includes(topic.toLowerCase()) ||
-      q.grande_tema?.toLowerCase().includes(topic.toLowerCase())
-    );
-  };
-
-  const getQuestionsByTheme = (theme: string) => {
-    return questions.filter(q => 
-      q.grande_tema?.toLowerCase().includes(theme.toLowerCase()) ||
-      q.topic?.toLowerCase().includes(theme.toLowerCase())
-    );
+    return questions.filter(q => q.topic === topic);
   };
 
   const getRandomQuestions = (count: number = 10) => {
@@ -147,7 +60,6 @@ export const useSubjectQuestions = (subject: string) => {
     questions,
     loading,
     getQuestionsByTopic,
-    getQuestionsByTheme,
     getRandomQuestions,
     refreshQuestions: loadQuestions
   };
