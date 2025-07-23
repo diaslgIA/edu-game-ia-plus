@@ -66,6 +66,12 @@ const TopicContent = () => {
             <BookOpen size={48} className="mb-4 opacity-50" />
             <h2 className="text-lg font-semibold">Conteúdo não encontrado</h2>
             <p className="text-sm mt-2">{error?.message || 'Não foi possível carregar o conteúdo.'}</p>
+            <Button 
+              onClick={() => navigate('/subjects')}
+              className="mt-4 bg-primary hover:bg-primary/90"
+            >
+              Voltar às Matérias
+            </Button>
           </div>
         </div>
         <BottomNavigation />
