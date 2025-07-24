@@ -165,6 +165,5 @@ export const useLanguage = () => {
   }
   return context;
 };
-</LanguageContext.Provider>
 
 export default LanguageProvider;
