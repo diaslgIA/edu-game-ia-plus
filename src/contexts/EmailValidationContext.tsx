@@ -17,7 +17,17 @@ const EmailValidationContext = createContext<EmailValidationContextType | undefi
 export const EmailValidationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isEmailValidated, setIsEmailValidated] = useState(false);
   const [pendingGoogleAuth, setPendingGoogleAuth] = useState(false);
-  const { profile } = useAuth();
+  
+  // Use a try-catch to handle the case where AuthProvider might not be ready
+  let profile = null;
+  try {
+    const auth = useAuth();
+    profile = auth.profile;
+  } catch (error) {
+    // AuthProvider not ready yet, profile will remain null
+    console.log('AuthProvider not ready yet, using fallback');
+  }
+  
   const { toast } = useToast();
 
   // Sincronizar com o status de verificação do perfil
