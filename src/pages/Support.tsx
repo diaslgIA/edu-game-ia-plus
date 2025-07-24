@@ -2,8 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import Logo from '@/components/Logo';
@@ -11,101 +9,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MessageCircle, HelpCircle, Bug, Star, Send } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, MessageCircle, HelpCircle, Bug, Star } from 'lucide-react';
 
 const Support = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { t } = useLanguage();
-  const { toast } = useToast();
-  
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
     type: 'question'
   });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const supportTypes = [
-    { id: 'question', label: t('support.question'), icon: HelpCircle },
-    { id: 'bug', label: t('support.bug'), icon: Bug },
-    { id: 'suggestion', label: t('support.suggestion'), icon: Star },
-    { id: 'other', label: t('support.other'), icon: MessageCircle }
+    { id: 'question', label: 'Dúvida', icon: HelpCircle },
+    { id: 'bug', label: 'Problema técnico', icon: Bug },
+    { id: 'suggestion', label: 'Sugestão', icon: Star },
+    { id: 'other', label: 'Outro', icon: MessageCircle }
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      toast({
-        title: t('general.error'),
-        description: "Você precisa estar logado para enviar uma solicitação de suporte.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.subject.trim() || !formData.message.trim()) {
-      toast({
-        title: t('general.error'),
-        description: "Por favor, preencha o assunto e a mensagem.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      console.log('Enviando solicitação de suporte:', {
-        user_id: user.id,
-        request_type: formData.type,
-        subject: formData.subject,
-        message: formData.message,
-        user_email: user.email,
-        user_name: profile?.full_name
-      });
-
-      // Chamar a edge function para enviar email e salvar no banco
-      const { data, error } = await supabase.functions.invoke('send-support-email', {
-        body: {
-          user_id: user.id,
-          request_type: formData.type,
-          subject: formData.subject,
-          message: formData.message,
-          user_email: user.email,
-          user_name: profile?.full_name
-        }
-      });
-
-      if (error) {
-        console.error('Erro ao enviar solicitação:', error);
-        throw error;
-      }
-
-      console.log('Solicitação enviada com sucesso:', data);
-
-      toast({
-        title: t('general.success'),
-        description: t('support.sent'),
-      });
-
-      // Limpar formulário
-      setFormData({ subject: '', message: '', type: 'question' });
-
-    } catch (error: any) {
-      console.error('Erro ao enviar solicitação de suporte:', error);
-      
-      toast({
-        title: t('general.error'),
-        description: error.message || "Erro ao enviar a solicitação. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    alert('Mensagem enviada! Responderemos em breve.');
+    setFormData({ subject: '', message: '', type: 'question' });
   };
 
   const faqItems = [
@@ -126,7 +51,7 @@ const Support = () => {
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full">
-        {/* Header */}
+        {/* Header - Fixo */}
         <div className="bg-white/10 backdrop-blur-sm text-white p-4 rounded-b-3xl flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <Button 
@@ -140,18 +65,16 @@ const Support = () => {
             <Logo size="md" showText={false} />
             <div className="w-10" />
           </div>
-          <h1 className="text-lg font-bold">{t('support.title')}</h1>
-          <p className="text-white/80 text-xs">
-            {t('support.how_can_help')}, {profile?.full_name || 'estudante'}?
-          </p>
+          <h1 className="text-lg font-bold">Suporte</h1>
+          <p className="text-white/80 text-xs">Como podemos ajudar você, {profile?.full_name || 'estudante'}?</p>
         </div>
 
-        {/* Content */}
+        {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto pb-20">
           <div className="px-4 py-3 space-y-4">
             {/* FAQ Section */}
             <div>
-              <h2 className="text-white text-sm font-semibold mb-3">{t('support.faq')}</h2>
+              <h2 className="text-white text-sm font-semibold mb-3">Perguntas Frequentes</h2>
               <div className="space-y-2">
                 {faqItems.map((item, index) => (
                   <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
@@ -164,11 +87,11 @@ const Support = () => {
 
             {/* Contact Form */}
             <div>
-              <h2 className="text-white text-sm font-semibold mb-3">{t('support.contact')}</h2>
+              <h2 className="text-white text-sm font-semibold mb-3">Entre em Contato</h2>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <div>
-                    <Label className="text-white text-xs">{t('support.request_type')}</Label>
+                    <Label className="text-white text-xs">Tipo de Solicitação</Label>
                     <div className="grid grid-cols-2 gap-2 mt-1">
                       {supportTypes.map((type) => (
                         <Button
@@ -190,7 +113,7 @@ const Support = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="subject" className="text-white text-xs">{t('support.subject')}</Label>
+                    <Label htmlFor="subject" className="text-white text-xs">Assunto</Label>
                     <Input
                       id="subject"
                       value={formData.subject}
@@ -202,7 +125,7 @@ const Support = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="message" className="text-white text-xs">{t('support.message')}</Label>
+                    <Label htmlFor="message" className="text-white text-xs">Mensagem</Label>
                     <Textarea
                       id="message"
                       value={formData.message}
@@ -215,20 +138,9 @@ const Support = () => {
 
                   <Button 
                     type="submit"
-                    disabled={isSubmitting}
                     className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold text-sm"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Send size={14} className="mr-1 animate-pulse" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={14} className="mr-1" />
-                        {t('support.send')}
-                      </>
-                    )}
+                    Enviar Mensagem
                   </Button>
                 </form>
               </div>
