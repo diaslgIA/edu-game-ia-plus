@@ -31,10 +31,13 @@ interface ContentProgress {
 
 // ==================================================================
 // FUNÇÃO DE CORREÇÃO ADICIONADA AQUI
-// Esta função pega um texto como "ingles" e o transforma em "Inglês".
+// Esta função pega um texto como "historia" e o transforma em "História".
 // ==================================================================
 const capitalizeFirstLetter = (string: string) => {
   if (!string) return '';
+  // Trata casos como "ingles" -> "Inglês" e "espanhol" -> "Espanhol"
+  if (string.toLowerCase() === 'ingles') return 'Inglês';
+  if (string.toLowerCase() === 'espanhol') return 'Espanhol';
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
@@ -50,7 +53,7 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
       
       // ==================================================================
       // A CORREÇÃO É APLICADA AQUI
-      // Usamos a função para garantir que a busca seja feita com a letra maiúscula.
+      // Usamos a função para garantir que a busca seja feita com a letra maiúscula correta.
       // ==================================================================
       const subjectNameToSearch = capitalizeFirstLetter(subjectId);
       
