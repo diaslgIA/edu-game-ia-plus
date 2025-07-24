@@ -25,8 +25,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <EmailValidationProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <EmailValidationProvider>
             <LanguageProvider>
               <SoundProvider>
                 <Router>
@@ -46,8 +46,8 @@ function App() {
                 </Router>
               </SoundProvider>
             </LanguageProvider>
-          </AuthProvider>
-        </EmailValidationProvider>
+          </EmailValidationProvider>
+        </AuthProvider>
       </ThemeProvider>
       <Toaster />
     </QueryClientProvider>
