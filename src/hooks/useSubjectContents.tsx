@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getMentorBySubject } from '@/data/subjectMentors'; // Precisamos desta função
 
 // (Mantenha as interfaces como estão)
 interface SubjectContent {
@@ -29,20 +30,8 @@ interface ContentProgress {
   created_at: string;
 }
 
-// ==================================================================
-// FUNÇÃO DE CORREÇÃO ADICIONADA AQUI
-// Esta função pega um texto como "historia" e o transforma em "História".
-// ==================================================================
-const capitalizeFirstLetter = (string: string) => {
-  if (!string) return '';
-  // Trata casos como "ingles" -> "Inglês" e "espanhol" -> "Espanhol"
-  if (string.toLowerCase() === 'ingles') return 'Inglês';
-  if (string.toLowerCase() === 'espanhol') return 'Espanhol';
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};
 
-
-export const useSubjectContents = (subjectId: string) => { // Renomeado para 'subjectId' para clareza
+export const useSubjectContents = (subjectId: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,10 +41,20 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
       setLoading(true);
       
       // ==================================================================
-      // A CORREÇÃO É APLICADA AQUI
-      // Usamos a função para garantir que a busca seja feita com a letra maiúscula correta.
+      // CORREÇÃO DEFINITIVA APLICADA AQUI
+      // 1. Usamos o 'subjectId' (ex: 'pedro_teixeira') para encontrar o mentor.
       // ==================================================================
-      const subjectNameToSearch = capitalizeFirstLetter(subjectId);
+      const mentor = getMentorBySubject(subjectId);
+      
+      // Se não encontrarmos um mentor, não há o que buscar.
+      if (!mentor) {
+        setContents([]);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Usamos o nome correto da matéria do mentor (ex: 'Geografia') para a busca.
+      const subjectNameToSearch = mentor.subject;
       
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
@@ -91,8 +90,11 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
   
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
-      // Aplicando a mesma correção aqui para consistência
-      const subjectNameToSearch = capitalizeFirstLetter(subjectId);
+      // Aplicando a mesma correção de duas etapas aqui
+      const mentor = getMentorBySubject(subjectId);
+      if (!mentor) return [];
+      
+      const subjectNameToSearch = mentor.subject;
       
       const { data, error } = await supabase
         .from('subject_contents')
