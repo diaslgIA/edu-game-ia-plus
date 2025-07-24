@@ -43,8 +43,8 @@ const Support = () => {
       answer: 'Alguns conteúdos podem ser baixados para estudo offline.'
     },
     {
-      question: 'Como funciona a assinatura premium?',
-      answer: 'A assinatura premium oferece acesso ilimitado a todos os conteúdos.'
+      question: 'O app não está funcionando corretamente. O que fazer?',
+      answer: 'Tente atualizar para a versão mais recente ou reinstalar o app. Se o problema persistir, contate o suporte.'
     }
   ];
 
