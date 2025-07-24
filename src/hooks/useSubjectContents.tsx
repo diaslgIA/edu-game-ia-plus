@@ -1,8 +1,8 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getMentorBySubject } from '@/data/subjectMentors'; // Precisamos desta função
 
-// (Mantenha as interfaces como estão)
+// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -16,7 +16,7 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
-  grande_tema?: string;
+  grande_tema?: string; // Garanta que esta propriedade exista
 }
 
 interface ContentProgress {
@@ -30,36 +30,20 @@ interface ContentProgress {
   created_at: string;
 }
 
-
-export const useSubjectContents = (subjectId: string) => {
+export const useSubjectContents = (subject: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // (A função loadContents continua a mesma)
   const loadContents = useCallback(async () => {
     try {
       setLoading(true);
       
-      // ==================================================================
-      // CORREÇÃO DEFINITIVA APLICADA AQUI
-      // 1. Usamos o 'subjectId' (ex: 'pedro_teixeira') para encontrar o mentor.
-      // ==================================================================
-      const mentor = getMentorBySubject(subjectId);
-      
-      // Se não encontrarmos um mentor, não há o que buscar.
-      if (!mentor) {
-        setContents([]);
-        setLoading(false);
-        return;
-      }
-
-      // 2. Usamos o nome correto da matéria do mentor (ex: 'Geografia') para a busca.
-      const subjectNameToSearch = mentor.subject;
-      
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
         .select('*')
-        .eq('subject', subjectNameToSearch) // Agora a busca funciona!
+        .eq('subject', subject)
         .order('order_index', { ascending: true });
 
       if (contentsError) throw contentsError;
@@ -80,26 +64,21 @@ export const useSubjectContents = (subjectId: string) => {
     } finally {
       setLoading(false);
     }
-  }, [subjectId]);
+  }, [subject]);
 
   useEffect(() => {
-    if (subjectId) {
+    if (subject) {
       loadContents();
     }
-  }, [subjectId, loadContents]);
+  }, [subject, loadContents]);
   
+  // NOVA FUNÇÃO ADICIONADA AQUI
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
-      // Aplicando a mesma correção de duas etapas aqui
-      const mentor = getMentorBySubject(subjectId);
-      if (!mentor) return [];
-      
-      const subjectNameToSearch = mentor.subject;
-      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .eq('subject', subjectNameToSearch)
+        .eq('subject', subject)
         .not('grande_tema', 'is', null);
 
       if (error) {
@@ -107,6 +86,7 @@ export const useSubjectContents = (subjectId: string) => {
         return [];
       }
       
+      // Filtra para retornar apenas os temas únicos
       const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
       return temasUnicos;
 
@@ -114,10 +94,9 @@ export const useSubjectContents = (subjectId: string) => {
       console.error('Erro na função getGrandesTemas:', error);
       return [];
     }
-  }, [subjectId]);
+  }, [subject]);
 
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
-    // (Esta função não precisa de alteração)
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -132,6 +111,7 @@ export const useSubjectContents = (subjectId: string) => {
 
       if (error) throw error;
       
+      // Reload progress after update
       await loadContents();
     } catch (error) {
       console.error('Error updating content progress:', error);
@@ -146,7 +126,7 @@ export const useSubjectContents = (subjectId: string) => {
     contents,
     progress,
     loading,
-    getGrandesTemas,
+    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents
