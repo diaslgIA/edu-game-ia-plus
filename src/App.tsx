@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -16,8 +17,6 @@ import Ranking from "./pages/Ranking";
 import Progress from "./pages/Progress";
 import Guilds from "./pages/Guilds";
 import Welcome from "./pages/Welcome";
-import EmailConfirmation from "./pages/EmailConfirmation";
-import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +24,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <ThemeProvider>
         <EmailValidationProvider>
           <AuthProvider>
             <LanguageProvider>
@@ -42,8 +41,6 @@ function App() {
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/guilds" element={<Guilds />} />
                     <Route path="/welcome" element={<Welcome />} />
-                    <Route path="/email-confirmation" element={<EmailConfirmation />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Router>

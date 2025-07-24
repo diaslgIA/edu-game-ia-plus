@@ -81,8 +81,8 @@ const RegistrationForm: React.FC = () => {
       {/* Avatar Selector */}
       <div className="flex justify-center py-2">
         <AvatarSelector
-          currentAvatar={formData.avatar}
-          onAvatarChange={handleAvatarChange}
+          selectedAvatar={formData.avatar}
+          onAvatarSelect={handleAvatarChange}
         />
       </div>
 
