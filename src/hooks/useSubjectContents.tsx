@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -30,20 +29,28 @@ interface ContentProgress {
   created_at: string;
 }
 
-export const useSubjectContents = (subject: string) => {
+// Função para capitalizar a primeira letra
+const capitalizeFirstLetter = (string: string) => {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+export const useSubjectContents = (subjectId: string) => { // Renomeado para 'subjectId' para maior clareza
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // (A função loadContents continua a mesma)
   const loadContents = useCallback(async () => {
     try {
       setLoading(true);
       
+      // *** CORREÇÃO APLICADA AQUI ***
+      const capitalizedSubject = capitalizeFirstLetter(subjectId);
+      
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
         .select('*')
-        .eq('subject', subject)
+        .eq('subject', capitalizedSubject) // Usa o nome capitalizado
         .order('order_index', { ascending: true });
 
       if (contentsError) throw contentsError;
@@ -64,21 +71,23 @@ export const useSubjectContents = (subject: string) => {
     } finally {
       setLoading(false);
     }
-  }, [subject]);
+  }, [subjectId]);
 
   useEffect(() => {
-    if (subject) {
+    if (subjectId) {
       loadContents();
     }
-  }, [subject, loadContents]);
+  }, [subjectId, loadContents]);
   
-  // NOVA FUNÇÃO ADICIONADA AQUI
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
+      // *** CORREÇÃO APLICADA AQUI TAMBÉM ***
+      const capitalizedSubject = capitalizeFirstLetter(subjectId);
+      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .eq('subject', subject)
+        .eq('subject', capitalizedSubject) // Usa o nome capitalizado
         .not('grande_tema', 'is', null);
 
       if (error) {
@@ -86,7 +95,6 @@ export const useSubjectContents = (subject: string) => {
         return [];
       }
       
-      // Filtra para retornar apenas os temas únicos
       const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
       return temasUnicos;
 
@@ -94,7 +102,7 @@ export const useSubjectContents = (subject: string) => {
       console.error('Erro na função getGrandesTemas:', error);
       return [];
     }
-  }, [subject]);
+  }, [subjectId]);
 
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
     try {
@@ -111,7 +119,6 @@ export const useSubjectContents = (subject: string) => {
 
       if (error) throw error;
       
-      // Reload progress after update
       await loadContents();
     } catch (error) {
       console.error('Error updating content progress:', error);
@@ -126,7 +133,7 @@ export const useSubjectContents = (subject: string) => {
     contents,
     progress,
     loading,
-    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
+    getGrandesTemas,
     updateContentProgress,
     getContentProgress,
     refreshContents: loadContents
