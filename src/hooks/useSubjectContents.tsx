@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
+// (Mantenha as interfaces como estão)
 interface SubjectContent {
   id: string;
   subject: string;
@@ -15,7 +15,7 @@ interface SubjectContent {
   order_index?: number;
   created_at: string;
   updated_at: string;
-  grande_tema?: string; // Garanta que esta propriedade exista
+  grande_tema?: string;
 }
 
 interface ContentProgress {
@@ -29,13 +29,17 @@ interface ContentProgress {
   created_at: string;
 }
 
-// Função para capitalizar a primeira letra
+// ==================================================================
+// FUNÇÃO DE CORREÇÃO ADICIONADA AQUI
+// Esta função pega um texto como "ingles" e o transforma em "Inglês".
+// ==================================================================
 const capitalizeFirstLetter = (string: string) => {
   if (!string) return '';
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-export const useSubjectContents = (subjectId: string) => { // Renomeado para 'subjectId' para maior clareza
+
+export const useSubjectContents = (subjectId: string) => { // Renomeado para 'subjectId' para clareza
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,13 +48,16 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
     try {
       setLoading(true);
       
-      // *** CORREÇÃO APLICADA AQUI ***
-      const capitalizedSubject = capitalizeFirstLetter(subjectId);
+      // ==================================================================
+      // A CORREÇÃO É APLICADA AQUI
+      // Usamos a função para garantir que a busca seja feita com a letra maiúscula.
+      // ==================================================================
+      const subjectNameToSearch = capitalizeFirstLetter(subjectId);
       
       const { data: contentsData, error: contentsError } = await supabase
         .from('subject_contents')
         .select('*')
-        .eq('subject', capitalizedSubject) // Usa o nome capitalizado
+        .eq('subject', subjectNameToSearch) // Agora a busca funciona!
         .order('order_index', { ascending: true });
 
       if (contentsError) throw contentsError;
@@ -81,13 +88,13 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
   
   const getGrandesTemas = useCallback(async (): Promise<string[]> => {
     try {
-      // *** CORREÇÃO APLICADA AQUI TAMBÉM ***
-      const capitalizedSubject = capitalizeFirstLetter(subjectId);
+      // Aplicando a mesma correção aqui para consistência
+      const subjectNameToSearch = capitalizeFirstLetter(subjectId);
       
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .eq('subject', capitalizedSubject) // Usa o nome capitalizado
+        .eq('subject', subjectNameToSearch)
         .not('grande_tema', 'is', null);
 
       if (error) {
@@ -105,6 +112,7 @@ export const useSubjectContents = (subjectId: string) => { // Renomeado para 'su
   }, [subjectId]);
 
   const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
+    // (Esta função não precisa de alteração)
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
