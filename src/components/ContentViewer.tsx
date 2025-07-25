@@ -1,67 +1,74 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Play } from 'lucide-react';
-import { useSubjectContents } from '@/hooks/useSubjectContents';
+import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+// Definimos o tipo para um único item de conteúdo
+type Content = Database['public']['Tables']['subject_contents']['Row'];
 
 interface ContentViewerProps {
-  subject: string;
   contentId: string;
   onBack: () => void;
   onComplete?: (contentId: string) => void;
 }
 
-const ContentViewer: React.FC<ContentViewerProps> = ({ 
-  subject, 
-  contentId, 
-  onBack, 
-  onComplete 
+const ContentViewer: React.FC<ContentViewerProps> = ({
+  contentId,
+  onBack,
+  onComplete
 }) => {
-  const { contents, updateContentProgress, getContentProgress } = useSubjectContents(subject);
-  const [startTime, setStartTime] = useState<number>(0);
+  const [content, setContent] = useState<Content | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
 
-  const content = contents.find(c => c.id === contentId);
-  const progress = getContentProgress(contentId);
-
+  // Efeito que busca o conteúdo específico quando o componente é exibido
   useEffect(() => {
-    setStartTime(Date.now());
-  }, []);
-
-  const handleComplete = async () => {
-    const timeSpent = Math.round((Date.now() - startTime) / 1000);
-    
-    await updateContentProgress(contentId, {
-      completed: true,
-      progress_percentage: 100,
-      time_spent: progress.time_spent + timeSpent
-    });
-
-    if (onComplete) {
-      onComplete(contentId);
+    if (!contentId) {
+      setLoading(false);
+      return;
     }
-  };
 
-  const handleSectionComplete = async () => {
+    const fetchContent = async () => {
+      setLoading(true);
+      // Busca diretamente no Supabase pelo ID específico
+      const { data, error } = await supabase
+        .from('subject_contents')
+        .select('*')
+        .eq('id', contentId)
+        .single(); // .single() é crucial para buscar apenas um registro
+
+      if (error) {
+        console.error("Erro ao buscar o conteúdo específico:", error);
+        setContent(null);
+      } else {
+        setContent(data);
+      }
+      setLoading(false);
+    };
+
+    fetchContent();
+  }, [contentId]); // Garante que a busca acontece se o ID mudar
+
+  const handleSectionComplete = () => {
     if (!content) return;
-
     const sections = content.content_data?.sections || [];
-    const progressPercentage = Math.round(((currentSection + 1) / sections.length) * 100);
-    const timeSpent = Math.round((Date.now() - startTime) / 1000);
-
-    await updateContentProgress(contentId, {
-      completed: progressPercentage === 100,
-      progress_percentage: progressPercentage,
-      time_spent: progress.time_spent + timeSpent
-    });
-
     if (currentSection < sections.length - 1) {
       setCurrentSection(currentSection + 1);
-      setStartTime(Date.now());
     } else {
-      handleComplete();
+      if (onComplete) {
+        onComplete(contentId);
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-white">
+        Carregando conteúdo...
+      </div>
+    );
+  }
 
   if (!content) {
     return (
@@ -91,8 +98,8 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
           onClick={onBack}
           className="text-white p-2 hover:bg-white/20 rounded-xl"
@@ -109,8 +116,8 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
             <div className="flex items-center space-x-1">
               <BookOpen size={14} />
               <span className={getDifficultyColor(content.difficulty_level)}>
-                {content.difficulty_level === 'easy' ? 'Fácil' : 
-                 content.difficulty_level === 'medium' ? 'Médio' : 'Difícil'}
+                {content.difficulty_level === 'easy' ? 'Fácil' :
+                  content.difficulty_level === 'medium' ? 'Médio' : 'Difícil'}
               </span>
             </div>
           </div>
@@ -120,9 +127,9 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
       {/* Progress Bar */}
       <div className="p-4">
         <div className="bg-white/20 rounded-full h-2 mb-2">
-          <div 
+          <div
             className="bg-green-500 h-full rounded-full transition-all duration-300"
-            style={{ width: `${((currentSection + 1) / sections.length) * 100}%` }}
+            style={{ width: `${sections.length > 0 ? ((currentSection + 1) / sections.length) * 100 : 0}%` }}
           />
         </div>
         <p className="text-white/80 text-sm text-center">
@@ -132,13 +139,15 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {currentSectionData && (
+        {currentSectionData ? (
           <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
             <h2 className="text-xl font-bold text-white mb-4">{currentSectionData.title}</h2>
             <div className="text-white/90 text-base leading-relaxed whitespace-pre-line">
               {currentSectionData.content}
             </div>
           </div>
+        ) : (
+          <div className="text-white text-center">Nenhuma seção de conteúdo encontrada.</div>
         )}
       </div>
 
@@ -146,7 +155,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
       <div className="p-6 border-t border-white/10">
         <div className="flex space-x-3">
           {currentSection < sections.length - 1 ? (
-            <Button 
+            <Button
               onClick={handleSectionComplete}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
             >
@@ -154,7 +163,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
               Próxima Seção
             </Button>
           ) : (
-            <Button 
+            <Button
               onClick={handleSectionComplete}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3"
             >
