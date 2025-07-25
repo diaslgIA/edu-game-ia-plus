@@ -19,51 +19,52 @@ interface Topic {
   grande_tema: string;
 }
 
+interface GroupedTopics {
+  [key: string]: Topic[];
+}
+
 const SubjectTopics = () => {
-  const { subject, theme } = useParams<{ subject: string; theme: string }>();
+  const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [groupedTopics, setGroupedTopics] = useState<GroupedTopics>({});
   const [loading, setLoading] = useState(true);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [subjectName, setSubjectName] = useState('');
 
-  const subjectNames: { [key: string]: string } = {
-    'matematica': 'Matemática',
-    'portugues': 'Português', 
-    'fisica': 'Física',
-    'quimica': 'Química',
-    'biologia': 'Biologia',
-    'historia': 'História',
-    'geografia': 'Geografia',
-    'filosofia': 'Filosofia',
-    'sociologia': 'Sociologia',
-    'ingles': 'Inglês',
-    'espanhol': 'Espanhol',
-    'literatura': 'Literatura',
-    'redacao': 'Redação'
-  };
-
-  const capitalizedSubject = subjectNames[subject?.toLowerCase() || ''] || subject;
-  const { getContentProgress } = useSubjectContents(capitalizedSubject || '');
+  const { getContentProgress } = useSubjectContents(subjectName);
 
   useEffect(() => {
-    if (subject && theme) {
+    if (subjectId) {
       loadTopics();
     }
-  }, [subject, theme]);
+  }, [subjectId]);
 
   const loadTopics = async () => {
     try {
       setLoading(true);
       
-      // Decodificar o tema da URL
-      const decodedTheme = decodeURIComponent(theme || '').replace(/-/g, ' ');
-      
+      // Get subject name first
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subjects')
+        .select('name, display_name')
+        .eq('id', subjectId)
+        .single();
+
+      if (subjectError) {
+        console.error('Error loading subject:', subjectError);
+        return;
+      }
+
+      if (subjectData) {
+        setSubjectName(subjectData.display_name || subjectData.name);
+      }
+
+      // Get topics for this subject
       const { data, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject', capitalizedSubject)
-        .ilike('grande_tema', `%${decodedTheme}%`)
+        .eq('subject_id', subjectId)
         .order('order_index', { ascending: true });
 
       if (error) {
@@ -71,7 +72,19 @@ const SubjectTopics = () => {
         return;
       }
 
-      setTopics(data || []);
+      // Group topics by grande_tema
+      const grouped: GroupedTopics = {};
+      if (data) {
+        data.forEach((topic) => {
+          const theme = topic.grande_tema || 'Outros';
+          if (!grouped[theme]) {
+            grouped[theme] = [];
+          }
+          grouped[theme].push(topic);
+        });
+      }
+
+      setGroupedTopics(grouped);
     } catch (error) {
       console.error('Error loading topics:', error);
     } finally {
@@ -107,20 +120,19 @@ const SubjectTopics = () => {
     if (selectedTopicId) {
       setSelectedTopicId(null);
     } else {
-      navigate(`/subjects/${subject}`);
+      navigate('/subjects');
     }
   };
 
-  if (!subject || !theme) {
+  if (!subjectId) {
     return <div>Parâmetros inválidos</div>;
   }
 
-  // Se um tópico foi selecionado, mostrar o ContentViewer
+  // If a topic was selected, show the ContentViewer
   if (selectedTopicId) {
     return (
       <MobileContainer background="gradient">
         <ContentViewer
-          subject={capitalizedSubject || ''}
           contentId={selectedTopicId}
           onBack={handleBack}
           onComplete={() => setSelectedTopicId(null)}
@@ -129,8 +141,6 @@ const SubjectTopics = () => {
       </MobileContainer>
     );
   }
-
-  const themeDisplayName = topics.length > 0 ? topics[0].grande_tema : decodeURIComponent(theme).replace(/-/g, ' ');
 
   return (
     <MobileContainer background="gradient">
@@ -146,79 +156,83 @@ const SubjectTopics = () => {
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{themeDisplayName}</h1>
-            <p className="text-white/80 text-sm">{capitalizedSubject}</p>
+            <h1 className="text-lg font-semibold">{subjectName}</h1>
+            <p className="text-white/80 text-sm">Tópicos de Estudo</p>
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
-            <h2 className="text-white text-lg font-semibold mb-4 flex items-center space-x-2">
-              <BookOpen size={20} />
-              <span>Tópicos de Estudo</span>
-            </h2>
-
             {loading ? (
               <div className="text-white text-center py-8">Carregando tópicos...</div>
-            ) : topics.length === 0 ? (
+            ) : Object.keys(groupedTopics).length === 0 ? (
               <div className="text-white text-center py-8">
                 <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Nenhum tópico encontrado para este tema ainda.</p>
+                <p>Nenhum tópico encontrado para esta matéria ainda.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {topics.map((topic) => {
-                  const progress = getContentProgress(topic.id);
-                  
-                  return (
-                    <div
-                      key={topic.id}
-                      onClick={() => handleTopicClick(topic.id)}
-                      className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
-                          <BookOpen size={24} />
-                          {progress && progress.completed && (
-                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                              <CheckCircle size={16} className="text-white" />
+              Object.keys(groupedTopics).map(theme => (
+                <div key={theme} className="space-y-3">
+                  <h2 className="text-white text-lg font-semibold mb-4 flex items-center space-x-2">
+                    <BookOpen size={20} />
+                    <span>{theme}</span>
+                  </h2>
+
+                  <div className="space-y-4">
+                    {groupedTopics[theme].map((topic) => {
+                      const progress = getContentProgress(topic.id);
+                      
+                      return (
+                        <div
+                          key={topic.id}
+                          onClick={() => handleTopicClick(topic.id)}
+                          className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
+                              <BookOpen size={24} />
+                              {progress && progress.completed && (
+                                <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                  <CheckCircle size={16} className="text-white" />
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
-                          <p className="text-white/80 text-sm mb-2">{topic.description}</p>
-                          
-                          <div className="flex items-center space-x-4 text-xs">
-                            <div className="flex items-center space-x-1">
-                              <Clock size={12} className="text-blue-400" />
-                              <span className="text-white/80">{topic.estimated_time} min</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
-                                {getDifficultyText(topic.difficulty_level)}
-                              </span>
-                            </div>
-                            {progress && progress.progress_percentage > 0 && (
-                              <div className="flex items-center space-x-1">
-                                <span className="text-green-400 text-xs">
-                                  {progress.progress_percentage}% concluído
-                                </span>
+                            
+                            <div className="flex-1">
+                              <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
+                              <p className="text-white/80 text-sm mb-2">{topic.description}</p>
+                              
+                              <div className="flex items-center space-x-4 text-xs">
+                                <div className="flex items-center space-x-1">
+                                  <Clock size={12} className="text-blue-400" />
+                                  <span className="text-white/80">{topic.estimated_time} min</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
+                                    {getDifficultyText(topic.difficulty_level)}
+                                  </span>
+                                </div>
+                                {progress && progress.progress_percentage > 0 && (
+                                  <div className="flex items-center space-x-1">
+                                    <span className="text-green-400 text-xs">
+                                      {progress.progress_percentage}% concluído
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </div>
+                            
+                            <div className="text-white/60">
+                              <Play size={20} />
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="text-white/60">
-                          <Play size={20} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

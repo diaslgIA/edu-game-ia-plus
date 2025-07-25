@@ -1,11 +1,26 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
-// Definimos o tipo para um único item de conteúdo
-type Content = Database['public']['Tables']['subject_contents']['Row'];
+interface ContentSection {
+  title: string;
+  content: string;
+}
+
+interface ContentData {
+  sections: ContentSection[];
+}
+
+interface Content {
+  id: string;
+  title: string;
+  description?: string;
+  content_data?: ContentData;
+  difficulty_level: string;
+  estimated_time: number;
+}
 
 interface ContentViewerProps {
   contentId: string;
@@ -22,7 +37,6 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
   const [loading, setLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
 
-  // Efeito que busca o conteúdo específico quando o componente é exibido
   useEffect(() => {
     if (!contentId) {
       setLoading(false);
@@ -31,34 +45,50 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
 
     const fetchContent = async () => {
       setLoading(true);
-      // Busca diretamente no Supabase pelo ID específico
-      const { data, error } = await supabase
-        .from('subject_contents')
-        .select('*')
-        .eq('id', contentId)
-        .single(); // .single() é crucial para buscar apenas um registro
+      
+      try {
+        const { data, error } = await supabase
+          .from('subject_contents')
+          .select('*')
+          .eq('id', contentId)
+          .single();
 
-      if (error) {
-        console.error("Erro ao buscar o conteúdo específico:", error);
+        if (error) {
+          console.error("Error fetching content:", error);
+          setContent(null);
+        } else {
+          setContent(data);
+        }
+      } catch (error) {
+        console.error("Error in fetchContent:", error);
         setContent(null);
-      } else {
-        setContent(data);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchContent();
-  }, [contentId]); // Garante que a busca acontece se o ID mudar
+  }, [contentId]);
 
   const handleSectionComplete = () => {
-    if (!content) return;
-    const sections = content.content_data?.sections || [];
+    if (!content || !content.content_data) return;
+    
+    const sections = content.content_data.sections || [];
     if (currentSection < sections.length - 1) {
       setCurrentSection(currentSection + 1);
     } else {
       if (onComplete) {
         onComplete(contentId);
       }
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'hard': return 'text-red-400';
+      default: return 'text-gray-400';
     }
   };
 
@@ -84,15 +114,6 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
 
   const sections = content.content_data?.sections || [];
   const currentSectionData = sections[currentSection];
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'text-green-400';
-      case 'medium': return 'text-yellow-400';
-      case 'hard': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
-  };
 
   return (
     <div className="h-full flex flex-col">
