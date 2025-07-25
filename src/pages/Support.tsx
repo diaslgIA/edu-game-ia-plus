@@ -10,15 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MessageCircle, HelpCircle, Bug, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Support = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
     type: 'question'
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const supportTypes = [
     { id: 'question', label: 'Dúvida', icon: HelpCircle },
@@ -27,10 +31,52 @@ const Support = () => {
     { id: 'other', label: 'Outro', icon: MessageCircle }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Mensagem enviada! Responderemos em breve.');
-    setFormData({ subject: '', message: '', type: 'question' });
+    
+    if (!user?.email) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para enviar uma solicitação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-support-email', {
+        body: {
+          tipo_solicitacao: formData.type,
+          assunto: formData.subject,
+          mensagem: formData.message,
+          usuario_email: user.email,
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Mensagem enviada!",
+        description: "Sua solicitação foi enviada com sucesso. Responderemos em breve.",
+      });
+
+      // Limpar formulário
+      setFormData({ subject: '', message: '', type: 'question' });
+      
+    } catch (error: any) {
+      console.error('Erro ao enviar solicitação:', error);
+      toast({
+        title: "Erro ao enviar",
+        description: error.message || "Ocorreu um erro ao enviar sua solicitação. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const faqItems = [
@@ -138,9 +184,10 @@ const Support = () => {
 
                   <Button 
                     type="submit"
+                    disabled={isLoading}
                     className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold text-sm"
                   >
-                    Enviar Mensagem
+                    {isLoading ? 'Enviando...' : 'Enviar Mensagem'}
                   </Button>
                 </form>
               </div>
