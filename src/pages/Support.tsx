@@ -150,7 +150,8 @@ const Support = () => {
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-white">
               <h3 className="font-semibold mb-2 text-xs">Outras formas de contato</h3>
               <div className="space-y-1 text-[10px] text-white/80">
-                <p>📧 iaedugame@gmail.com</p>
+                <p>📧 suporte@edugameia.com</p>
+                <p>📱 WhatsApp: (11) 99999-9999</p>
                 <p>🕒 Atendimento: Seg-Sex, 9h às 18h</p>
               </div>
             </div>
