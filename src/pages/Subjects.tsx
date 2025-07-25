@@ -9,12 +9,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Star, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Interface para definir o tipo de um Subject vindo do banco
+// Interface ajustada para corresponder às suas colunas
 interface Subject {
   id: number;
-  name: string;
-  icon: string;
-  difficulty: string;
+  nome: string; // Corrigido de 'name' para 'nome'
+  description: string; // Adicionada a coluna 'description'
 }
 
 const Subjects = () => {
@@ -29,9 +28,10 @@ const Subjects = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       setLoading(true);
+      // CORREÇÃO FINAL: Pedindo exatamente as colunas que você tem
       const { data, error } = await supabase
         .from('subjects')
-        .select('id, name, icon, difficulty');
+        .select('id, name, description'); 
 
       if (error) {
         console.error("Erro ao buscar matérias:", error);
@@ -75,7 +75,7 @@ const Subjects = () => {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {subjects.map((subject, index) => {
-                const subjectProgress = getSubjectProgress(subject.name);
+                const subjectProgress = getSubjectProgress(subject.nome); // Corrigido para usar subject.nome
                 
                 return (
                   <div
@@ -85,18 +85,14 @@ const Subjects = () => {
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xl shadow-lg`}>
-                        {subject.icon || '📚'}
+                        📚 {/* Ícone fixo, pois não temos essa coluna */}
                       </div>
                       
                       <div className="flex-1">
-                        <h4 className="font-bold text-white text-lg mb-1">{subject.name}</h4>
-                        <p className="text-white/80 text-sm mb-2">Conteúdo direto do seu banco de dados!</p>
+                        <h4 className="font-bold text-white text-lg mb-1">{subject.nome}</h4> {/* Exibe o nome da sua tabela */}
+                        <p className="text-white/80 text-sm mb-2">{subject.description}</p> {/* Exibe a descrição da sua tabela */}
                         
                         <div className="flex items-center space-x-4 text-xs">
-                          <div className="flex items-center space-x-1">
-                            <Clock size={12} className="text-green-400" />
-                            <span className="text-white/80">{subject.difficulty || 'Normal'}</span>
-                          </div>
                           <div className="flex items-center space-x-1">
                             <Star size={12} className="text-yellow-400" />
                             <span className="text-white/80">{subjectProgress.progress_percentage}%</span>
