@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Play } from 'lucide-react';
@@ -27,6 +26,30 @@ interface ContentViewerProps {
   onBack: () => void;
   onComplete?: (contentId: string) => void;
 }
+
+// Helper function to safely parse content_data
+const parseContentData = (content_data: any): ContentData | undefined => {
+  if (!content_data) return undefined;
+  
+  // If it's already an object with sections, return it
+  if (typeof content_data === 'object' && content_data.sections && Array.isArray(content_data.sections)) {
+    return content_data as ContentData;
+  }
+  
+  // If it's a string, try to parse it as JSON
+  if (typeof content_data === 'string') {
+    try {
+      const parsed = JSON.parse(content_data);
+      if (parsed.sections && Array.isArray(parsed.sections)) {
+        return parsed as ContentData;
+      }
+    } catch (e) {
+      console.error('Failed to parse content_data as JSON:', e);
+    }
+  }
+  
+  return undefined;
+};
 
 const ContentViewer: React.FC<ContentViewerProps> = ({
   contentId,
@@ -57,11 +80,8 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
           console.error("Error fetching content:", error);
           setContent(null);
         } else {
-          // Parse the content_data if it exists and is valid JSON
-          let parsedContentData: ContentData | undefined;
-          if (data.content_data && typeof data.content_data === 'object') {
-            parsedContentData = data.content_data as ContentData;
-          }
+          // Parse the content_data safely
+          const parsedContentData = parseContentData(data.content_data);
 
           const contentItem: Content = {
             id: data.id,
