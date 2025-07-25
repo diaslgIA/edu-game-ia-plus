@@ -30,7 +30,7 @@ const Subjects = () => {
     const fetchSubjects = async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from('subjects')
+        .from('Subjects')
         .select('id, name, icon, difficulty');
 
       if (error) {
