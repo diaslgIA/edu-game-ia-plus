@@ -39,6 +39,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
   if (selectedContent) {
     return (
       <ContentViewer
+        subject={subject}
         contentId={selectedContent}
         onBack={() => setSelectedContent(null)}
         onComplete={() => setSelectedContent(null)}
