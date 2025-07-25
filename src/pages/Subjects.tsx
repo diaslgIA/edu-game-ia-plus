@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Star, ChevronRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client'; // Importante: Importar o Supabase
+import { supabase } from '@/integrations/supabase/client';
 
 // Interface para definir o tipo de um Subject vindo do banco
 interface Subject {
@@ -23,19 +23,15 @@ const Subjects = () => {
   const { t } = useLanguage();
   const { playSound, isMuted } = useSound();
   
-  // Estado para armazenar as matérias que vêm do Supabase
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  // Estado para controlar o carregamento
   const [loading, setLoading] = useState(true);
 
-  // useEffect para buscar os dados quando o componente carregar
   useEffect(() => {
     const fetchSubjects = async () => {
       setLoading(true);
-      // Busca na tabela 'subjects' do seu banco de dados
       const { data, error } = await supabase
         .from('subjects')
-        .select('id, name, icon, difficulty'); // Peça as colunas que você tem
+        .select('id, name, icon, difficulty');
 
       if (error) {
         console.error("Erro ao buscar matérias:", error);
