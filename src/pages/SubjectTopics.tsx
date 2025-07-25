@@ -60,11 +60,11 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.display_name || subjectData.name);
       }
 
-      // Get topics for this subject
+      // Get topics for this subject - using the subject name to filter
       const { data, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId)
+        .eq('subject', subjectData?.name || '')
         .order('order_index', { ascending: true });
 
       if (error) {

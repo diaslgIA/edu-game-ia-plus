@@ -49,7 +49,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
       try {
         const { data, error } = await supabase
           .from('subject_contents')
-          .select('*')
+          .select('id, title, description, content_data, difficulty_level, estimated_time')
           .eq('id', contentId)
           .single();
 
@@ -57,7 +57,22 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
           console.error("Error fetching content:", error);
           setContent(null);
         } else {
-          setContent(data);
+          // Parse the content_data if it exists and is valid JSON
+          let parsedContentData: ContentData | undefined;
+          if (data.content_data && typeof data.content_data === 'object') {
+            parsedContentData = data.content_data as ContentData;
+          }
+
+          const contentItem: Content = {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            content_data: parsedContentData,
+            difficulty_level: data.difficulty_level || 'medium',
+            estimated_time: data.estimated_time || 15
+          };
+
+          setContent(contentItem);
         }
       } catch (error) {
         console.error("Error in fetchContent:", error);
@@ -154,7 +169,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
           />
         </div>
         <p className="text-white/80 text-sm text-center">
-          Seção {currentSection + 1} de {sections.length}
+          {sections.length > 0 ? `Seção ${currentSection + 1} de ${sections.length}` : 'Conteúdo disponível'}
         </p>
       </div>
 
@@ -168,32 +183,39 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
             </div>
           </div>
         ) : (
-          <div className="text-white text-center">Nenhuma seção de conteúdo encontrada.</div>
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
+            <h2 className="text-xl font-bold text-white mb-4">{content.title}</h2>
+            <div className="text-white/90 text-base leading-relaxed">
+              {content.description || 'Conteúdo em desenvolvimento'}
+            </div>
+          </div>
         )}
       </div>
 
       {/* Action Buttons */}
-      <div className="p-6 border-t border-white/10">
-        <div className="flex space-x-3">
-          {currentSection < sections.length - 1 ? (
-            <Button
-              onClick={handleSectionComplete}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
-            >
-              <Play className="mr-2" size={16} />
-              Próxima Seção
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSectionComplete}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3"
-            >
-              <CheckCircle className="mr-2" size={16} />
-              Concluir Conteúdo
-            </Button>
-          )}
+      {sections.length > 0 && (
+        <div className="p-6 border-t border-white/10">
+          <div className="flex space-x-3">
+            {currentSection < sections.length - 1 ? (
+              <Button
+                onClick={handleSectionComplete}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
+              >
+                <Play className="mr-2" size={16} />
+                Próxima Seção
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSectionComplete}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3"
+              >
+                <CheckCircle className="mr-2" size={16} />
+                Concluir Conteúdo
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

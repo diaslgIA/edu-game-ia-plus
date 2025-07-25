@@ -11,14 +11,14 @@ import { ArrowLeft, BookOpen, Clock, Star, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Subject {
-  id: number;
+  id: string;
   name: string;
   display_name: string;
-  knowledge_area_id: number;
+  description?: string;
 }
 
 interface KnowledgeArea {
-  id: number;
+  id: string;
   name: string;
   icon: string;
   color: string;
@@ -43,22 +43,10 @@ const Subjects = () => {
       setLoading(true);
       
       try {
-        // Fetch knowledge areas
-        const { data: areasData, error: areasError } = await supabase
-          .from('knowledge_areas')
-          .select('*')
-          .order('id');
-
-        if (areasError) {
-          console.error('Error fetching knowledge areas:', areasError);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch subjects
+        // Get all subjects first
         const { data: subjectsData, error: subjectsError } = await supabase
           .from('subjects')
-          .select('id, name, display_name, knowledge_area_id')
+          .select('id, name, display_name, description')
           .order('name');
 
         if (subjectsError) {
@@ -67,13 +55,49 @@ const Subjects = () => {
           return;
         }
 
-        // Group subjects by knowledge area
-        const groupedData: KnowledgeArea[] = areasData.map(area => ({
-          ...area,
-          subjects: subjectsData.filter(subject => subject.knowledge_area_id === area.id)
-        }));
+        // Create knowledge areas manually with the subjects grouped by category
+        const knowledgeAreasData: KnowledgeArea[] = [
+          {
+            id: '1',
+            name: 'Linguagens e Códigos',
+            icon: '📝',
+            color: 'from-blue-500 to-blue-700',
+            subjects: subjectsData?.filter(subject => 
+              ['Português', 'Inglês', 'Espanhol', 'Literatura', 'Redação'].includes(subject.name)
+            ) || []
+          },
+          {
+            id: '2',
+            name: 'Matemática',
+            icon: '📐',
+            color: 'from-purple-500 to-purple-700',
+            subjects: subjectsData?.filter(subject => 
+              subject.name === 'Matemática'
+            ) || []
+          },
+          {
+            id: '3',
+            name: 'Ciências da Natureza',
+            icon: '🔬',
+            color: 'from-green-500 to-green-700',
+            subjects: subjectsData?.filter(subject => 
+              ['Física', 'Química', 'Biologia'].includes(subject.name)
+            ) || []
+          },
+          {
+            id: '4',
+            name: 'Ciências Humanas',
+            icon: '🌍',
+            color: 'from-orange-500 to-orange-700',
+            subjects: subjectsData?.filter(subject => 
+              ['História', 'Geografia', 'Filosofia', 'Sociologia'].includes(subject.name)
+            ) || []
+          }
+        ];
 
-        setKnowledgeAreas(groupedData);
+        // Filter out empty areas
+        const filteredAreas = knowledgeAreasData.filter(area => area.subjects.length > 0);
+        setKnowledgeAreas(filteredAreas);
       } catch (error) {
         console.error('Error in fetchData:', error);
       } finally {
@@ -133,7 +157,7 @@ const Subjects = () => {
                               
                               <div className="flex-1">
                                 <h4 className="font-bold text-white text-lg mb-1">{subject.display_name || subject.name}</h4>
-                                <p className="text-white/80 text-sm mb-2">Grandes temas e conteúdos organizados</p>
+                                <p className="text-white/80 text-sm mb-2">{subject.description || 'Grandes temas e conteúdos organizados'}</p>
                                 
                                 <div className="flex items-center space-x-4 text-xs">
                                   <div className="flex items-center space-x-1">
