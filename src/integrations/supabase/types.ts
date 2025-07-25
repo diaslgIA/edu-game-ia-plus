@@ -787,42 +787,108 @@ export type Database = {
         }
         Relationships: []
       }
-      Subjects: {
+      subjects: {
         Row: {
           created_at: string | null
           description: string | null
+          display_name: string | null
           id: string
-          name: string
+          knowledge_area_id: number | null
+          nome: string
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          display_name?: string | null
           id?: string
-          name: string
+          knowledge_area_id?: number | null
+          nome: string
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          display_name?: string | null
           id?: string
-          name?: string
+          knowledge_area_id?: number | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      suporte_duvidas: {
+        Row: {
+          assunto: string
+          data_criacao: string
+          id: string
+          mensagem: string
+          tipo_solicitacao: string
+          usuario_email: string
+        }
+        Insert: {
+          assunto: string
+          data_criacao?: string
+          id?: string
+          mensagem: string
+          tipo_solicitacao: string
+          usuario_email: string
+        }
+        Update: {
+          assunto?: string
+          data_criacao?: string
+          id?: string
+          mensagem?: string
+          tipo_solicitacao?: string
+          usuario_email?: string
+        }
+        Relationships: []
+      }
+      support_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          request_type: string
+          status: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          request_type: string
+          status?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          request_type?: string
+          status?: string
+          subject?: string
+          user_id?: string | null
         }
         Relationships: []
       }
       Themes: {
         Row: {
           created_at: string | null
+          display_name: string | null
           id: string
           name: string
           subject_id: string
         }
         Insert: {
           created_at?: string | null
+          display_name?: string | null
           id?: string
           name: string
           subject_id: string
         }
         Update: {
           created_at?: string | null
+          display_name?: string | null
           id?: string
           name?: string
           subject_id?: string
@@ -832,7 +898,7 @@ export type Database = {
             foreignKeyName: "Themes_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "Subjects"
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -840,6 +906,7 @@ export type Database = {
       Topics: {
         Row: {
           created_at: string | null
+          display_name: string | null
           explanation: string | null
           id: string
           name: string
@@ -847,6 +914,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          display_name?: string | null
           explanation?: string | null
           id?: string
           name: string
@@ -854,6 +922,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          display_name?: string | null
           explanation?: string | null
           id?: string
           name?: string
@@ -1060,6 +1129,14 @@ export type Database = {
           p_time_spent: number
         }
         Returns: undefined
+      }
+      unaccent: {
+        Args: { "": string }
+        Returns: string
+      }
+      unaccent_init: {
+        Args: { "": unknown }
+        Returns: unknown
       }
     }
     Enums: {
