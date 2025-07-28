@@ -25,7 +25,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/guilda/${guild.id}`);
+    navigate(`/guilds/${guild.id}`);
   };
 
   return (
