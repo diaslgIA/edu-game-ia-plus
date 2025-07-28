@@ -14,12 +14,13 @@ const GuildRequestNotifications: React.FC<GuildRequestNotificationsProps> = ({ u
 
   const fetchPendingRequests = async () => {
     try {
-      // Buscar solicitações pendentes para guildas onde o usuário é dono ou líder
+      // Buscar solicitações pendentes para guildas onde o usuário é dono
       const { data: ownedGuilds } = await supabase
         .from('guilds')
         .select('id')
         .eq('owner_id', userId);
 
+      // Buscar solicitações pendentes para guildas onde o usuário é líder
       const { data: ledGuilds } = await supabase
         .from('guild_members')
         .select('guild_id')
@@ -45,6 +46,7 @@ const GuildRequestNotifications: React.FC<GuildRequestNotificationsProps> = ({ u
       setPendingRequests(count || 0);
     } catch (error) {
       console.error('Erro ao buscar solicitações:', error);
+      setPendingRequests(0);
     }
   };
 

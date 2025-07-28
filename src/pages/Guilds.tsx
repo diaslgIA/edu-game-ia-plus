@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -44,6 +43,8 @@ const Guilds = () => {
   });
 
   const fetchGuilds = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       console.log('Buscando guildas...');
@@ -52,7 +53,7 @@ const Guilds = () => {
       const { data: memberGuilds } = await supabase
         .from('guild_members')
         .select('guild_id')
-        .eq('profile_id', user?.id);
+        .eq('profile_id', user.id);
 
       const memberGuildIds = memberGuilds?.map(g => g.guild_id) || [];
 

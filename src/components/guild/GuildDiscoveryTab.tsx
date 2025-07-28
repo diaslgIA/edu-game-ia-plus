@@ -33,14 +33,7 @@ const GuildDiscoveryTab: React.FC = () => {
     try {
       setLoading(true);
       
-      // Buscar guildas públicas onde o usuário não é membro
-      const { data: userGuilds } = await supabase
-        .from('guild_members')
-        .select('guild_id')
-        .eq('profile_id', user.id);
-
-      const userGuildIds = userGuilds?.map(g => g.guild_id) || [];
-
+      // Buscar guildas públicas
       let query = supabase
         .from('guilds')
         .select('*')
@@ -51,29 +44,51 @@ const GuildDiscoveryTab: React.FC = () => {
         query = query.ilike('name', `%${searchQuery}%`);
       }
 
-      if (userGuildIds.length > 0) {
-        query = query.not('id', 'in', `(${userGuildIds.map(id => `"${id}"`).join(',')})`);
-      }
-
       const { data: guilds, error } = await query;
 
       if (error) throw error;
 
+      if (!guilds) {
+        setPublicGuilds([]);
+        return;
+      }
+
+      // Buscar guildas onde o usuário é membro
+      const { data: userGuilds } = await supabase
+        .from('guild_members')
+        .select('guild_id')
+        .eq('profile_id', user.id);
+
+      const userGuildIds = new Set(userGuilds?.map(g => g.guild_id) || []);
+
+      // Filtrar guildas onde o usuário não é membro
+      const availableGuilds = guilds.filter(guild => !userGuildIds.has(guild.id));
+
       // Contar membros de cada guilda
       const guildsWithCount = await Promise.all(
-        (guilds || []).map(async (guild) => {
-          const { count } = await supabase
-            .from('guild_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('guild_id', guild.id);
+        availableGuilds.map(async (guild) => {
+          try {
+            const { count } = await supabase
+              .from('guild_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('guild_id', guild.id);
 
-          return { ...guild, member_count: count || 0 };
+            return { ...guild, member_count: count || 0 };
+          } catch (error) {
+            console.warn(`Erro ao contar membros da guilda ${guild.id}:`, error);
+            return { ...guild, member_count: 0 };
+          }
         })
       );
 
       setPublicGuilds(guildsWithCount);
     } catch (error) {
       console.error('Erro ao buscar guildas públicas:', error);
+      toast({
+        title: "Erro ao carregar guildas",
+        description: "Não foi possível carregar as guildas públicas.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -93,7 +108,17 @@ const GuildDiscoveryTab: React.FC = () => {
           message: `Olá! Gostaria de participar da guilda ${guildName}.`
         });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Solicitação já enviada",
+            description: "Você já enviou uma solicitação para esta guilda.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Solicitação enviada!",
@@ -162,12 +187,14 @@ const GuildDiscoveryTab: React.FC = () => {
                 </div>
                 <Button
                   onClick={() => requestToJoin(guild.id, guild.name)}
-                  disabled={requesting === guild.id}
+                  disabled={requesting === guild.id || (guild.member_count || 0) >= 20}
                   size="sm"
                   className="bg-green-500 hover:bg-green-600"
                 >
                   {requesting === guild.id ? (
                     'Enviando...'
+                  ) : (guild.member_count || 0) >= 20 ? (
+                    'Lotada'
                   ) : (
                     <>
                       <Plus size={14} className="mr-1" />
@@ -183,7 +210,7 @@ const GuildDiscoveryTab: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
                     <Users size={12} />
-                    <span>{guild.member_count} membros</span>
+                    <span>{guild.member_count}/20 membros</span>
                   </div>
                   <span>{guild.total_points} pontos</span>
                 </div>

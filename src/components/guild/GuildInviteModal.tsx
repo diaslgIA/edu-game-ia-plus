@@ -1,92 +1,93 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, X, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, UserPlus, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useDebounce } from '@/hooks/useDebounce';
 
-interface Profile {
+interface User {
   id: string;
   full_name: string;
   email: string;
 }
 
 interface GuildInviteModalProps {
-  guildId: string;
-  guildName: string;
   isOpen: boolean;
   onClose: () => void;
+  guildId: string;
+  guildName: string;
 }
 
 const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
-  guildId,
-  guildName,
   isOpen,
-  onClose
+  onClose,
+  guildId,
+  guildName
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
+  
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Função de busca com debounce
-  const searchUsers = useCallback(async (term: string) => {
-    if (!term.trim()) {
-      setSearchResults([]);
+  const searchUsers = async (term: string) => {
+    if (!term.trim() || term.length < 2) {
+      setUsers([]);
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Buscando usuários com termo:', term);
       
-      // Primeiro, buscar IDs de usuários que já são membros
-      const { data: existingMembers } = await supabase
-        .from('guild_members')
-        .select('profile_id')
-        .eq('guild_id', guildId);
-
-      // Buscar IDs de usuários que foram convidados
-      const { data: invitedUsers } = await supabase
-        .from('guild_invites')
-        .select('invited_user_id')
-        .eq('guild_id', guildId)
-        .eq('status', 'pending');
-
-      // Criar array de IDs para excluir
-      const excludeIds = [
-        user?.id, // Excluir o próprio usuário
-        ...(existingMembers || []).map(u => u.profile_id),
-        ...(invitedUsers || []).map(u => u.invited_user_id)
-      ].filter(Boolean);
-
-      console.log('IDs para excluir:', excludeIds);
-
-      // Buscar usuários que não são membros nem foram convidados
-      let query = supabase
+      // Buscar usuários que não são membros da guilda
+      const { data: allUsers, error: usersError } = await supabase
         .from('profiles')
         .select('id, full_name, email')
         .ilike('full_name', `%${term}%`)
         .limit(10);
 
-      // Excluir usuários já relacionados à guilda
-      if (excludeIds.length > 0) {
-        query = query.not('id', 'in', `(${excludeIds.map(id => `"${id}"`).join(',')})`);
+      if (usersError) throw usersError;
+
+      if (!allUsers || allUsers.length === 0) {
+        setUsers([]);
+        return;
       }
 
-      const { data: profiles, error } = await query;
+      // Buscar membros atuais da guilda
+      const { data: guildMembers, error: membersError } = await supabase
+        .from('guild_members')
+        .select('profile_id')
+        .eq('guild_id', guildId);
 
-      if (error) {
-        console.error('Erro na busca de usuários:', error);
-        throw error;
-      }
+      if (membersError) throw membersError;
 
-      console.log('Usuários encontrados:', profiles);
-      setSearchResults(profiles || []);
+      // Buscar convites pendentes
+      const { data: pendingInvites, error: invitesError } = await supabase
+        .from('guild_invites')
+        .select('invited_user_id')
+        .eq('guild_id', guildId)
+        .eq('status', 'pending');
+
+      if (invitesError) throw invitesError;
+
+      const memberIds = new Set(guildMembers?.map(m => m.profile_id) || []);
+      const invitedIds = new Set(pendingInvites?.map(i => i.invited_user_id) || []);
+
+      // Filtrar usuários que não são membros e não têm convites pendentes
+      const availableUsers = allUsers.filter(user => 
+        !memberIds.has(user.id) && 
+        !invitedIds.has(user.id) &&
+        user.id !== user?.id // Excluir o próprio usuário
+      );
+
+      setUsers(availableUsers);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       toast({
@@ -97,22 +98,9 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [guildId, user?.id, toast]);
+  };
 
-  // Debounce para busca em tempo real
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchUsers(searchTerm);
-      } else {
-        setSearchResults([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, searchUsers]);
-
-  const sendInvite = async (userId: string) => {
+  const sendInvite = async (userId: string, userName: string) => {
     if (!user) return;
 
     try {
@@ -123,18 +111,19 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
         .insert({
           guild_id: guildId,
           inviter_id: user.id,
-          invited_user_id: userId
+          invited_user_id: userId,
+          status: 'pending'
         });
 
       if (error) throw error;
 
       toast({
         title: "Convite enviado!",
-        description: "O convite foi enviado com sucesso.",
+        description: `Convite enviado para ${userName}.`,
       });
 
-      // Remover usuário dos resultados
-      setSearchResults(prev => prev.filter(p => p.id !== userId));
+      // Remover usuário da lista
+      setUsers(prev => prev.filter(u => u.id !== userId));
     } catch (error) {
       console.error('Erro ao enviar convite:', error);
       toast({
@@ -147,73 +136,75 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      searchUsers(debouncedSearchTerm);
+    } else {
+      setUsers([]);
+    }
+  }, [debouncedSearchTerm, guildId]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">Convidar para {guildName}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Convidar para {guildName}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar usuários pelo nome..."
+              className="pl-10"
+            />
+          </div>
 
-        <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Digite o nome do usuário..."
-            className="pl-10"
-          />
-          {loading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {searchResults.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">
-              {searchTerm ? 
-                (loading ? 'Buscando...' : 'Nenhum usuário encontrado') : 
-                'Digite para buscar usuários'
-              }
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {searchResults.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{profile.full_name}</p>
-                    <p className="text-sm text-gray-500">{profile.email}</p>
-                  </div>
-                  <Button
-                    onClick={() => sendInvite(profile.id)}
-                    disabled={inviting === profile.id}
-                    size="sm"
+          <div className="max-h-60 overflow-y-auto">
+            {loading ? (
+              <div className="text-center py-4 text-gray-500">
+                Buscando usuários...
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                {searchTerm.length >= 2 ? 'Nenhum usuário encontrado' : 'Digite pelo menos 2 caracteres para buscar'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
-                    {inviting === profile.id ? (
-                      'Enviando...'
-                    ) : (
-                      <>
-                        <UserPlus size={14} className="mr-1" />
-                        Convidar
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+                    <div>
+                      <p className="font-medium">{user.full_name}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                    </div>
+                    <Button
+                      onClick={() => sendInvite(user.id, user.full_name)}
+                      disabled={inviting === user.id}
+                      size="sm"
+                      className="bg-blue-500 hover:bg-blue-600"
+                    >
+                      {inviting === user.id ? (
+                        'Enviando...'
+                      ) : (
+                        <>
+                          <UserPlus size={14} className="mr-1" />
+                          Convidar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
