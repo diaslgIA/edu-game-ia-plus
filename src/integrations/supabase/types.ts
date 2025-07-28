@@ -14,38 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      Answers: {
-        Row: {
-          answer_text: string
-          created_at: string | null
-          id: string
-          is_correct: boolean
-          question_id: string
-        }
-        Insert: {
-          answer_text: string
-          created_at?: string | null
-          id?: string
-          is_correct: boolean
-          question_id: string
-        }
-        Update: {
-          answer_text?: string
-          created_at?: string | null
-          id?: string
-          is_correct?: boolean
-          question_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "Questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       content_progress: {
         Row: {
           completed: boolean | null
@@ -551,35 +519,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      Questions: {
-        Row: {
-          created_at: string | null
-          id: string
-          question_text: string
-          quiz_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          question_text: string
-          quiz_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          question_text?: string
-          quiz_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Questions_quiz_id_fkey"
-            columns: ["quiz_id"]
-            isOneToOne: false
-            referencedRelation: "Quizzes"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       quiz_scores: {
         Row: {

@@ -88,45 +88,58 @@ export const useMentorAffinity = () => {
       const newXP = (existing?.experience_points || 0) + xpGained;
       const newLevel = Math.floor(newXP / 100) + 1;
 
-      if (existing) {
-        // Update existing affinity
-        const { error } = await supabase
-          .from('mentor_affinities')
-          .update({
-            experience_points: newXP,
-            affinity_level: newLevel,
-            last_interaction: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existing.id);
+      const affinityData = {
+        user_id: user.id,
+        mentor_id: mentorId,
+        experience_points: newXP,
+        affinity_level: newLevel,
+        last_interaction: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-        if (error) {
-          console.error('Error updating mentor affinity:', error);
-          return;
-        }
-      } else {
-        // Create new affinity - usando upsert para evitar duplicatas
-        const { error } = await supabase
-          .from('mentor_affinities')
-          .upsert({
-            user_id: user.id,
-            mentor_id: mentorId,
-            experience_points: newXP,
-            affinity_level: newLevel,
-            last_interaction: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,mentor_id'
-          });
+      // Tentar primeiro com upsert
+      const { error: upsertError } = await supabase
+        .from('mentor_affinities')
+        .upsert(affinityData, {
+          onConflict: 'user_id,mentor_id'
+        });
 
-        if (error) {
-          console.error('Error creating mentor affinity:', error);
-          return;
+      if (upsertError) {
+        console.error('Erro no upsert, tentando update:', upsertError);
+        
+        // Se o upsert falhar, tentar update direto
+        if (existing) {
+          const { error: updateError } = await supabase
+            .from('mentor_affinities')
+            .update({
+              experience_points: newXP,
+              affinity_level: newLevel,
+              last_interaction: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+
+          if (updateError) {
+            console.error('Erro no update de afinidade:', updateError);
+            return;
+          }
+        } else {
+          // Se não existe, tentar insert simples
+          const { error: insertError } = await supabase
+            .from('mentor_affinities')
+            .insert(affinityData);
+
+          if (insertError) {
+            console.error('Erro no insert de afinidade:', insertError);
+            return;
+          }
         }
       }
 
+      // Atualizar estado local
       await fetchAffinities();
     } catch (error) {
-      console.error('Error updating mentor affinity:', error);
+      console.error('Erro ao criar afinidade de mentor:', error);
     }
   };
 

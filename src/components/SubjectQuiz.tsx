@@ -143,19 +143,17 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     const questionScore = isCorrect ? 10 : 0;
     const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
     
-    // Registrar atividade da questão - não falhar se der erro
-    try {
-      await recordQuizQuestion(
-        subject,
-        question.topic,
-        question.id || `${subject}-${currentQuestion}`,
-        selectedAnswer || -1,
-        question.correctAnswer,
-        timeSpentOnQuestion
-      );
-    } catch (error) {
-      console.error('Erro ao registrar atividade da questão (ignorando):', error);
-    }
+    // Registrar atividade da questão (não crítico)
+    recordQuizQuestion(
+      subject,
+      question.topic,
+      question.id || `${subject}-${currentQuestion}`,
+      selectedAnswer || -1,
+      question.correctAnswer,
+      timeSpentOnQuestion
+    ).catch(error => {
+      console.error('Erro ao registrar atividade da questão (não crítico):', error);
+    });
     
     if (isCorrect) {
       setScore(score + questionScore);
@@ -188,16 +186,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       
       console.log('🎯 Finalizando quiz:', { subject, finalScore, timeSpent });
       
-      // Registrar conclusão do quiz (não falhar se der erro)
-      try {
-        await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
-      } catch (error) {
-        console.error('Erro ao registrar conclusão do quiz (ignorando):', error);
-      }
+      // Registrar conclusão do quiz (não crítico)
+      recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent)
+        .catch(error => {
+          console.error('Erro ao registrar conclusão do quiz (não crítico):', error);
+        });
       
-      // Salvar pontuação (principal)
+      // Salvar pontuação (CRÍTICO)
+      let saveSuccess = false;
       try {
-        const saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
         
         if (saveSuccess) {
           console.log('✅ Quiz finalizado com sucesso!');
@@ -205,14 +203,12 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         } else {
           console.log('⚠️ Quiz finalizado mas com erro no salvamento');
         }
-        
-        // Sempre completar o quiz, mesmo com erro de salvamento
-        onComplete(finalScore, timeSpent);
       } catch (error) {
         console.error('❌ Erro ao salvar quiz:', error);
-        // Mesmo com erro, finalizar o quiz
-        onComplete(finalScore, timeSpent);
       }
+      
+      // Sempre completar o quiz, mesmo com erro de salvamento
+      onComplete(finalScore, timeSpent);
     }
   };
 

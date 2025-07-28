@@ -31,89 +31,64 @@ export const useQuizScore = () => {
         timeSpent 
       });
 
-      // Tentar salvar com retry em caso de erro
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        try {
-          const { data: quizData, error: quizError } = await supabase
-            .from('quiz_scores')
-            .insert({
-              user_id: user.id,
-              subject,
-              score,
-              total_questions: totalQuestions,
-              time_spent: timeSpent
-            })
-            .select()
-            .single();
+      // Salvar pontuação com tratamento de erro melhorado
+      const { data: quizData, error: quizError } = await supabase
+        .from('quiz_scores')
+        .insert({
+          user_id: user.id,
+          subject,
+          score,
+          total_questions: totalQuestions,
+          time_spent: timeSpent
+        })
+        .select()
+        .single();
 
-          if (quizError) {
-            console.error(`❌ Erro ao salvar pontuação (tentativa ${attempts + 1}):`, quizError);
-            
-            if (attempts === maxAttempts - 1) {
-              // Última tentativa - mostrar erro
-              if (quizError.code === '23505') {
-                toast({
-                  title: "Dados duplicados",
-                  description: "Esta pontuação já foi salva anteriormente.",
-                  variant: "destructive"
-                });
-              } else {
-                toast({
-                  title: "Erro ao salvar pontuação",
-                  description: "Não foi possível salvar sua pontuação. Tente novamente.",
-                  variant: "destructive"
-                });
-              }
-              return false;
-            }
-            
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-            continue;
-          }
-
-          console.log('✅ Pontuação salva com sucesso:', quizData);
-          
-          // Aguardar um pouco para o trigger processar
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Atualizar o perfil do usuário
-          try {
-            await refreshProfile();
-          } catch (refreshError) {
-            console.error('Erro ao atualizar perfil:', refreshError);
-            // Não falhar por causa do refresh
-          }
-          
+      if (quizError) {
+        console.error('❌ Erro ao salvar pontuação:', quizError);
+        
+        // Tratamento específico para diferentes tipos de erro
+        if (quizError.code === '23505') {
           toast({
-            title: "Quiz concluído!",
-            description: `Parabéns! Você ganhou ${score} pontos!`,
+            title: "Dados duplicados",
+            description: "Esta pontuação já foi salva anteriormente.",
+            variant: "destructive"
           });
-
-          return true;
-        } catch (innerError) {
-          console.error(`❌ Erro inesperado na tentativa ${attempts + 1}:`, innerError);
-          attempts++;
-          
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-          }
+        } else if (quizError.code === '42501') {
+          toast({
+            title: "Erro de permissão",
+            description: "Você não tem permissão para salvar pontuações.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erro ao salvar pontuação",
+            description: "Não foi possível salvar sua pontuação. Tente novamente.",
+            variant: "destructive"
+          });
         }
+        return false;
       }
 
-      // Se chegou aqui, todas as tentativas falharam
+      console.log('✅ Pontuação salva com sucesso:', quizData);
+      
+      // Tentar atualizar o perfil, mas não falhar se der erro
+      try {
+        await refreshProfile();
+        console.log('✅ Perfil atualizado com sucesso');
+      } catch (refreshError) {
+        console.error('⚠️ Erro ao atualizar perfil (não crítico):', refreshError);
+      }
+      
       toast({
-        title: "Erro ao salvar pontuação",
-        description: "Não foi possível salvar sua pontuação após várias tentativas.",
-        variant: "destructive"
+        title: "Quiz concluído!",
+        description: `Parabéns! Você ganhou ${score} pontos!`,
       });
-      return false;
+
+      return true;
 
     } catch (error) {
-      console.error('❌ Erro inesperado geral:', error);
+      console.error('❌ Erro inesperado ao salvar pontuação:', error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao salvar sua pontuação.",
