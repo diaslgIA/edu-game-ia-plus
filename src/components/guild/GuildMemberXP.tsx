@@ -40,7 +40,7 @@ const GuildMemberXP: React.FC<GuildMemberXPProps> = ({ guildId }) => {
         user_id: item.user_id,
         xp_points: item.xp_points,
         level: item.level,
-        badges: item.badges || [],
+        badges: Array.isArray(item.badges) ? item.badges.filter((badge): badge is string => typeof badge === 'string') : [],
         full_name: item.profiles?.full_name || 'Usuário',
         position: index + 1
       }));
