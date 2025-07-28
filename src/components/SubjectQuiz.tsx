@@ -186,33 +186,24 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
-      console.log('🎯 Iniciando finalização do quiz:', {
-        subject,
-        finalScore,
-        totalQuestions: quizQuestions.length,
-        timeSpent
-      });
+      console.log('🎯 Finalizando quiz:', { subject, finalScore, timeSpent });
       
       try {
         // Registrar conclusão do quiz
-        console.log('📝 Registrando conclusão do quiz...');
         await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
         
-        // Salvar pontuação no sistema
-        console.log('💾 Salvando pontuação...');
+        // Salvar pontuação
         const saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
         
         if (saveSuccess) {
           console.log('✅ Quiz finalizado com sucesso!');
           if (playSound) playSound('success');
-        } else {
-          console.error('❌ Falha ao salvar pontuação, mas quiz será finalizado');
         }
         
         onComplete(finalScore, timeSpent);
       } catch (error) {
-        console.error('❌ Erro crítico ao finalizar quiz:', error);
-        // Mesmo com erro, finalizar o quiz para não travar o usuário
+        console.error('❌ Erro ao finalizar quiz:', error);
+        // Mesmo com erro, finalizar o quiz
         onComplete(finalScore, timeSpent);
       }
     }

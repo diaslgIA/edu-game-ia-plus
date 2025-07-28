@@ -23,7 +23,7 @@ export const useQuizScore = () => {
     try {
       setSaving(true);
       
-      console.log('🎯 Iniciando salvamento de pontuação:', { 
+      console.log('🎯 Salvando pontuação do quiz:', { 
         user_id: user.id, 
         subject, 
         score, 
@@ -31,26 +31,7 @@ export const useQuizScore = () => {
         timeSpent 
       });
 
-      // Verificar se o usuário tem perfil
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, full_name, points')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('❌ Erro ao buscar perfil:', profileError);
-        toast({
-          title: "Erro de perfil",
-          description: "Não foi possível acessar seu perfil. Tente fazer login novamente.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      console.log('✅ Perfil encontrado:', profile);
-
-      // Tentar salvar a pontuação
+      // Salvar a pontuação - o trigger se encarregará de atualizar o ranking
       const { data: quizData, error: quizError } = await supabase
         .from('quiz_scores')
         .insert({
@@ -64,17 +45,10 @@ export const useQuizScore = () => {
         .single();
 
       if (quizError) {
-        console.error('❌ Erro ao salvar pontuação no quiz_scores:', quizError);
-        console.error('Detalhes do erro:', {
-          code: quizError.code,
-          message: quizError.message,
-          details: quizError.details,
-          hint: quizError.hint
-        });
-        
+        console.error('❌ Erro ao salvar pontuação:', quizError);
         toast({
           title: "Erro ao salvar pontuação",
-          description: `Erro técnico: ${quizError.message}`,
+          description: "Não foi possível salvar sua pontuação. Tente novamente.",
           variant: "destructive"
         });
         return false;
@@ -82,44 +56,24 @@ export const useQuizScore = () => {
 
       console.log('✅ Pontuação salva com sucesso:', quizData);
 
-      // Aguardar processamento do trigger
+      // Aguardar um pouco para o trigger processar
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Verificar se o ranking foi atualizado
-      const { data: ranking, error: rankingError } = await supabase
-        .from('user_rankings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (rankingError) {
-        console.error('⚠️ Erro ao verificar ranking:', rankingError);
-      } else {
-        console.log('✅ Ranking atualizado:', ranking);
-      }
-
-      // Atualizar o perfil
+      // Atualizar o perfil do usuário
       await refreshProfile();
       
       toast({
-        title: "Pontuação salva!",
-        description: `+${score} pontos adicionados à sua conta!`,
+        title: "Quiz concluído!",
+        description: `Parabéns! Você ganhou ${score} pontos!`,
       });
 
       return true;
 
     } catch (error) {
-      console.error('❌ Erro inesperado ao salvar pontuação:', error);
-      
-      // Tentar identificar o tipo de erro
-      if (error instanceof Error) {
-        console.error('Mensagem do erro:', error.message);
-        console.error('Stack trace:', error.stack);
-      }
-      
+      console.error('❌ Erro inesperado:', error);
       toast({
-        title: "Erro ao salvar pontuação",
-        description: "Ocorreu um erro inesperado. Verifique sua conexão e tente novamente.",
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao salvar sua pontuação.",
         variant: "destructive"
       });
       return false;
