@@ -127,6 +127,128 @@ export type Database = {
         }
         Relationships: []
       }
+      guild_battle_participants: {
+        Row: {
+          answers: Json | null
+          battle_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          guild_id: string | null
+          id: string
+          score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          battle_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          battle_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          score?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_battle_participants_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "guild_battles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_battle_participants_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_battle_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_battles: {
+        Row: {
+          battle_type: string | null
+          challenged_guild_id: string | null
+          challenged_score: number | null
+          challenger_guild_id: string | null
+          challenger_score: number | null
+          created_at: string | null
+          end_time: string | null
+          id: string
+          start_time: string | null
+          status: string | null
+          updated_at: string | null
+          winner_guild_id: string | null
+        }
+        Insert: {
+          battle_type?: string | null
+          challenged_guild_id?: string | null
+          challenged_score?: number | null
+          challenger_guild_id?: string | null
+          challenger_score?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+          winner_guild_id?: string | null
+        }
+        Update: {
+          battle_type?: string | null
+          challenged_guild_id?: string | null
+          challenged_score?: number | null
+          challenger_guild_id?: string | null
+          challenger_score?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+          winner_guild_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_battles_challenged_guild_id_fkey"
+            columns: ["challenged_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_battles_challenger_guild_id_fkey"
+            columns: ["challenger_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_battles_winner_guild_id_fkey"
+            columns: ["winner_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_chat_messages: {
         Row: {
           content: string
@@ -308,6 +430,54 @@ export type Database = {
           },
         ]
       }
+      guild_member_xp: {
+        Row: {
+          badges: Json | null
+          created_at: string | null
+          guild_id: string | null
+          id: string
+          level: number | null
+          updated_at: string | null
+          user_id: string | null
+          xp_points: number | null
+        }
+        Insert: {
+          badges?: Json | null
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp_points?: number | null
+        }
+        Update: {
+          badges?: Json | null
+          created_at?: string | null
+          guild_id?: string | null
+          id?: string
+          level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_member_xp_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_member_xp_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_members: {
         Row: {
           guild_id: string
@@ -385,6 +555,87 @@ export type Database = {
             columns: ["guild_id"]
             isOneToOne: false
             referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_mural_response_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          response_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          response_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          response_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_mural_response_likes_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "guild_mural_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_mural_response_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_mural_responses: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          likes_count: number | null
+          post_id: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          post_id?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_mural_responses_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_mural_responses_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "guild_mural_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -1050,6 +1301,15 @@ export type Database = {
       unaccent_init: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      update_guild_member_xp: {
+        Args: {
+          p_guild_id: string
+          p_user_id: string
+          p_xp_gain: number
+          p_reason?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

@@ -5,7 +5,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Crown, UserPlus, Settings, Trash2, LogOut, UserCheck } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, MessageSquare, FileText, Crown, UserPlus, Trash2, LogOut, UserCheck, Zap, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import GuildMembers from '@/components/guild/GuildMembers';
 import GuildInviteModal from '@/components/guild/GuildInviteModal';
 import GuildInvites from '@/components/guild/GuildInvites';
 import GuildJoinRequests from '@/components/guild/GuildJoinRequests';
+import GuildMemberXP from '@/components/guild/GuildMemberXP';
+import GuildBattles from '@/components/guild/GuildBattles';
 
 interface Guild {
   id: string;
@@ -179,6 +181,7 @@ const GuildDetails = () => {
   const canInvite = isOwner || guild.user_role === 'líder';
   const canInviteMore = (guild.member_count || 0) < 20;
   const canManageRequests = isOwner || guild.user_role === 'líder';
+  const canManageBattles = isOwner || guild.user_role === 'líder';
 
   return (
     <MobileContainer background="gradient">
@@ -259,28 +262,31 @@ const GuildDetails = () => {
         {/* Tabs */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className={`grid w-full ${canManageRequests ? 'grid-cols-5' : 'grid-cols-4'} bg-white/10 backdrop-blur-md mx-3 mt-3`}>
+            <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-md mx-3 mt-3">
               <TabsTrigger value="chat" className="text-xs">
-                <MessageSquare size={14} className="mr-1" />
+                <MessageSquare size={12} className="mr-1" />
                 Chat
               </TabsTrigger>
               <TabsTrigger value="mural" className="text-xs">
-                <FileText size={14} className="mr-1" />
+                <FileText size={12} className="mr-1" />
                 Mural
               </TabsTrigger>
               <TabsTrigger value="membros" className="text-xs">
-                <Users size={14} className="mr-1" />
+                <Users size={12} className="mr-1" />
                 Membros
+              </TabsTrigger>
+              <TabsTrigger value="xp" className="text-xs">
+                <Star size={12} className="mr-1" />
+                XP
+              </TabsTrigger>
+              <TabsTrigger value="batalhas" className="text-xs">
+                <Zap size={12} className="mr-1" />
+                Batalhas
               </TabsTrigger>
               {canManageRequests && (
                 <TabsTrigger value="solicitacoes" className="text-xs">
-                  <UserCheck size={14} className="mr-1" />
+                  <UserCheck size={12} className="mr-1" />
                   Solicitações
-                </TabsTrigger>
-              )}
-              {canInvite && (
-                <TabsTrigger value="convites" className="text-xs">
-                  Convites
                 </TabsTrigger>
               )}
             </TabsList>
@@ -295,17 +301,24 @@ const GuildDetails = () => {
               <TabsContent value="membros" className="h-full m-0">
                 <GuildMembers guildId={guild.id} isOwner={isOwner} onMemberUpdate={fetchGuildDetails} />
               </TabsContent>
+              <TabsContent value="xp" className="h-full m-0">
+                <div className="p-3">
+                  <GuildMemberXP guildId={guild.id} />
+                </div>
+              </TabsContent>
+              <TabsContent value="batalhas" className="h-full m-0">
+                <div className="p-3">
+                  <GuildBattles 
+                    guildId={guild.id} 
+                    isOwner={isOwner} 
+                    isLeader={guild.user_role === 'líder'}
+                  />
+                </div>
+              </TabsContent>
               {canManageRequests && (
                 <TabsContent value="solicitacoes" className="h-full m-0">
                   <div className="p-3">
                     <GuildJoinRequests guildId={guild.id} onRequestHandled={fetchGuildDetails} />
-                  </div>
-                </TabsContent>
-              )}
-              {canInvite && (
-                <TabsContent value="convites" className="h-full m-0">
-                  <div className="p-3">
-                    <GuildInvites guildId={guild.id} />
                   </div>
                 </TabsContent>
               )}

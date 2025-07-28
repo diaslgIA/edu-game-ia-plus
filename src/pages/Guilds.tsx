@@ -5,7 +5,6 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +44,7 @@ const Guilds = () => {
       setLoading(true);
       console.log('Buscando guildas...');
 
-      // Buscar guildas com query simplificada
+      // Buscar guildas com query otimizada
       let guildsQuery = supabase
         .from('guilds')
         .select('*')
@@ -64,14 +63,21 @@ const Guilds = () => {
 
       console.log('Guildas encontradas:', guildsData);
 
-      // Buscar contagem de membros para cada guilda
+      // Usar função segura para contar membros
       const guildsWithMemberCount = await Promise.all(
         (guildsData || []).map(async (guild) => {
           try {
             const { count, error: countError } = await supabase
-              .from('guild_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('guild_id', guild.id);
+              .rpc('is_guild_member_safe', { 
+                target_guild_id: guild.id, 
+                target_user_id: user?.id || '00000000-0000-0000-0000-000000000000'
+              })
+              .then(async () => {
+                return await supabase
+                  .from('guild_members')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('guild_id', guild.id);
+              });
 
             if (countError) {
               console.warn(`Erro ao contar membros da guilda ${guild.id}:`, countError);

@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, MessageSquare, CheckCircle, User } from 'lucide-react';
+import { Plus, MessageSquare, CheckCircle, User, MessageCircleReply } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import MuralResponse from './MuralResponse';
 
 interface MuralPost {
   id: string;
@@ -16,6 +17,7 @@ interface MuralPost {
   is_answered: boolean;
   created_at: string;
   author_name: string;
+  response_count?: number;
 }
 
 interface GuildMuralProps {
@@ -30,6 +32,23 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostBody, setNewPostBody] = useState('');
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('membro');
+
+  const fetchUserRole = async () => {
+    try {
+      const { data } = await supabase
+        .from('guild_members')
+        .select('role')
+        .eq('guild_id', guildId)
+        .eq('profile_id', user?.id)
+        .single();
+
+      setUserRole(data?.role || 'membro');
+    } catch (error) {
+      console.error('Erro ao buscar papel do usuário:', error);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -44,12 +63,23 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
 
       if (error) throw error;
 
-      const processedPosts = data.map(post => ({
-        ...post,
-        author_name: post.profiles?.full_name || 'Usuário'
-      }));
+      // Buscar contagem de respostas para cada post
+      const postsWithResponseCount = await Promise.all(
+        (data || []).map(async (post) => {
+          const { count } = await supabase
+            .from('guild_mural_responses')
+            .select('*', { count: 'exact', head: true })
+            .eq('post_id', post.id);
 
-      setPosts(processedPosts);
+          return {
+            ...post,
+            author_name: post.profiles?.full_name || 'Usuário',
+            response_count: count || 0
+          };
+        })
+      );
+
+      setPosts(postsWithResponseCount);
     } catch (error) {
       console.error('Erro ao buscar posts:', error);
     } finally {
@@ -97,7 +127,7 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
         .from('guild_mural_posts')
         .update({ is_answered: true })
         .eq('id', postId)
-        .eq('author_id', user?.id); // Só o autor pode marcar como respondido
+        .eq('author_id', user?.id);
 
       if (error) throw error;
 
@@ -112,8 +142,13 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
     }
   };
 
+  const togglePostExpansion = (postId: string) => {
+    setExpandedPost(expandedPost === postId ? null : postId);
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchUserRole();
   }, [guildId]);
 
   const formatDate = (dateString: string) => {
@@ -124,6 +159,9 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
       minute: '2-digit'
     });
   };
+
+  const isOwner = userRole === 'dono';
+  const isLeader = userRole === 'líder';
 
   return (
     <div className="flex flex-col h-full">
@@ -167,24 +205,45 @@ const GuildMural: React.FC<GuildMuralProps> = ({ guildId }) => {
                   </div>
                   <p className="text-white/80 text-xs mb-2">{post.body}</p>
                   
-                  <div className="flex items-center justify-between text-xs text-white/60">
+                  <div className="flex items-center justify-between text-xs text-white/60 mb-2">
                     <div className="flex items-center space-x-1">
                       <User size={12} />
                       <span>{post.author_name}</span>
                     </div>
                     <span>{formatDate(post.created_at)}</span>
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => togglePostExpansion(post.id)}
+                      className="flex items-center space-x-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <MessageCircleReply size={12} />
+                      <span>{post.response_count || 0} respostas</span>
+                    </button>
+                    
+                    {!post.is_answered && post.author_id === user?.id && (
+                      <Button
+                        onClick={() => markAsAnswered(post.id)}
+                        className="bg-green-500 hover:bg-green-600 text-white text-xs py-1 px-2"
+                      >
+                        Marcar como Respondido
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
               
-              {!post.is_answered && post.author_id === user?.id && (
-                <div className="mt-2">
-                  <Button
-                    onClick={() => markAsAnswered(post.id)}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-1"
-                  >
-                    Marcar como Respondido
-                  </Button>
+              {/* Expanded Responses */}
+              {expandedPost === post.id && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <MuralResponse
+                    postId={post.id}
+                    guildId={guildId}
+                    isOwner={isOwner}
+                    isLeader={isLeader}
+                    onResponseAdded={fetchPosts}
+                  />
                 </div>
               )}
             </div>
