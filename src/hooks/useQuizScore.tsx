@@ -10,12 +10,17 @@ export const useQuizScore = () => {
   const { toast } = useToast();
 
   const saveQuizScore = async (subject: string, score: number, totalQuestions: number, timeSpent: number) => {
-    if (!user) return false;
+    if (!user) {
+      console.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
       setSaving(true);
       
-      const { error } = await supabase
+      console.log('Salvando pontuação do quiz:', { subject, score, totalQuestions, timeSpent });
+      
+      const { data, error } = await supabase
         .from('quiz_scores')
         .insert({
           user_id: user.id,
@@ -23,17 +28,21 @@ export const useQuizScore = () => {
           score,
           total_questions: totalQuestions,
           time_spent: timeSpent
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Erro ao salvar pontuação:', error);
         toast({
           title: "Erro ao salvar pontuação",
-          description: "Não foi possível salvar sua pontuação.",
+          description: "Não foi possível salvar sua pontuação. Tente novamente.",
           variant: "destructive"
         });
         return false;
       }
+
+      console.log('Pontuação salva com sucesso:', data);
 
       // Atualizar o perfil para mostrar os novos pontos
       await refreshProfile();
@@ -45,7 +54,12 @@ export const useQuizScore = () => {
 
       return true;
     } catch (error) {
-      console.error('Erro ao salvar pontuação:', error);
+      console.error('Erro inesperado ao salvar pontuação:', error);
+      toast({
+        title: "Erro ao salvar pontuação",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
       return false;
     } finally {
       setSaving(false);

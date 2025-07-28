@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,11 +15,24 @@ export const useUserActivities = () => {
     correctAnswer: number,
     timeSpent: number
   ) => {
-    if (!user) return false;
+    if (!user) {
+      console.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
       setRecording(true);
 
+      console.log('Registrando atividade de questão:', { 
+        subject, 
+        topic, 
+        questionId, 
+        userAnswer, 
+        correctAnswer, 
+        timeSpent 
+      });
+
+      // Usar a função do banco para registrar a atividade
       const { error } = await supabase.rpc('register_quiz_question_activity', {
         p_subject: subject,
         p_topic: topic,
@@ -33,9 +47,10 @@ export const useUserActivities = () => {
         return false;
       }
 
+      console.log('Atividade registrada com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao registrar atividade:', error);
+      console.error('Erro inesperado ao registrar atividade:', error);
       return false;
     } finally {
       setRecording(false);
@@ -48,9 +63,19 @@ export const useUserActivities = () => {
     totalQuestions: number,
     totalTimeSpent: number
   ) => {
-    if (!user) return false;
+    if (!user) {
+      console.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
+      console.log('Registrando conclusão do quiz:', { 
+        subject, 
+        finalScore, 
+        totalQuestions, 
+        totalTimeSpent 
+      });
+
       const { error } = await supabase
         .from('user_activities')
         .insert({
@@ -70,9 +95,10 @@ export const useUserActivities = () => {
         return false;
       }
 
+      console.log('Conclusão do quiz registrada com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao registrar conclusão do quiz:', error);
+      console.error('Erro inesperado ao registrar conclusão do quiz:', error);
       return false;
     }
   };
@@ -101,7 +127,7 @@ export const useUserActivities = () => {
 
       return data || [];
     } catch (error) {
-      console.error('Erro ao buscar atividades:', error);
+      console.error('Erro inesperado ao buscar atividades:', error);
       return [];
     }
   };
@@ -138,10 +164,10 @@ export const useUserActivities = () => {
         correctAnswers,
         accuracy: totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0,
         totalPoints,
-        avgTimePerQuestion: Math.round(avgTimePerQuestion)
+        avgTimePerQuestion: Math.round(avgTimePerQuestion) || 0
       };
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
+      console.error('Erro inesperado ao buscar estatísticas:', error);
       return null;
     }
   };

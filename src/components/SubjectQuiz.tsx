@@ -106,6 +106,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         const difficulty = difficultyMap[q.difficulty_level?.toLowerCase()] || 'Médio';
         
         const formattedQuestion = {
+          id: q.id,
           question: q.question,
           options: optionsArray,
           correctAnswer: q.correct_answer,
@@ -150,8 +151,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     console.log('Starting game with questions:', quizQuestions);
     setGameStarted(true);
     setStartTime(Date.now());
-    setQuestionStartTime(Date.now()); // Inicializar tempo da primeira questão
-    setTimeLeft(180); // 3 minutos por questão
+    setQuestionStartTime(Date.now());
+    setTimeLeft(180);
     if (playSound) playSound('click');
   };
 
@@ -177,13 +178,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     
     // Registrar atividade da questão
     try {
-      // Gerar um ID único para a questão (baseado no índice e conteúdo)
-      const questionId = `${subject}-${currentQuestion}-${question.question.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}`;
-      
       await recordQuizQuestion(
         subject,
         question.topic,
-        questionId,
+        question.id || `${subject}-${currentQuestion}`,
         selectedAnswer || -1,
         question.correctAnswer,
         timeSpentOnQuestion
@@ -194,10 +192,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     
     if (isCorrect) {
       setScore(score + questionScore);
-      // Atualizar experiência por acerto
       setExperience(prev => Math.min(prev + 10, 100));
     } else {
-      // Atualizar experiência por tentativa
       setExperience(prev => Math.min(prev + 3, 100));
     }
     
@@ -217,24 +213,32 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowResult(false);
-      setTimeLeft(180); // Reset para 3 minutos
-      setQuestionStartTime(Date.now()); // Reset tempo para próxima questão
+      setTimeLeft(180);
+      setQuestionStartTime(Date.now());
     } else {
       setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
+      
+      console.log('Quiz completed with final score:', finalScore);
       
       try {
         // Registrar conclusão do quiz
         await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
         
         // Salvar pontuação no sistema de pontos
-        await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        const saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
+        
+        if (saveSuccess) {
+          console.log('Quiz score saved successfully');
+        } else {
+          console.error('Failed to save quiz score');
+        }
         
         onComplete(finalScore, timeSpent);
         if (playSound) playSound('success');
       } catch (error) {
-        console.error('Error saving quiz score:', error);
+        console.error('Error completing quiz:', error);
         onComplete(finalScore, timeSpent);
       }
     }

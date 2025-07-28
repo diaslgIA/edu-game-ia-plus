@@ -841,36 +841,6 @@ export type Database = {
         }
         Relationships: []
       }
-      support_requests: {
-        Row: {
-          created_at: string
-          id: string
-          message: string
-          request_type: string
-          status: string
-          subject: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message: string
-          request_type: string
-          status?: string
-          subject: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string
-          request_type?: string
-          status?: string
-          subject?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       Themes: {
         Row: {
           created_at: string | null
