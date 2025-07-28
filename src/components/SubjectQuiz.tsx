@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
@@ -40,7 +39,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutos por questão
+  const [timeLeft, setTimeLeft] = useState(180);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
@@ -52,30 +51,22 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const [showMentorFeedback, setShowMentorFeedback] = useState(false);
   const [showMentorProfile, setShowMentorProfile] = useState(false);
   
-  // Afinidade fictícia para demonstração
   const [affinityLevel, setAffinityLevel] = useState(1);
   const [experience, setExperience] = useState(30);
 
   useEffect(() => {
     if (questions.length > 0) {
-      console.log('Raw questions from database:', questions);
+      console.log('Processando questões:', questions.length);
       
-      // Filtrar por tópico se especificado
       let filteredQuestions = questions;
       if (topic) {
         filteredQuestions = questions.filter(q => q.topic === topic);
-        console.log(`Filtered questions for topic "${topic}":`, filteredQuestions);
       }
       
-      // Selecionar questões aleatórias (máximo 15)
       const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
       const selectedQuestions = shuffled.slice(0, Math.min(15, filteredQuestions.length));
       
-      // Converter para o formato esperado pelo quiz
       const formattedQuestions = selectedQuestions.map(q => {
-        console.log('Processing question:', q);
-        
-        // Garantir que options seja um array
         let optionsArray = [];
         if (Array.isArray(q.options)) {
           optionsArray = q.options;
@@ -88,38 +79,24 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           } catch {
             optionsArray = ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
           }
-        } else {
-          console.error('Invalid options format for question:', q);
-          optionsArray = ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
         }
         
-        // Mapear dificuldade
         const difficultyMap: { [key: string]: string } = {
-          'easy': 'Fácil',
-          'medium': 'Médio', 
-          'hard': 'Difícil',
-          'facil': 'Fácil',
-          'medio': 'Médio',
-          'dificil': 'Difícil'
+          'easy': 'Fácil', 'medium': 'Médio', 'hard': 'Difícil',
+          'facil': 'Fácil', 'medio': 'Médio', 'dificil': 'Difícil'
         };
         
-        const difficulty = difficultyMap[q.difficulty_level?.toLowerCase()] || 'Médio';
-        
-        const formattedQuestion = {
+        return {
           id: q.id,
           question: q.question,
           options: optionsArray,
           correctAnswer: q.correct_answer,
           explanation: q.explanation || "Explicação não disponível.",
           topic: q.topic || subject,
-          difficulty: difficulty
+          difficulty: difficultyMap[q.difficulty_level?.toLowerCase()] || 'Médio'
         };
-        
-        console.log('Formatted question:', formattedQuestion);
-        return formattedQuestion;
       });
       
-      console.log('Final formatted questions:', formattedQuestions);
       setQuizQuestions(formattedQuestions);
     }
   }, [questions, subject, topic]);
@@ -129,15 +106,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !showResult) {
-      // Tempo esgotado - submeter resposta automaticamente
-      const submitAnswer = async () => {
-        await handleSubmitAnswer();
-      };
-      submitAnswer();
+      handleSubmitAnswer();
     }
   }, [timeLeft, gameStarted, showResult, gameCompleted]);
 
-  // Mostrar guia do mentor nas questões difíceis
   useEffect(() => {
     if (gameStarted && !showResult && quizQuestions.length > 0 && currentQuestion < quizQuestions.length) {
       const question = quizQuestions[currentQuestion];
@@ -148,7 +120,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   }, [gameStarted, showResult, currentQuestion, timeLeft, quizQuestions]);
 
   const startGame = () => {
-    console.log('Starting game with questions:', quizQuestions);
     setGameStarted(true);
     setStartTime(Date.now());
     setQuestionStartTime(Date.now());
@@ -157,7 +128,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
-    console.log('Answer selected:', answerIndex);
     if (!showResult) {
       setSelectedAnswer(answerIndex);
       if (playSound) playSound('click');
@@ -165,7 +135,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   };
 
   const handleSubmitAnswer = async () => {
-    console.log('Submitting answer:', selectedAnswer);
     setShowResult(true);
     setShowMentorGuide(false);
     
@@ -173,8 +142,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     const isCorrect = selectedAnswer === question.correctAnswer;
     const questionScore = isCorrect ? 10 : 0;
     const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
-    
-    console.log('Answer is correct:', isCorrect, 'Score:', questionScore);
     
     // Registrar atividade da questão
     try {
@@ -197,7 +164,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       setExperience(prev => Math.min(prev + 3, 100));
     }
     
-    // Verificar se deve aumentar o nível
     if (experience >= 100) {
       setAffinityLevel(prev => prev + 1);
       setExperience(0);
@@ -220,25 +186,23 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
       
-      console.log('Quiz completed with final score:', finalScore);
-      
       try {
+        console.log('Finalizando quiz - Score:', finalScore, 'Questions:', quizQuestions.length, 'Time:', timeSpent);
+        
         // Registrar conclusão do quiz
         await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
         
-        // Salvar pontuação no sistema de pontos
+        // Salvar pontuação no sistema
         const saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
         
         if (saveSuccess) {
-          console.log('Quiz score saved successfully');
-        } else {
-          console.error('Failed to save quiz score');
+          console.log('Quiz finalizado com sucesso!');
         }
         
         onComplete(finalScore, timeSpent);
         if (playSound) playSound('success');
       } catch (error) {
-        console.error('Error completing quiz:', error);
+        console.error('Erro ao finalizar quiz:', error);
         onComplete(finalScore, timeSpent);
       }
     }
@@ -265,8 +229,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     setShowMentorProfile(false);
     setGameStarted(true);
     setStartTime(Date.now());
-    setQuestionStartTime(Date.now()); // Inicializar tempo da primeira questão
-    setTimeLeft(180); // 3 minutos por questão
+    setQuestionStartTime(Date.now());
+    setTimeLeft(180);
     if (playSound) playSound('click');
   };
 
@@ -312,7 +276,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   }
 
   if (!gameStarted) {
-    // Mostrar perfil do mentor para História
     if (subject.toLowerCase() === 'história' && showMentorProfile) {
       return (
         <ZumbiProfile
@@ -352,13 +315,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const isCorrect = selectedAnswer === question.correctAnswer;
   const xpGained = isCorrect ? 10 : 3;
 
-  console.log('Current question:', question);
-  console.log('Selected answer:', selectedAnswer);
-  console.log('Show result:', showResult);
-
   return (
     <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg relative">
-      {/* Guia do Mentor */}
       {showMentorGuide && (
         <QuizMentorGuide
           subject={subject}
@@ -369,7 +327,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         />
       )}
 
-      {/* Dica do Mentor */}
       {showMentorHint && (
         <QuizMentorHint
           subject={subject}
@@ -380,7 +337,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         />
       )}
 
-      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <QuizHeader 
           subject={subject}
@@ -472,7 +428,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           />
         )}
 
-        {/* Pontuação Atual */}
         <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 border-2 border-blue-500 rounded-lg">
           <div className="text-center">
             <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">Pontos: </span>
@@ -481,7 +436,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         </div>
       </div>
 
-      {/* Botões de Ação */}
       <div className="pt-4 border-t border-gray-300 dark:border-gray-700">
         <div className="flex space-x-3">
           {!showResult ? (

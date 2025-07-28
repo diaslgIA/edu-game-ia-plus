@@ -12,13 +12,24 @@ export const useQuizScore = () => {
   const saveQuizScore = async (subject: string, score: number, totalQuestions: number, timeSpent: number) => {
     if (!user) {
       console.error('Usuário não autenticado');
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para salvar pontuações.",
+        variant: "destructive"
+      });
       return false;
     }
 
     try {
       setSaving(true);
       
-      console.log('Salvando pontuação do quiz:', { subject, score, totalQuestions, timeSpent });
+      console.log('Salvando pontuação do quiz:', { 
+        user_id: user.id, 
+        subject, 
+        score, 
+        totalQuestions, 
+        timeSpent 
+      });
       
       const { data, error } = await supabase
         .from('quiz_scores')
@@ -43,6 +54,9 @@ export const useQuizScore = () => {
       }
 
       console.log('Pontuação salva com sucesso:', data);
+
+      // Aguardar um pouco para o trigger processar
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Atualizar o perfil para mostrar os novos pontos
       await refreshProfile();

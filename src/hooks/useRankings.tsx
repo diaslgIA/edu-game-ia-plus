@@ -26,7 +26,7 @@ export const useRankings = () => {
         .from('user_rankings')
         .select('*')
         .order('position', { ascending: true })
-        .limit(50); // Top 50 usuários
+        .limit(50);
 
       if (error) {
         console.error('Erro ao buscar rankings:', error);
