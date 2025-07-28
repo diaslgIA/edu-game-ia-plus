@@ -1016,6 +1016,10 @@ export type Database = {
         }
         Returns: Json
       }
+      is_guild_member: {
+        Args: { guild_id: string; user_id: string }
+        Returns: boolean
+      }
       is_guild_member_safe: {
         Args: { target_guild_id: string; target_user_id: string }
         Returns: boolean

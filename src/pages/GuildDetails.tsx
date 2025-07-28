@@ -48,6 +48,7 @@ const GuildDetails = () => {
     try {
       setLoading(true);
       
+      // Buscar detalhes da guilda
       const { data: guildData, error } = await supabase
         .from('guilds')
         .select(`
@@ -57,7 +58,10 @@ const GuildDetails = () => {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar guilda:', error);
+        throw error;
+      }
 
       // Contar membros
       const { count: memberCount } = await supabase
@@ -213,7 +217,6 @@ const GuildDetails = () => {
                 </Button>
               )}
               
-              {/* Opções de gerenciamento */}
               {isOwner ? (
                 <Button 
                   onClick={() => setShowDeleteModal(true)}

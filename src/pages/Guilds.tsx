@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -44,8 +45,11 @@ const Guilds = () => {
       setLoading(true);
       console.log('Buscando guildas...');
 
-      // Buscar guildas sem a contagem aninhada para evitar recursão
-      let guildsQuery = supabase.from('guilds').select('*');
+      // Buscar guildas com query simplificada
+      let guildsQuery = supabase
+        .from('guilds')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (searchQuery) {
         guildsQuery = guildsQuery.ilike('name', `%${searchQuery}%`);
@@ -60,7 +64,7 @@ const Guilds = () => {
 
       console.log('Guildas encontradas:', guildsData);
 
-      // Buscar contagem de membros separadamente para cada guilda
+      // Buscar contagem de membros para cada guilda
       const guildsWithMemberCount = await Promise.all(
         (guildsData || []).map(async (guild) => {
           try {
@@ -132,11 +136,10 @@ const Guilds = () => {
         guildData: newGuildData 
       });
 
-      // Gerar código único da guilda
       const guildCode = generateGuildCode();
       console.log('Código da guilda gerado:', guildCode);
 
-      // Usar uma transação RPC para criar guilda e adicionar membro de forma atômica
+      // Usar a função RPC para criar guilda e adicionar membro
       const { data: result, error: rpcError } = await supabase
         .rpc('create_guild_with_owner', {
           guild_name: newGuildData.name.trim(),
@@ -160,6 +163,8 @@ const Guilds = () => {
 
       setShowCreateModal(false);
       setNewGuildData({ name: '', description: '', isPublic: true });
+      
+      // Atualizar lista de guildas
       fetchGuilds();
     } catch (error: any) {
       console.error('Erro completo na criação da guilda:', error);
@@ -174,9 +179,16 @@ const Guilds = () => {
     }
   };
 
+  // Buscar guildas quando o componente monta ou quando a busca muda
   useEffect(() => {
     fetchGuilds();
   }, [searchQuery]);
+
+  // Atualizar lista a cada 30 segundos para mostrar novas guildas
+  useEffect(() => {
+    const interval = setInterval(fetchGuilds, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -220,8 +232,10 @@ const Guilds = () => {
         <div className="flex-1 overflow-y-auto p-4">
           {guilds.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-white/80 mb-4">Nenhuma guilda encontrada</div>
-              {user && (
+              <div className="text-white/80 mb-4">
+                {searchQuery ? 'Nenhuma guilda encontrada' : 'Nenhuma guilda disponível'}
+              </div>
+              {user && !searchQuery && (
                 <Button 
                   onClick={() => setShowCreateModal(true)}
                   className="bg-green-500 hover:bg-green-600 text-white"
