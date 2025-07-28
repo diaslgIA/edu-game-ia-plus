@@ -5,12 +5,15 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Users, Compass } from 'lucide-react';
 import GuildCard from '@/components/guild/GuildCard';
 import GuildCreateModal from '@/components/guild/GuildCreateModal';
+import GuildDiscoveryTab from '@/components/guild/GuildDiscoveryTab';
+import GuildRequestNotifications from '@/components/guild/GuildRequestNotifications';
 
 interface Guild {
   id: string;
@@ -33,6 +36,7 @@ const Guilds = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creatingGuild, setCreatingGuild] = useState(false);
+  const [activeTab, setActiveTab] = useState('minhas');
   const [newGuildData, setNewGuildData] = useState({
     name: '',
     description: '',
@@ -44,10 +48,25 @@ const Guilds = () => {
       setLoading(true);
       console.log('Buscando guildas...');
 
-      // Buscar guildas com query otimizada
+      // Buscar guildas onde o usuário é membro
+      const { data: memberGuilds } = await supabase
+        .from('guild_members')
+        .select('guild_id')
+        .eq('profile_id', user?.id);
+
+      const memberGuildIds = memberGuilds?.map(g => g.guild_id) || [];
+
+      if (memberGuildIds.length === 0) {
+        setGuilds([]);
+        setLoading(false);
+        return;
+      }
+
+      // Buscar informações completas das guildas
       let guildsQuery = supabase
         .from('guilds')
         .select('*')
+        .in('id', memberGuildIds)
         .order('created_at', { ascending: false });
 
       if (searchQuery) {
@@ -63,21 +82,14 @@ const Guilds = () => {
 
       console.log('Guildas encontradas:', guildsData);
 
-      // Usar função segura para contar membros
+      // Contar membros de cada guilda
       const guildsWithMemberCount = await Promise.all(
         (guildsData || []).map(async (guild) => {
           try {
             const { count, error: countError } = await supabase
-              .rpc('is_guild_member_safe', { 
-                target_guild_id: guild.id, 
-                target_user_id: user?.id || '00000000-0000-0000-0000-000000000000'
-              })
-              .then(async () => {
-                return await supabase
-                  .from('guild_members')
-                  .select('*', { count: 'exact', head: true })
-                  .eq('guild_id', guild.id);
-              });
+              .from('guild_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('guild_id', guild.id);
 
             if (countError) {
               console.warn(`Erro ao contar membros da guilda ${guild.id}:`, countError);
@@ -187,16 +199,12 @@ const Guilds = () => {
 
   // Buscar guildas quando o componente monta ou quando a busca muda
   useEffect(() => {
-    fetchGuilds();
-  }, [searchQuery]);
+    if (activeTab === 'minhas') {
+      fetchGuilds();
+    }
+  }, [searchQuery, activeTab, user]);
 
-  // Atualizar lista a cada 30 segundos para mostrar novas guildas
-  useEffect(() => {
-    const interval = setInterval(fetchGuilds, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
+  if (loading && activeTab === 'minhas') {
     return (
       <MobileContainer background="gradient">
         <div className="flex items-center justify-center h-full">
@@ -212,7 +220,10 @@ const Guilds = () => {
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-md text-white p-4 rounded-b-3xl flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-semibold">Guildas</h1>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-lg font-semibold">Guildas</h1>
+              {user && <GuildRequestNotifications userId={user.id} />}
+            </div>
             <Button 
               onClick={() => setShowCreateModal(true)}
               className="bg-green-500 hover:bg-green-600 text-white"
@@ -222,42 +233,61 @@ const Guilds = () => {
               Criar Guilda
             </Button>
           </div>
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Buscar guilda..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-            />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50" size={16} />
-          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-3">
+              <TabsTrigger value="minhas">Minhas Guildas</TabsTrigger>
+              <TabsTrigger value="descobrir">Descobrir</TabsTrigger>
+            </TabsList>
+            
+            {activeTab === 'minhas' && (
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Buscar minhas guildas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50" size={16} />
+              </div>
+            )}
+          </Tabs>
         </div>
 
-        {/* Guild List */}
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {guilds.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-white/80 mb-4">
-                {searchQuery ? 'Nenhuma guilda encontrada' : 'Nenhuma guilda disponível'}
-              </div>
-              {user && !searchQuery && (
-                <Button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Criar primeira guilda
-                </Button>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsContent value="minhas" className="mt-0">
+              {guilds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users size={48} className="mx-auto mb-4 opacity-50 text-white/50" />
+                  <div className="text-white/80 mb-4">
+                    {searchQuery ? 'Nenhuma guilda encontrada' : 'Você ainda não participa de nenhuma guilda'}
+                  </div>
+                  {user && !searchQuery && (
+                    <Button 
+                      onClick={() => setShowCreateModal(true)}
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Criar primeira guilda
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {guilds.map((guild) => (
+                    <GuildCard key={guild.id} guild={guild} />
+                  ))}
+                </div>
               )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {guilds.map((guild) => (
-                <GuildCard key={guild.id} guild={guild} />
-              ))}
-            </div>
-          )}
+            </TabsContent>
+            
+            <TabsContent value="descobrir" className="mt-0">
+              <GuildDiscoveryTab />
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Create Guild Modal */}

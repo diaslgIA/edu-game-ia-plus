@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, X, UserPlus } from 'lucide-react';
@@ -33,46 +33,59 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
 
-  const searchUsers = async () => {
-    if (!searchTerm.trim()) {
+  // Função de busca com debounce
+  const searchUsers = useCallback(async (term: string) => {
+    if (!term.trim()) {
       setSearchResults([]);
       return;
     }
 
     try {
       setLoading(true);
+      console.log('Buscando usuários com termo:', term);
       
-      // Primeiro, buscar IDs de usuários que já são membros ou foram convidados
-      const { data: existingUsers } = await supabase
+      // Primeiro, buscar IDs de usuários que já são membros
+      const { data: existingMembers } = await supabase
         .from('guild_members')
         .select('profile_id')
         .eq('guild_id', guildId);
 
+      // Buscar IDs de usuários que foram convidados
       const { data: invitedUsers } = await supabase
         .from('guild_invites')
         .select('invited_user_id')
         .eq('guild_id', guildId)
         .eq('status', 'pending');
 
+      // Criar array de IDs para excluir
       const excludeIds = [
-        ...(existingUsers || []).map(u => u.profile_id),
+        user?.id, // Excluir o próprio usuário
+        ...(existingMembers || []).map(u => u.profile_id),
         ...(invitedUsers || []).map(u => u.invited_user_id)
-      ];
+      ].filter(Boolean);
 
-      // Buscar usuários que não são membros da guilda nem foram convidados
+      console.log('IDs para excluir:', excludeIds);
+
+      // Buscar usuários que não são membros nem foram convidados
       let query = supabase
         .from('profiles')
         .select('id, full_name, email')
-        .ilike('full_name', `%${searchTerm}%`)
+        .ilike('full_name', `%${term}%`)
         .limit(10);
 
+      // Excluir usuários já relacionados à guilda
       if (excludeIds.length > 0) {
-        query = query.not('id', 'in', `(${excludeIds.map(id => `'${id}'`).join(',')})`);
+        query = query.not('id', 'in', `(${excludeIds.map(id => `"${id}"`).join(',')})`);
       }
 
       const { data: profiles, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na busca de usuários:', error);
+        throw error;
+      }
+
+      console.log('Usuários encontrados:', profiles);
       setSearchResults(profiles || []);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
@@ -84,7 +97,20 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [guildId, user?.id, toast]);
+
+  // Debounce para busca em tempo real
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchUsers(searchTerm);
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, searchUsers]);
 
   const sendInvite = async (userId: string) => {
     if (!user) return;
@@ -121,12 +147,6 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      searchUsers();
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -144,23 +164,23 @@ const GuildInviteModal: React.FC<GuildInviteModalProps> = ({
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Buscar usuários por nome..."
+            placeholder="Digite o nome do usuário..."
             className="pl-10"
           />
-          <Button 
-            onClick={searchUsers}
-            disabled={loading || !searchTerm.trim()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 px-2"
-          >
-            {loading ? 'Buscando...' : 'Buscar'}
-          </Button>
+          {loading && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {searchResults.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
-              {searchTerm ? 'Nenhum usuário encontrado' : 'Digite para buscar usuários'}
+              {searchTerm ? 
+                (loading ? 'Buscando...' : 'Nenhum usuário encontrado') : 
+                'Digite para buscar usuários'
+              }
             </div>
           ) : (
             <div className="space-y-2">
