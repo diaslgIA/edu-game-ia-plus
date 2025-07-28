@@ -32,23 +32,46 @@ export const useUserActivities = () => {
         timeSpent 
       });
 
-      // Usar a função do banco para registrar a atividade
-      const { error } = await supabase.rpc('register_quiz_question_activity', {
-        p_subject: subject,
-        p_topic: topic,
-        p_question_id: questionId,
-        p_user_answer: userAnswer,
-        p_correct_answer: correctAnswer,
-        p_time_spent: timeSpent
-      });
+      // Tentar com retry em caso de erro
+      let attempts = 0;
+      const maxAttempts = 2;
+      
+      while (attempts < maxAttempts) {
+        try {
+          const { error } = await supabase.rpc('register_quiz_question_activity', {
+            p_subject: subject,
+            p_topic: topic,
+            p_question_id: questionId,
+            p_user_answer: userAnswer,
+            p_correct_answer: correctAnswer,
+            p_time_spent: timeSpent
+          });
 
-      if (error) {
-        console.error('Erro ao registrar atividade:', error);
-        return false;
+          if (error) {
+            console.error(`Erro ao registrar atividade (tentativa ${attempts + 1}):`, error);
+            
+            if (attempts === maxAttempts - 1) {
+              return false;
+            }
+            
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+
+          console.log('Atividade registrada com sucesso');
+          return true;
+        } catch (innerError) {
+          console.error(`Erro inesperado na tentativa ${attempts + 1}:`, innerError);
+          attempts++;
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
       }
 
-      console.log('Atividade registrada com sucesso');
-      return true;
+      return false;
     } catch (error) {
       console.error('Erro inesperado ao registrar atividade:', error);
       return false;
@@ -76,27 +99,51 @@ export const useUserActivities = () => {
         totalTimeSpent 
       });
 
-      const { error } = await supabase
-        .from('user_activities')
-        .insert({
-          user_id: user.id,
-          activity_type: 'quiz_complete',
-          subject,
-          points_earned: finalScore,
-          time_spent: totalTimeSpent,
-          metadata: {
-            total_questions: totalQuestions,
-            average_time_per_question: totalTimeSpent / totalQuestions
-          }
-        });
+      // Tentar com retry em caso de erro
+      let attempts = 0;
+      const maxAttempts = 2;
+      
+      while (attempts < maxAttempts) {
+        try {
+          const { error } = await supabase
+            .from('user_activities')
+            .insert({
+              user_id: user.id,
+              activity_type: 'quiz_complete',
+              subject,
+              points_earned: finalScore,
+              time_spent: totalTimeSpent,
+              metadata: {
+                total_questions: totalQuestions,
+                average_time_per_question: totalTimeSpent / totalQuestions
+              }
+            });
 
-      if (error) {
-        console.error('Erro ao registrar conclusão do quiz:', error);
-        return false;
+          if (error) {
+            console.error(`Erro ao registrar conclusão do quiz (tentativa ${attempts + 1}):`, error);
+            
+            if (attempts === maxAttempts - 1) {
+              return false;
+            }
+            
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+
+          console.log('Conclusão do quiz registrada com sucesso');
+          return true;
+        } catch (innerError) {
+          console.error(`Erro inesperado na tentativa ${attempts + 1}:`, innerError);
+          attempts++;
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
       }
 
-      console.log('Conclusão do quiz registrada com sucesso');
-      return true;
+      return false;
     } catch (error) {
       console.error('Erro inesperado ao registrar conclusão do quiz:', error);
       return false;

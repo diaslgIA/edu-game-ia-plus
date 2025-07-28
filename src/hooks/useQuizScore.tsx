@@ -31,46 +31,89 @@ export const useQuizScore = () => {
         timeSpent 
       });
 
-      // Salvar a pontuação - o trigger se encarregará de atualizar o ranking
-      const { data: quizData, error: quizError } = await supabase
-        .from('quiz_scores')
-        .insert({
-          user_id: user.id,
-          subject,
-          score,
-          total_questions: totalQuestions,
-          time_spent: timeSpent
-        })
-        .select()
-        .single();
+      // Tentar salvar com retry em caso de erro
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          const { data: quizData, error: quizError } = await supabase
+            .from('quiz_scores')
+            .insert({
+              user_id: user.id,
+              subject,
+              score,
+              total_questions: totalQuestions,
+              time_spent: timeSpent
+            })
+            .select()
+            .single();
 
-      if (quizError) {
-        console.error('❌ Erro ao salvar pontuação:', quizError);
-        toast({
-          title: "Erro ao salvar pontuação",
-          description: "Não foi possível salvar sua pontuação. Tente novamente.",
-          variant: "destructive"
-        });
-        return false;
+          if (quizError) {
+            console.error(`❌ Erro ao salvar pontuação (tentativa ${attempts + 1}):`, quizError);
+            
+            if (attempts === maxAttempts - 1) {
+              // Última tentativa - mostrar erro
+              if (quizError.code === '23505') {
+                toast({
+                  title: "Dados duplicados",
+                  description: "Esta pontuação já foi salva anteriormente.",
+                  variant: "destructive"
+                });
+              } else {
+                toast({
+                  title: "Erro ao salvar pontuação",
+                  description: "Não foi possível salvar sua pontuação. Tente novamente.",
+                  variant: "destructive"
+                });
+              }
+              return false;
+            }
+            
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+            continue;
+          }
+
+          console.log('✅ Pontuação salva com sucesso:', quizData);
+          
+          // Aguardar um pouco para o trigger processar
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Atualizar o perfil do usuário
+          try {
+            await refreshProfile();
+          } catch (refreshError) {
+            console.error('Erro ao atualizar perfil:', refreshError);
+            // Não falhar por causa do refresh
+          }
+          
+          toast({
+            title: "Quiz concluído!",
+            description: `Parabéns! Você ganhou ${score} pontos!`,
+          });
+
+          return true;
+        } catch (innerError) {
+          console.error(`❌ Erro inesperado na tentativa ${attempts + 1}:`, innerError);
+          attempts++;
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          }
+        }
       }
 
-      console.log('✅ Pontuação salva com sucesso:', quizData);
-
-      // Aguardar um pouco para o trigger processar
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Atualizar o perfil do usuário
-      await refreshProfile();
-      
+      // Se chegou aqui, todas as tentativas falharam
       toast({
-        title: "Quiz concluído!",
-        description: `Parabéns! Você ganhou ${score} pontos!`,
+        title: "Erro ao salvar pontuação",
+        description: "Não foi possível salvar sua pontuação após várias tentativas.",
+        variant: "destructive"
       });
-
-      return true;
+      return false;
 
     } catch (error) {
-      console.error('❌ Erro inesperado:', error);
+      console.error('❌ Erro inesperado geral:', error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao salvar sua pontuação.",

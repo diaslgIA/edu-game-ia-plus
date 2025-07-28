@@ -143,7 +143,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     const questionScore = isCorrect ? 10 : 0;
     const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
     
-    // Registrar atividade da questão
+    // Registrar atividade da questão - não falhar se der erro
     try {
       await recordQuizQuestion(
         subject,
@@ -154,7 +154,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         timeSpentOnQuestion
       );
     } catch (error) {
-      console.error('Erro ao registrar atividade da questão:', error);
+      console.error('Erro ao registrar atividade da questão (ignorando):', error);
     }
     
     if (isCorrect) {
@@ -188,21 +188,28 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       
       console.log('🎯 Finalizando quiz:', { subject, finalScore, timeSpent });
       
+      // Registrar conclusão do quiz (não falhar se der erro)
       try {
-        // Registrar conclusão do quiz
         await recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent);
-        
-        // Salvar pontuação
+      } catch (error) {
+        console.error('Erro ao registrar conclusão do quiz (ignorando):', error);
+      }
+      
+      // Salvar pontuação (principal)
+      try {
         const saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
         
         if (saveSuccess) {
           console.log('✅ Quiz finalizado com sucesso!');
           if (playSound) playSound('success');
+        } else {
+          console.log('⚠️ Quiz finalizado mas com erro no salvamento');
         }
         
+        // Sempre completar o quiz, mesmo com erro de salvamento
         onComplete(finalScore, timeSpent);
       } catch (error) {
-        console.error('❌ Erro ao finalizar quiz:', error);
+        console.error('❌ Erro ao salvar quiz:', error);
         // Mesmo com erro, finalizar o quiz
         onComplete(finalScore, timeSpent);
       }

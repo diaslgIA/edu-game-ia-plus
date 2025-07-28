@@ -39,7 +39,6 @@ export const useMentorAffinity = () => {
         return;
       }
 
-      // Transform the data to match our interface
       const transformedData: MentorAffinity[] = (data || []).map(item => ({
         id: item.id,
         user_id: item.user_id,
@@ -68,7 +67,6 @@ export const useMentorAffinity = () => {
     const existing = affinities.find(a => a.mentor_id === mentorId);
     if (existing) return existing;
     
-    // Return default values if no affinity exists yet
     return {
       id: '',
       user_id: user?.id || '',
@@ -107,15 +105,17 @@ export const useMentorAffinity = () => {
           return;
         }
       } else {
-        // Create new affinity
+        // Create new affinity - usando upsert para evitar duplicatas
         const { error } = await supabase
           .from('mentor_affinities')
-          .insert({
+          .upsert({
             user_id: user.id,
             mentor_id: mentorId,
             experience_points: newXP,
             affinity_level: newLevel,
             last_interaction: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,mentor_id'
           });
 
         if (error) {
@@ -124,7 +124,6 @@ export const useMentorAffinity = () => {
         }
       }
 
-      // Refresh affinities
       await fetchAffinities();
     } catch (error) {
       console.error('Error updating mentor affinity:', error);
