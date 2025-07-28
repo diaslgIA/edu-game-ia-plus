@@ -44,6 +44,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const [gameStarted, setGameStarted] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
+  const [finalScore, setFinalScore] = useState(0);
   
   // Estados dos mentores
   const [showMentorGuide, setShowMentorGuide] = useState(false);
@@ -143,6 +144,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     const questionScore = isCorrect ? 10 : 0;
     const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
     
+    // Atualizar score imediatamente
+    const newScore = score + questionScore;
+    setScore(newScore);
+    
     // Registrar atividade da questão (não crítico)
     recordQuizQuestion(
       subject,
@@ -156,7 +161,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     });
     
     if (isCorrect) {
-      setScore(score + questionScore);
       setExperience(prev => Math.min(prev + 10, 100));
     } else {
       setExperience(prev => Math.min(prev + 3, 100));
@@ -180,35 +184,35 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       setTimeLeft(180);
       setQuestionStartTime(Date.now());
     } else {
-      setGameCompleted(true);
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
-      const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
+      const calculatedFinalScore = score;
       
-      console.log('🎯 Finalizando quiz:', { subject, finalScore, timeSpent });
+      // Mostrar resultado imediatamente
+      setFinalScore(calculatedFinalScore);
+      setGameCompleted(true);
       
-      // Registrar conclusão do quiz (não crítico)
-      recordQuizComplete(subject, finalScore, quizQuestions.length, timeSpent)
+      console.log('🎯 Finalizando quiz:', { subject, finalScore: calculatedFinalScore, timeSpent });
+      
+      // Salvar em background
+      saveQuizScore(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
+        .then((success) => {
+          if (success) {
+            console.log('✅ Quiz salvo com sucesso!');
+            if (playSound) playSound('success');
+          }
+        })
+        .catch(error => {
+          console.error('❌ Erro ao salvar quiz:', error);
+        });
+      
+      // Registrar conclusão em background
+      recordQuizComplete(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
         .catch(error => {
           console.error('Erro ao registrar conclusão do quiz (não crítico):', error);
         });
       
-      // Salvar pontuação (CRÍTICO)
-      let saveSuccess = false;
-      try {
-        saveSuccess = await saveQuizScore(subject, finalScore, quizQuestions.length, timeSpent);
-        
-        if (saveSuccess) {
-          console.log('✅ Quiz finalizado com sucesso!');
-          if (playSound) playSound('success');
-        } else {
-          console.log('⚠️ Quiz finalizado mas com erro no salvamento');
-        }
-      } catch (error) {
-        console.error('❌ Erro ao salvar quiz:', error);
-      }
-      
-      // Sempre completar o quiz, mesmo com erro de salvamento
-      onComplete(finalScore, timeSpent);
+      // Completar quiz imediatamente
+      onComplete(calculatedFinalScore, timeSpent);
     }
   };
 
@@ -302,8 +306,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   }
 
   if (gameCompleted) {
-    const finalScore = score + (selectedAnswer === quizQuestions[currentQuestion].correctAnswer ? 10 : 0);
-    
     return (
       <QuizResults 
         subject={subject}
@@ -453,7 +455,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           ) : (
             <Button 
               onClick={handleNextQuestion}
-              disabled={saving}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
               {currentQuestion < quizQuestions.length - 1 ? 'Próxima' : 'Finalizar Quiz'}
