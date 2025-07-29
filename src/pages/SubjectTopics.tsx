@@ -5,7 +5,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import TextContentViewer from '@/components/TextContentViewer';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSound } from '@/contexts/SoundContext';
 

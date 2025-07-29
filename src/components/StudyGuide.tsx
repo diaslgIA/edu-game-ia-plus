@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { BookOpen, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { BookOpen, ArrowLeft } from 'lucide-react';
 import EnglishGuide from './guides/EnglishGuide';
 import SpanishGuide from './guides/SpanishGuide';
 import LiteratureGuide from './guides/LiteratureGuide';
