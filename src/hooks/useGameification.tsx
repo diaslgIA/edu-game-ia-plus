@@ -108,15 +108,15 @@ export const useGameification = () => {
     if (!user || !profile) return false;
 
     try {
-      const currentXP = profile.xp_points || profile.points || 0;
+      const currentXP = profile.points || 0;
       const newXP = currentXP + amount;
       const newLevel = Math.floor(newXP / 100) + 1;
 
       const { error } = await supabase
         .from('profiles')
         .update({
-          xp_points: newXP,
-          global_level: newLevel,
+          points: newXP,
+          level: newLevel,
         })
         .eq('id', user.id);
 

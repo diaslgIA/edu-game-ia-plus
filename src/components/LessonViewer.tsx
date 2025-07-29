@@ -56,9 +56,9 @@ const LessonViewer: React.FC = () => {
   }
 
   const sections = [
-    { title: 'O que é?', content: lesson.description || lesson.content_data?.sections?.[0]?.content || '' },
-    { title: 'Conceitos Principais', content: lesson.content_data?.sections?.[1]?.content || 'Conceitos principais desta lição...' },
-    { title: 'Exemplo Prático', content: 'Exemplo prático aplicando os conceitos aprendidos...' },
+    { title: 'O que é?', content: lesson.detalhes?.['O que é?'] || lesson.description || 'Introdução ao tópico...' },
+    { title: 'Conceitos Principais', content: lesson.detalhes?.['Conceitos Principais'] || lesson.content_data?.sections?.[1]?.content || 'Conceitos principais desta lição...' },
+    { title: 'Exemplo Prático', content: lesson.detalhes?.['Exemplo Prático'] || 'Exemplo prático aplicando os conceitos aprendidos...' },
     { title: 'Exercício', content: '', type: 'exercise' }
   ];
 
