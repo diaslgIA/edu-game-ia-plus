@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -68,20 +67,22 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject with explicit typing
+      // 2. Fetch all topics belonging to this subject
       const { data: topicsData, error: topicsError } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId)
-        .returns<SubjectContentRow[]>();
+        .eq('subject_id', subjectId);
 
       if (topicsError) {
         console.error('Erro ao buscar tópicos:', topicsError);
       } else if (topicsData) {
+        // Type assertion to help TypeScript understand the structure
+        const typedTopicsData = topicsData as SubjectContentRow[];
+        
         // 3. Group topics by "grande_tema" with explicit typing
         const groups: GroupedTopics = {};
         
-        topicsData.forEach((dbTopic: SubjectContentRow) => {
+        typedTopicsData.forEach((dbTopic) => {
           const theme = dbTopic.grande_tema;
           if (!groups[theme]) {
             groups[theme] = [];
