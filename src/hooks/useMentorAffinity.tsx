@@ -3,134 +3,164 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface MentorAffinity {
+export interface MentorAffinity {
+  id: string;
+  user_id: string;
   mentor_id: string;
   affinity_level: number;
   experience_points: number;
-  last_interaction: string;
-  unlocked_content: string[];
+  unlocked_content: any[];
+  last_interaction: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useMentorAffinity = () => {
   const { user } = useAuth();
-  const [affinities, setAffinities] = useState<Record<string, MentorAffinity>>({});
+  const [affinities, setAffinities] = useState<MentorAffinity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadAffinities();
+  const fetchAffinities = async () => {
+    if (!user) {
+      setAffinities([]);
+      setLoading(false);
+      return;
     }
-  }, [user]);
-
-  const loadAffinities = async () => {
-    if (!user) return;
 
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('mentor_affinities')
         .select('*')
         .eq('user_id', user.id);
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading mentor affinities:', error);
+      if (error) {
+        console.error('Error fetching mentor affinities:', error);
         return;
       }
 
-      const affinityMap: Record<string, MentorAffinity> = {};
-      data?.forEach(affinity => {
-        let unlockedContent: string[] = [];
-        if (affinity.unlocked_content) {
-          if (Array.isArray(affinity.unlocked_content)) {
-            unlockedContent = affinity.unlocked_content.filter((item): item is string => 
-              typeof item === 'string'
-            );
-          }
-        }
+      const transformedData: MentorAffinity[] = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        mentor_id: item.mentor_id,
+        affinity_level: item.affinity_level,
+        experience_points: item.experience_points,
+        unlocked_content: Array.isArray(item.unlocked_content) ? item.unlocked_content : [],
+        last_interaction: item.last_interaction,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
 
-        affinityMap[affinity.mentor_id] = {
-          mentor_id: affinity.mentor_id,
-          affinity_level: affinity.affinity_level,
-          experience_points: affinity.experience_points,
-          last_interaction: affinity.last_interaction,
-          unlocked_content: unlockedContent
-        };
-      });
-
-      setAffinities(affinityMap);
+      setAffinities(transformedData);
     } catch (error) {
-      console.error('Error loading mentor affinities:', error);
+      console.error('Error fetching mentor affinities:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchAffinities();
+  }, [user]);
+
   const getMentorAffinity = (mentorId: string): MentorAffinity => {
-    return affinities[mentorId] || {
+    const existing = affinities.find(a => a.mentor_id === mentorId);
+    if (existing) return existing;
+    
+    return {
+      id: '',
+      user_id: user?.id || '',
       mentor_id: mentorId,
       affinity_level: 1,
       experience_points: 0,
-      last_interaction: new Date().toISOString(),
-      unlocked_content: []
+      unlocked_content: [],
+      last_interaction: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
   };
 
   const updateAffinity = async (mentorId: string, xpGained: number) => {
-    if (!user || !mentorId || xpGained <= 0) return;
+    if (!user) return;
 
     try {
-      const currentAffinity = getMentorAffinity(mentorId);
-      const newXP = currentAffinity.experience_points + xpGained;
+      const existing = affinities.find(a => a.mentor_id === mentorId);
+      const newXP = (existing?.experience_points || 0) + xpGained;
       const newLevel = Math.floor(newXP / 100) + 1;
 
-      // Usar upsert para evitar conflitos 409
-      const { error } = await supabase
+      const affinityData = {
+        user_id: user.id,
+        mentor_id: mentorId,
+        experience_points: newXP,
+        affinity_level: newLevel,
+        last_interaction: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Tentar primeiro com upsert
+      const { error: upsertError } = await supabase
         .from('mentor_affinities')
-        .upsert({
-          user_id: user.id,
-          mentor_id: mentorId,
-          affinity_level: newLevel,
-          experience_points: newXP,
-          last_interaction: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
+        .upsert(affinityData, {
           onConflict: 'user_id,mentor_id'
         });
 
-      if (error) {
-        console.error('Error updating mentor affinity:', error);
-        return;
+      if (upsertError) {
+        console.error('Erro no upsert, tentando update:', upsertError);
+        
+        // Se o upsert falhar, tentar update direto
+        if (existing) {
+          const { error: updateError } = await supabase
+            .from('mentor_affinities')
+            .update({
+              experience_points: newXP,
+              affinity_level: newLevel,
+              last_interaction: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+
+          if (updateError) {
+            console.error('Erro no update de afinidade:', updateError);
+            return;
+          }
+        } else {
+          // Se não existe, tentar insert simples
+          const { error: insertError } = await supabase
+            .from('mentor_affinities')
+            .insert(affinityData);
+
+          if (insertError) {
+            console.error('Erro no insert de afinidade:', insertError);
+            return;
+          }
+        }
       }
 
       // Atualizar estado local
-      setAffinities(prev => ({
-        ...prev,
-        [mentorId]: {
-          mentor_id: mentorId,
-          affinity_level: newLevel,
-          experience_points: newXP,
-          last_interaction: new Date().toISOString(),
-          unlocked_content: currentAffinity.unlocked_content
-        }
-      }));
-
+      await fetchAffinities();
     } catch (error) {
-      console.error('Error updating mentor affinity:', error);
+      console.error('Erro ao criar afinidade de mentor:', error);
     }
   };
 
   const getAffinityTitle = (mentorId: string): string => {
     const affinity = getMentorAffinity(mentorId);
     const level = affinity.affinity_level;
-    
-    if (level >= 10) return 'Mestre';
-    if (level >= 7) return 'Especialista';
-    if (level >= 5) return 'Avançado';
-    if (level >= 3) return 'Intermediário';
-    return 'Iniciante';
+
+    if (level >= 10) return 'Mestre Supremo';
+    if (level >= 8) return 'Discípulo Iluminado';
+    if (level >= 6) return 'Seguidor Dedicado';
+    if (level >= 4) return 'Aprendiz Aplicado';
+    if (level >= 2) return 'Estudante Interessado';
+    return 'Novo Conhecedor';
   };
 
   return {
     affinities,
+    loading,
     getMentorAffinity,
     updateAffinity,
     getAffinityTitle,
-    loadAffinities
+    refetch: fetchAffinities
   };
 };

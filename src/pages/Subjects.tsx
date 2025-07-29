@@ -1,154 +1,146 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import LessonMap from '@/components/LessonMap';
+import { useUserProgress } from '@/hooks/useUserProgress';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Flame, Target } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useGameification } from '@/hooks/useGameification';
-import { conteudoEducacional } from '@/data/conteudoLocal';
+import { ArrowLeft, BookOpen, Clock, Star, ChevronRight } from 'lucide-react';
 
 const Subjects = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const { streak, dailyGoals } = useGameification();
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const { getSubjectProgress } = useUserProgress();
+  const { t } = useLanguage();
+  const { playSound, isMuted } = useSound();
 
-  // Group subjects by knowledge area
-  const subjectsByArea: Record<string, string[]> = {};
-  
-  conteudoEducacional.materias.forEach(materia => {
-    const area = materia.area_conhecimento;
-    if (!subjectsByArea[area]) {
-      subjectsByArea[area] = [];
+  const handleNavigation = (path: string) => {
+    if (!isMuted) playSound('click');
+    navigate(path);
+  };
+
+  // Áreas do conhecimento com suas respectivas matérias
+  const knowledgeAreas = [
+    {
+      id: 'linguagens',
+      name: 'Linguagens e Códigos',
+      icon: '📝',
+      color: 'from-blue-500 to-blue-700',
+      subjects: [
+        { id: 'portugues', name: 'Português', icon: '📚', difficulty: 'Fácil', topics: 42 },
+        { id: 'ingles', name: 'Inglês', icon: '🌎', difficulty: 'Médio', topics: 28 },
+        { id: 'espanhol', name: 'Espanhol', icon: '🇪🇸', difficulty: 'Médio', topics: 24 },
+        { id: 'literatura', name: 'Literatura', icon: '📖', difficulty: 'Médio', topics: 36 },
+        { id: 'redacao', name: 'Redação', icon: '✍️', difficulty: 'Difícil', topics: 20 }
+      ]
+    },
+    {
+      id: 'matematica',
+      name: 'Matemática',
+      icon: '📐',
+      color: 'from-purple-500 to-purple-700',
+      subjects: [
+        { id: 'matematica', name: 'Matemática', icon: '🔢', difficulty: 'Médio', topics: 48 }
+      ]
+    },
+    {
+      id: 'natureza',
+      name: 'Ciências da Natureza',
+      icon: '🔬',
+      color: 'from-green-500 to-green-700',
+      subjects: [
+        { id: 'fisica', name: 'Física', icon: '⚡', difficulty: 'Difícil', topics: 38 },
+        { id: 'quimica', name: 'Química', icon: '🧪', difficulty: 'Médio', topics: 41 },
+        { id: 'biologia', name: 'Biologia', icon: '🧬', difficulty: 'Médio', topics: 47 }
+      ]
+    },
+    {
+      id: 'humanas',
+      name: 'Ciências Humanas',
+      icon: '🌍',
+      color: 'from-orange-500 to-orange-700',
+      subjects: [
+        { id: 'historia', name: 'História', icon: '🏛️', difficulty: 'Fácil', topics: 36 },
+        { id: 'geografia', name: 'Geografia', icon: '🌍', difficulty: 'Fácil', topics: 33 },
+        { id: 'filosofia', name: 'Filosofia', icon: '🤔', difficulty: 'Médio', topics: 24 },
+        { id: 'sociologia', name: 'Sociologia', icon: '👥', difficulty: 'Fácil', topics: 28 }
+      ]
     }
-    subjectsByArea[area].push(materia.name);
-  });
-
-  if (selectedSubject) {
-    return (
-      <MobileContainer>
-        <LessonMap 
-          subject={selectedSubject} 
-          onBack={() => setSelectedSubject(null)} 
-        />
-      </MobileContainer>
-    );
-  }
-
-  const getSubjectIcon = (subject: string) => {
-    const icons: Record<string, string> = {
-      'Matemática': '📊',
-      'Português': '📚',
-      'Física': '⚡',
-      'Química': '🧪',
-      'Biologia': '🧬',
-      'História': '📜',
-      'Geografia': '🌍',
-      'Filosofia': '🤔',
-      'Sociologia': '👥',
-    };
-    return icons[subject] || '📖';
-  };
-
-  const getAreaColor = (area: string) => {
-    const colors: Record<string, string> = {
-      'Ciências da Natureza': 'bg-green-100 border-green-300',
-      'Ciências Humanas': 'bg-blue-100 border-blue-300',
-      'Linguagens': 'bg-purple-100 border-purple-300',
-      'Matemática': 'bg-orange-100 border-orange-300',
-    };
-    return colors[area] || 'bg-gray-100 border-gray-300';
-  };
+  ];
 
   return (
-    <MobileContainer>
+    <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
-        {/* Header with Gamification Stats */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/dashboard')}
-              className="text-white p-2"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <h1 className="text-lg font-semibold">Matérias</h1>
-            <div className="w-8" /> {/* Spacer */}
-          </div>
+        {/* Header */}
+        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="text-white p-2 hover:bg-white/20 rounded-xl"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className="text-lg font-semibold flex items-center space-x-2">
+            <BookOpen size={20} />
+            <span>{t('subjects')}</span>
+          </h1>
+        </div>
 
-          {/* Stats Bar */}
-          <div className="flex items-center justify-between bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <div className="flex items-center space-x-2">
-              <Flame className="text-orange-400" size={20} />
-              <span className="font-semibold">{streak?.current_streak || 0}</span>
-              <span className="text-sm opacity-80">dias</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Trophy className="text-yellow-400" size={20} />
-              <span className="font-semibold">{profile?.points || 0} XP</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Target className="text-green-400" size={20} />
-              <span className="font-semibold">Nível {profile?.level || 1}</span>
-            </div>
-          </div>
-
-          {/* Daily Goals Progress */}
-          {dailyGoals.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {dailyGoals.map(goal => (
-                <div key={goal.id} className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Meta: {goal.goal_type === 'lessons' ? 'Lições' : goal.goal_type === 'xp' ? 'XP' : 'Tempo'}</span>
-                    <span>{goal.current_value}/{goal.target_value}</span>
-                  </div>
-                  <div className="w-full bg-white/30 rounded-full h-1 mt-1">
-                    <div
-                      className="bg-white h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min((goal.current_value / goal.target_value) * 100, 100)}%` }}
-                    />
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          <div>
+            <h2 className="text-white text-lg font-semibold mb-4">Áreas do Conhecimento</h2>
+            <div className="grid grid-cols-1 gap-4">
+              {knowledgeAreas.map((area, index) => (
+                <div key={index} className="space-y-3">
+                  <h3 className="text-white text-md font-medium flex items-center space-x-2">
+                    <span className="text-xl">{area.icon}</span>
+                    <span>{area.name}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {area.subjects.map((subject, subIndex) => {
+                      const subjectProgress = getSubjectProgress(subject.name);
+                      
+                      return (
+                        <div
+                          key={subIndex}
+                          onClick={() => handleNavigation(`/subjects/${subject.id}`)}
+                          className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${area.color} flex items-center justify-center text-xl shadow-lg`}>
+                              {subject.icon}
+                            </div>
+                            
+                            <div className="flex-1">
+                              <h4 className="font-bold text-white text-lg mb-1">{subject.name}</h4>
+                              <p className="text-white/80 text-sm mb-2">Grandes temas e conteúdos organizados</p>
+                              
+                              <div className="flex items-center space-x-4 text-xs">
+                                <div className="flex items-center space-x-1">
+                                  <Clock size={12} className="text-green-400" />
+                                  <span className="text-white/80">{subject.difficulty}</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <Star size={12} className="text-yellow-400" />
+                                  <span className="text-white/80">{subjectProgress.progress_percentage}%</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="text-white/60 text-2xl">
+                              <ChevronRight size={20} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Subject Areas */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {Object.entries(subjectsByArea).map(([area, subjects]) => (
-            <div key={area} className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                {area}
-              </h2>
-              
-              <div className="grid grid-cols-2 gap-3">
-                {subjects.map(subject => (
-                  <button
-                    key={subject}
-                    onClick={() => setSelectedSubject(subject)}
-                    className={`${getAreaColor(area)} rounded-xl p-4 border-2 transition-all duration-200 hover:scale-105 hover:shadow-md`}
-                  >
-                    <div className="text-2xl mb-2">
-                      {getSubjectIcon(subject)}
-                    </div>
-                    <h3 className="font-semibold text-gray-800 text-sm">
-                      {subject}
-                    </h3>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {conteudoEducacional.conteudos.filter(c => c.subject_id === subject).length} lições
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
       </div>
       

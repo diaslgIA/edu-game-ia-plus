@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
@@ -9,16 +8,16 @@ interface QuizResultsProps {
   subject: string;
   score: number;
   totalQuestions: number;
+  saving: boolean;
   onBack: () => void;
-  restartQuiz: () => void;
 }
 
 const QuizResults: React.FC<QuizResultsProps> = ({ 
   subject, 
   score, 
   totalQuestions, 
-  onBack,
-  restartQuiz
+  saving, 
+  onBack 
 }) => {
   const { isMuted } = useSound();
   const { t, language } = useLanguage();
@@ -129,7 +128,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{t('quiz_results_points', { score })}</div>
         <div className="text-lg text-orange-700 dark:text-orange-300">{t('quiz_results_percentage', { percentage, subject })}</div>
         <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-          {t('quiz_results_saved')}
+          {saving ? t('quiz_results_saving') : t('quiz_results_saved')}
         </div>
       </div>
       
@@ -145,22 +144,12 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         </div>
       </div>
       
-      <div className="space-y-3">
-        <Button 
-          onClick={restartQuiz}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl"
-        >
-          Tentar Novamente
-        </Button>
-        
-        <Button 
-          onClick={onBack}
-          className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
-          variant="outline"
-        >
-          {t('quiz_results_back')}
-        </Button>
-      </div>
+      <Button 
+        onClick={onBack}
+        className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
+      >
+        {t('quiz_results_back')}
+      </Button>
     </div>
   );
 };

@@ -3,139 +3,74 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { SoundProvider } from "@/contexts/SoundContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
-
-// Import pages
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { SoundProvider } from "./contexts/SoundContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Verification from "./pages/Verification";
 import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
+import Subjects from "./pages/Subjects";
+import SubjectThemes from "./pages/SubjectThemes";
+import SubjectTopics from "./pages/SubjectTopics";
 import Exercises from "./pages/Exercises";
-import Support from "./pages/Support";
+import Progress from "./pages/Progress";
+import Profile from "./pages/Profile";
 import Guilds from "./pages/Guilds";
 import GuildDetails from "./pages/GuildDetails";
 import Ranking from "./pages/Ranking";
-import Profile from "./pages/Profile";
-import Premium from "./pages/Premium";
-import Subjects from "./pages/Subjects";
-import SubjectTopics from "./pages/SubjectTopics";
-import SubjectThemes from "./pages/SubjectThemes";
-import Progress from "./pages/Progress";
+import Subscriptions from "./pages/Subscriptions";
+import Support from "./pages/Support";
 import StudyRecommendations from "./pages/StudyRecommendations";
+import MentorImages from "./pages/MentorImages";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <SoundProvider>
-            <LanguageProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
+    <ThemeProvider>
+      <LanguageProvider>
+        <SoundProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
                 <Routes>
-                  {/* Public routes */}
                   <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/verification" element={<Verification />} />
                   <Route path="/welcome" element={<Welcome />} />
-                  
-                  {/* Protected routes */}
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/exercises" element={
-                    <ProtectedRoute>
-                      <Exercises />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/support" element={
-                    <ProtectedRoute>
-                      <Support />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/guilds" element={
-                    <ProtectedRoute>
-                      <Guilds />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/guilds/:guildId" element={
-                    <ProtectedRoute>
-                      <GuildDetails />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/ranking" element={
-                    <ProtectedRoute>
-                      <Ranking />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/premium" element={
-                    <ProtectedRoute>
-                      <Premium />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/subjects" element={
-                    <ProtectedRoute>
-                      <Subjects />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/subjects/:subjectId" element={
-                    <ProtectedRoute>
-                      <SubjectTopics />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/subjects/:subject/:theme" element={
-                    <ProtectedRoute>
-                      <SubjectThemes />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/progress" element={
-                    <ProtectedRoute>
-                      <Progress />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/study-recommendations" element={
-                    <ProtectedRoute>
-                      <StudyRecommendations />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Redirect subscriptions to premium */}
-                  <Route path="/subscriptions" element={<Navigate to="/premium" replace />} />
-                  <Route path="/subscription" element={<Navigate to="/premium" replace />} />
-                  
-                  {/* Catch all route */}
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/subjects" element={<Subjects />} />
+                  <Route path="/subjects/:subject" element={<SubjectThemes />} />
+                  <Route path="/subjects/:subject/:theme" element={<SubjectTopics />} />
+                  <Route path="/exercises" element={<Exercises />} />
+                  <Route path="/progress" element={<Progress />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/guilds" element={<Guilds />} />
+                  <Route path="/guilds/:id" element={<GuildDetails />} />
+                  <Route path="/ranking" element={<Ranking />} />
+                  <Route path="/subscriptions" element={<Subscriptions />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/recommendations" element={<StudyRecommendations />} />
+                  <Route path="/mentor-images" element={<MentorImages />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
-              </TooltipProvider>
-            </LanguageProvider>
-          </SoundProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </SoundProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

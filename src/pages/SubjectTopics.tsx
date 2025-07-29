@@ -5,68 +5,87 @@ import BottomNavigation from '@/components/BottomNavigation';
 import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
-import { useSubjectContents } from '@/hooks/useSubjectContents';
+import { supabase } from '@/integrations/supabase/client';
+import { useSubjectContents } from '@/hooks/useSubjectContents'; // Mantido se você usa em outro lugar
 import { useSound } from '@/contexts/SoundContext';
-import { conteudoEducacional } from '@/data/conteudoLocal';
 
+// A sua interface de Tópico, ajustada para o ID numérico
 interface Topic {
-  id: string;
+  id: number; // Alterado para number para corresponder ao banco de dados
   title: string;
   description: string;
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
-  subject_id: string;
 }
 
+// Uma nova interface para agrupar os tópicos por tema
 interface GroupedTopics {
   [key: string]: Topic[];
 }
 
 const SubjectTopics = () => {
+  // CORREÇÃO: Pega o ID numérico da matéria da URL
   const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
   
+  // Estados para gerir os dados
   const [groupedTopics, setGroupedTopics] = useState<GroupedTopics>({});
   const [loading, setLoading] = useState(true);
   const [subjectName, setSubjectName] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
+  // Mantido para a lógica de progresso
   const { getContentProgress } = useSubjectContents(subjectName || '');
 
   useEffect(() => {
+    // Se não houver ID na URL, não faz nada
     if (!subjectId) return;
 
-    const fetchAndGroupTopics = () => {
+    const fetchAndGroupTopics = async () => {
       setLoading(true);
       
-      // Buscar o nome da matéria
-      const subject = conteudoEducacional.materias.find(m => m.id === subjectId);
-      if (subject) {
-        setSubjectName(subject.name);
+      // 1. Busca o nome da matéria para exibir no cabeçalho
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subjects')
+        .select('nome')
+        .eq('id', subjectId)
+        .single();
+      
+      if (subjectError) {
+        console.error('Erro ao buscar o nome da matéria:', subjectError);
+      } else if (subjectData) {
+        setSubjectName(subjectData.nome);
       }
       
-      // Buscar todos os tópicos que pertencem a esta matéria
-      const topicsData = conteudoEducacional.conteudos.filter(topic => topic.subject_id === subjectId);
-      
-      // Agrupar os tópicos pelo "grande_tema"
-      const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
-        const theme = topic.grande_tema;
-        if (!acc[theme]) {
-          acc[theme] = [];
-        }
-        acc[theme].push(topic);
-        return acc;
-      }, {} as GroupedTopics);
-      
-      setGroupedTopics(groups);
+      // 2. Busca todos os tópicos que pertencem a esta matéria
+      const { data: topicsData, error: topicsError } = await supabase
+        .from('subject_contents')
+        .select('id, title, description, difficulty_level, estimated_time, grande_tema')
+        .eq('subject_id', subjectId); // A CONEXÃO CORRETA
+
+      if (topicsError) {
+        console.error('Erro ao buscar tópicos:', topicsError);
+      } else if (topicsData) {
+        // 3. Agrupa os tópicos pelo "grande_tema", preservando sua lógica visual
+        const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
+          const theme = topic.grande_tema;
+          if (!acc[theme]) {
+            acc[theme] = [];
+          }
+          acc[theme].push(topic as Topic);
+          return acc;
+        }, {} as GroupedTopics);
+        setGroupedTopics(groups);
+      }
       setLoading(false);
     };
     
     fetchAndGroupTopics();
   }, [subjectId]);
 
+  // Suas funções de ajuda permanecem as mesmas
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'text-green-400';
@@ -85,9 +104,9 @@ const SubjectTopics = () => {
     }
   };
 
-  const handleTopicClick = (topicId: string) => {
+  const handleTopicClick = (topicId: number) => {
     if (!isMuted) playSound('click');
-    setSelectedTopicId(topicId);
+    setSelectedTopicId(String(topicId));
   };
 
   const handleBack = () => {
@@ -95,10 +114,11 @@ const SubjectTopics = () => {
     if (selectedTopicId) {
       setSelectedTopicId(null);
     } else {
-      navigate('/subjects');
+      navigate('/subjects'); // Volta para a lista de áreas/matérias
     }
   };
 
+  // Se um tópico foi selecionado, mostrar o ContentViewer
   if (selectedTopicId) {
     return (
       <MobileContainer background="gradient">
@@ -113,6 +133,7 @@ const SubjectTopics = () => {
     );
   }
 
+  // A renderização principal, agora com os dados agrupados
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
@@ -141,7 +162,7 @@ const SubjectTopics = () => {
                 </h2>
                 <div className="space-y-4">
                   {groupedTopics[theme].map((topic) => {
-                    const progress = getContentProgress(topic.id);
+                    const progress = getContentProgress(String(topic.id));
                     return (
                       <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
                         <div className="flex items-center space-x-4">
