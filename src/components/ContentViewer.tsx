@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Play } from 'lucide-react';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
+import { conteudoLocal } from '@/data/conteudoLocal';
 
 interface ContentViewerProps {
   subject: string;
@@ -17,11 +18,12 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
   onBack, 
   onComplete 
 }) => {
-  const { contents, updateContentProgress, getContentProgress } = useSubjectContents(subject);
+  const { updateContentProgress, getContentProgress } = useSubjectContents(subject);
   const [startTime, setStartTime] = useState<number>(0);
   const [currentSection, setCurrentSection] = useState(0);
 
-  const content = contents.find(c => c.id === contentId);
+  // Buscar o conteúdo localmente
+  const content = conteudoLocal.topicos.find(t => t.id === contentId);
   const progress = getContentProgress(contentId);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
     await updateContentProgress(contentId, {
       completed: true,
       progress_percentage: 100,
-      time_spent: progress.time_spent + timeSpent
+      time_spent: (progress.time_spent || 0) + timeSpent
     });
 
     if (onComplete) {
@@ -52,7 +54,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
     await updateContentProgress(contentId, {
       completed: progressPercentage === 100,
       progress_percentage: progressPercentage,
-      time_spent: progress.time_spent + timeSpent
+      time_spent: (progress.time_spent || 0) + timeSpent
     });
 
     if (currentSection < sections.length - 1) {
