@@ -142,7 +142,7 @@ const Subjects = () => {
                       {subject}
                     </h3>
                     <p className="text-xs text-gray-600 mt-1">
-                      {conteudoEducacional.conteudos.filter(c => c.materia === subject).length} lições
+                      {conteudoEducacional.conteudos.filter(c => c.subject_id === subject).length} lições
                     </p>
                   </button>
                 ))}

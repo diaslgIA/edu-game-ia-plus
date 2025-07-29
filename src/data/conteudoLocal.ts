@@ -1,4 +1,3 @@
-
 // Estrutura de dados local para todo o conteúdo educacional
 // Nível 1: Áreas do Conhecimento
 export const areasConhecimento = [
@@ -266,6 +265,13 @@ export const topicos = [
     }
   }
 ];
+
+// Create the unified structure expected by components
+export const conteudoEducacional = {
+  materias: materias,
+  conteudos: topicos,
+  areas: areasConhecimento
+};
 
 // Estrutura unificada para exportação
 export const conteudoLocal = {
