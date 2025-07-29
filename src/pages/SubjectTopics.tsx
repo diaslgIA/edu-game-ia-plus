@@ -11,7 +11,7 @@ import { useSound } from '@/contexts/SoundContext';
 
 // Fixed interface to match database schema (UUID strings)
 interface Topic {
-  id: string; // Changed from number to string for UUID compatibility
+  id: string;
   title: string;
   description: string;
   difficulty_level: string;
@@ -66,23 +66,27 @@ const SubjectTopics = () => {
       if (topicsError) {
         console.error('Erro ao buscar tópicos:', topicsError);
       } else if (topicsData) {
-        // 3. Group topics by "grande_tema"
-        const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
+        // 3. Group topics by "grande_tema" - Fix the type inference issue
+        const groups: GroupedTopics = {};
+        
+        topicsData.forEach((topic) => {
           const theme = topic.grande_tema;
-          if (!acc[theme]) {
-            acc[theme] = [];
+          if (!groups[theme]) {
+            groups[theme] = [];
           }
-          // No need for type casting since id is already string
-          acc[theme].push({
+          
+          const topicItem: Topic = {
             id: topic.id,
             title: topic.title,
             description: topic.description,
             difficulty_level: topic.difficulty_level,
             estimated_time: topic.estimated_time,
             grande_tema: topic.grande_tema
-          });
-          return acc;
-        }, {} as GroupedTopics);
+          };
+          
+          groups[theme].push(topicItem);
+        });
+        
         setGroupedTopics(groups);
       }
       setLoading(false);
