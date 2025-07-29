@@ -30,14 +30,13 @@ export const useMentorAffinity = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
         console.error('Error loading mentor affinities:', error);
         return;
       }
 
       const affinityMap: Record<string, MentorAffinity> = {};
       data?.forEach(affinity => {
-        // Safely handle the unlocked_content field which comes as Json from Supabase
         let unlockedContent: string[] = [];
         if (affinity.unlocked_content) {
           if (Array.isArray(affinity.unlocked_content)) {
@@ -80,25 +79,51 @@ export const useMentorAffinity = () => {
       const newXP = currentAffinity.experience_points + xpGained;
       const newLevel = Math.floor(newXP / 100) + 1;
 
-      const { data, error } = await supabase
+      // Primeiro, tentar buscar se já existe
+      const { data: existingData } = await supabase
         .from('mentor_affinities')
-        .upsert({
-          user_id: user.id,
-          mentor_id: mentorId,
-          affinity_level: newLevel,
-          experience_points: newXP,
-          last_interaction: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('mentor_id', mentorId)
         .single();
 
-      if (error) {
-        console.error('Error updating mentor affinity:', error);
-        return;
+      if (existingData) {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from('mentor_affinities')
+          .update({
+            affinity_level: newLevel,
+            experience_points: newXP,
+            last_interaction: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('mentor_id', mentorId);
+
+        if (error) {
+          console.error('Error updating mentor affinity:', error);
+          return;
+        }
+      } else {
+        // Criar novo registro
+        const { error } = await supabase
+          .from('mentor_affinities')
+          .insert({
+            user_id: user.id,
+            mentor_id: mentorId,
+            affinity_level: newLevel,
+            experience_points: newXP,
+            last_interaction: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error creating mentor affinity:', error);
+          return;
+        }
       }
 
-      // Update local state
+      // Atualizar estado local
       setAffinities(prev => ({
         ...prev,
         [mentorId]: {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -41,63 +40,73 @@ const Guilds = () => {
     
     setLoading(true);
     try {
-      // Load user's guilds (owned or member)
-      const { data: memberGuilds, error: memberError } = await supabase
+      // Buscar guildas do usuário de forma mais simples
+      const { data: ownedGuilds, error: ownedError } = await supabase
         .from('guilds')
+        .select('*')
+        .eq('owner_id', user.id);
+
+      if (ownedError) {
+        console.error('Error loading owned guilds:', ownedError);
+      }
+
+      // Buscar guildas onde o usuário é membro
+      const { data: membershipData, error: memberError } = await supabase
+        .from('guild_members')
         .select(`
-          id,
-          name,
-          description,
-          owner_id,
-          is_public,
-          created_at,
-          max_members,
-          guild_members!inner (
-            profile_id
-          )
+          guild_id,
+          guilds (*)
         `)
-        .or(`owner_id.eq.${user.id},guild_members.profile_id.eq.${user.id}`);
+        .eq('profile_id', user.id);
 
       if (memberError) {
         console.error('Error loading member guilds:', memberError);
-        // Try simpler query if complex one fails
-        const { data: simpleGuilds } = await supabase
-          .from('guilds')
-          .select('*')
-          .eq('owner_id', user.id);
-        
-        setMyGuilds(simpleGuilds?.map(guild => ({
-          ...guild,
-          member_count: 1,
-          description: guild.description || ''
-        })) || []);
-      } else {
-        // Remove duplicates and format data
-        const uniqueGuilds = memberGuilds?.reduce((acc: any[], current) => {
-          const existing = acc.find(item => item.id === current.id);
-          if (!existing) {
-            acc.push({
-              ...current,
-              member_count: 1, // Default value for now
-              description: current.description || ''
-            });
-          }
-          return acc;
-        }, []);
-        
-        setMyGuilds(uniqueGuilds || []);
       }
 
-      // Load public guilds for discovery
+      // Combinar as guildas
+      const allMyGuilds: any[] = [];
+      
+      // Adicionar guildas próprias
+      if (ownedGuilds) {
+        ownedGuilds.forEach(guild => {
+          allMyGuilds.push({
+            ...guild,
+            member_count: 1,
+            description: guild.description || ''
+          });
+        });
+      }
+
+      // Adicionar guildas onde é membro
+      if (membershipData) {
+        membershipData.forEach(membership => {
+          const guild = (membership as any).guilds;
+          if (guild && !allMyGuilds.find(g => g.id === guild.id)) {
+            allMyGuilds.push({
+              ...guild,
+              member_count: 1,
+              description: guild.description || ''
+            });
+          }
+        });
+      }
+
+      setMyGuilds(allMyGuilds);
+
+      // Buscar guildas públicas para descobrir
       const { data: discoverGuilds, error: discoverError } = await supabase
         .from('guilds')
         .select('*')
         .eq('is_public', true)
-        .neq('owner_id', user.id) // Don't show user's own guilds
+        .neq('owner_id', user.id)
         .limit(10);
 
       if (!discoverError && discoverGuilds) {
-        setPublicGuilds(discoverGuilds.map(guild => ({
+        const filteredPublicGuilds = discoverGuilds.filter(guild => 
+          !allMyGuilds.find(myGuild => myGuild.id === guild.id)
+        );
+
+        setPublicGuilds(filteredPublicGuilds.map(guild => ({
           ...guild,
           member_count: 1,
           description: guild.description || ''

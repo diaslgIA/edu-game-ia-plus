@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Crown, Shield, User, UserMinus, UserCheck, ArrowDown } from 'lucide-react';
+import { Users, Crown, Shield, User, UserMinus, UserCheck, ArrowDown, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,38 +33,56 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   const [userRole, setUserRole] = useState<string>('membro');
 
   const fetchMembers = async () => {
+    if (!guildId) return;
+    
     try {
       console.log('Buscando membros da guilda:', guildId);
+      setLoading(true);
       
-      const { data, error } = await supabase
+      // Buscar membros de forma mais segura
+      const { data: memberData, error: memberError } = await supabase
         .from('guild_members')
-        .select(`
-          profile_id,
-          role,
-          joined_at,
-          profiles!guild_members_profile_id_fkey(full_name, points)
-        `)
-        .eq('guild_id', guildId)
-        .order('joined_at', { ascending: true });
+        .select('profile_id, role, joined_at')
+        .eq('guild_id', guildId);
 
-      if (error) {
-        console.error('Erro ao buscar membros:', error);
-        throw error;
+      if (memberError) {
+        console.error('Erro ao buscar membros:', memberError);
+        throw memberError;
       }
 
-      console.log('Membros encontrados:', data);
+      if (!memberData || memberData.length === 0) {
+        setMembers([]);
+        return;
+      }
 
-      const processedMembers = data?.map(member => ({
-        profile_id: member.profile_id,
-        role: member.role,
-        joined_at: member.joined_at,
-        full_name: member.profiles?.full_name || 'Usuário',
-        points: member.profiles?.points || 0
-      })) || [];
+      // Buscar perfis dos membros separadamente
+      const profileIds = memberData.map(m => m.profile_id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, points')
+        .in('id', profileIds);
 
+      if (profileError) {
+        console.error('Erro ao buscar perfis:', profileError);
+        // Continuar mesmo se não conseguir buscar perfis
+      }
+
+      // Combinar dados
+      const processedMembers = memberData.map(member => {
+        const profile = profileData?.find(p => p.id === member.profile_id);
+        return {
+          profile_id: member.profile_id,
+          role: member.role || 'membro',
+          joined_at: member.joined_at,
+          full_name: profile?.full_name || 'Usuário',
+          points: profile?.points || 0
+        };
+      });
+
+      console.log('Membros processados:', processedMembers);
       setMembers(processedMembers);
 
-      // Encontrar o papel do usuário atual
+      // Encontrar papel do usuário atual
       const currentUserMember = processedMembers.find(m => m.profile_id === user?.id);
       if (currentUserMember) {
         setUserRole(currentUserMember.role);
@@ -82,7 +100,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   };
 
   const updateMemberRole = async (memberId: string, newRole: string, memberName: string) => {
-    // Verificar se o usuário tem permissão (dono ou líder)
     if (!isOwner && userRole !== 'líder') {
       toast({
         title: "Sem permissão",
@@ -127,7 +144,6 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   };
 
   const removeMember = async (memberId: string, memberName: string) => {
-    // Verificar permissões - dono/líder pode remover outros, qualquer um pode sair
     if (!isOwner && userRole !== 'líder' && memberId !== user?.id) {
       toast({
         title: "Sem permissão",
@@ -204,7 +220,12 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
   const canManageMembers = isOwner || userRole === 'líder';
 
   if (loading) {
-    return <div className="text-center py-4 text-white/80">Carregando membros...</div>;
+    return (
+      <div className="flex items-center justify-center py-8 text-white">
+        <Loader2 className="animate-spin mr-2" size={20} />
+        <span>Carregando membros...</span>
+      </div>
+    );
   }
 
   return (
@@ -248,7 +269,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   </div>
                 </div>
 
-                {/* Ações disponíveis para donos e líderes */}
+                {/* Ações disponíveis */}
                 {canManageMembers && member.profile_id !== user?.id && (
                   <div className="flex items-center space-x-1">
                     {member.role === 'membro' && (
@@ -259,7 +280,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                         disabled={processingMember === member.profile_id}
                       >
                         <UserCheck size={12} className="mr-1" />
-                        {processingMember === member.profile_id ? 'Processando...' : 'Promover a Líder'}
+                        {processingMember === member.profile_id ? 'Processando...' : 'Promover'}
                       </Button>
                     )}
                     {member.role === 'líder' && (
@@ -285,7 +306,7 @@ const GuildMembers: React.FC<GuildMembersProps> = ({
                   </div>
                 )}
 
-                {/* Botão de sair para o próprio usuário (se não for dono) */}
+                {/* Botão de sair para o usuário */}
                 {!isOwner && member.profile_id === user?.id && (
                   <Button
                     onClick={() => removeMember(member.profile_id, member.full_name)}
