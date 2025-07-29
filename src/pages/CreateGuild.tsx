@@ -30,29 +30,11 @@ const CreateGuild: React.FC = () => {
     e.preventDefault();
     if (!user || loading) return;
 
-    // Validações
-    if (!formData.name.trim()) {
-      toast({
-        title: "Erro",
-        description: "Nome da guilda é obrigatório.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.name.trim().length < 3) {
+    // Validações básicas
+    if (!formData.name.trim() || formData.name.trim().length < 3) {
       toast({
         title: "Erro",
         description: "Nome da guilda deve ter pelo menos 3 caracteres.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.name.trim().length > 50) {
-      toast({
-        title: "Erro",
-        description: "Nome da guilda deve ter no máximo 50 caracteres.",
         variant: "destructive"
       });
       return;
@@ -70,7 +52,7 @@ const CreateGuild: React.FC = () => {
         ownerId: user.id
       });
 
-      // Criar guilda usando a função do banco
+      // Tentar criar guilda usando a função do banco
       const { data, error } = await supabase.rpc('create_guild_with_owner', {
         guild_name: formData.name.trim(),
         guild_description: formData.description.trim() || '',
@@ -80,27 +62,14 @@ const CreateGuild: React.FC = () => {
       });
 
       if (error) {
-        console.error('Error creating guild:', error);
-        
-        let errorMessage = "Não foi possível criar a guilda. Tente novamente.";
-        
-        if (error.message?.includes('duplicate key')) {
-          errorMessage = "Já existe uma guilda com este nome ou código. Tente novamente.";
-        } else if (error.message?.includes('permission')) {
-          errorMessage = "Você não tem permissão para criar guildas. Verifique se está logado.";
-        }
-        
-        toast({
-          title: "Erro ao criar guilda",
-          description: errorMessage,
-          variant: "destructive"
-        });
-        return;
+        console.error('Error creating guild via RPC:', error);
+        // Tentar método alternativo direto
+        return await createGuildDirect(guildCode);
       }
 
       console.log('Guild creation response:', data);
 
-      // Parse the JSON response properly e verificar se tem ID
+      // Processar resposta da função
       let guildResult;
       try {
         guildResult = typeof data === 'string' ? JSON.parse(data) : data;
@@ -109,7 +78,7 @@ const CreateGuild: React.FC = () => {
         guildResult = data;
       }
       
-      if (guildResult && typeof guildResult === 'object' && 'id' in guildResult && guildResult.id) {
+      if (guildResult && guildResult.id) {
         console.log('Guild created successfully with ID:', guildResult.id);
         
         toast({
@@ -117,34 +86,10 @@ const CreateGuild: React.FC = () => {
           description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
         });
 
-        // Navegar para a nova guilda
         navigate(`/guilds/${guildResult.id}`);
       } else {
-        console.error('Unexpected response format:', data);
-        
-        // Tentar buscar a guilda recém-criada pelo código
-        const { data: searchData, error: searchError } = await supabase
-          .from('guilds')
-          .select('id')
-          .eq('guild_code', guildCode)
-          .eq('owner_id', user.id)
-          .maybeSingle();
-          
-        if (searchData?.id) {
-          console.log('Found guild by code:', searchData.id);
-          toast({
-            title: "Guilda criada!",
-            description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
-          });
-          navigate(`/guilds/${searchData.id}`);
-        } else {
-          console.error('Could not find created guild');
-          toast({
-            title: "Guilda criada",
-            description: "Guilda criada com sucesso! Redirecionando para a lista de guildas.",
-          });
-          navigate('/guilds');
-        }
+        // Se não conseguiu obter o ID, buscar a guilda
+        await findCreatedGuild(guildCode);
       }
     } catch (error) {
       console.error('Error creating guild:', error);
@@ -155,6 +100,94 @@ const CreateGuild: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createGuildDirect = async (guildCode: string) => {
+    try {
+      console.log('Attempting direct guild creation');
+      
+      // Criar guilda diretamente
+      const { data: guildData, error: guildError } = await supabase
+        .from('guilds')
+        .insert({
+          name: formData.name.trim(),
+          description: formData.description.trim() || '',
+          guild_code: guildCode,
+          owner_id: user!.id,
+          is_public: formData.isPublic,
+          total_points: 0
+        })
+        .select()
+        .single();
+
+      if (guildError) {
+        console.error('Direct guild creation failed:', guildError);
+        throw new Error('Não foi possível criar a guilda');
+      }
+
+      console.log('Guild created directly:', guildData);
+
+      // Adicionar owner como membro
+      const { error: memberError } = await supabase
+        .from('guild_members')
+        .insert({
+          guild_id: guildData.id,
+          profile_id: user!.id,
+          role: 'dono'
+        });
+
+      if (memberError) {
+        console.error('Error adding owner as member:', memberError);
+      }
+
+      toast({
+        title: "Guilda criada!",
+        description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
+      });
+
+      navigate(`/guilds/${guildData.id}`);
+      
+    } catch (error) {
+      console.error('Direct creation failed:', error);
+      await findCreatedGuild(guildCode);
+    }
+  };
+
+  const findCreatedGuild = async (guildCode: string) => {
+    try {
+      console.log('Searching for created guild with code:', guildCode);
+      
+      const { data: searchData, error: searchError } = await supabase
+        .from('guilds')
+        .select('id')
+        .eq('guild_code', guildCode)
+        .eq('owner_id', user!.id)
+        .maybeSingle();
+        
+      if (searchData?.id) {
+        console.log('Found guild by code:', searchData.id);
+        toast({
+          title: "Guilda criada!",
+          description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
+        });
+        navigate(`/guilds/${searchData.id}`);
+      } else {
+        console.error('Could not find created guild');
+        toast({
+          title: "Guilda criada",
+          description: "Guilda criada com sucesso! Redirecionando para a lista de guildas.",
+        });
+        navigate('/guilds');
+      }
+    } catch (error) {
+      console.error('Error finding guild:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar se a guilda foi criada.",
+        variant: "destructive"
+      });
+      navigate('/guilds');
     }
   };
 

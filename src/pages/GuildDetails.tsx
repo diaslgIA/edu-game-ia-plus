@@ -47,6 +47,7 @@ const GuildDetails = () => {
 
   const fetchGuildDetails = async () => {
     if (!id || !user) {
+      setError('ID da guilda ou usuário não encontrado');
       setLoading(false);
       return;
     }
@@ -57,7 +58,7 @@ const GuildDetails = () => {
       
       console.log('Fetching guild details for:', id);
       
-      // Buscar detalhes da guilda com informações do owner
+      // Consulta mais robusta com tratamento de erro
       const { data: guildData, error: guildError } = await supabase
         .from('guilds')
         .select(`
@@ -76,7 +77,7 @@ const GuildDetails = () => {
 
       if (guildError) {
         console.error('Error fetching guild:', guildError);
-        throw new Error('Erro ao carregar dados da guilda');
+        throw new Error(`Erro ao carregar dados da guilda: ${guildError.message}`);
       }
 
       if (!guildData) {
@@ -84,41 +85,57 @@ const GuildDetails = () => {
         throw new Error('Guilda não encontrada');
       }
 
-      console.log('Guild data loaded:', guildData);
+      console.log('Guild data loaded successfully:', guildData);
 
-      // Contar membros de forma otimizada
-      const { count: memberCount, error: countError } = await supabase
-        .from('guild_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('guild_id', id);
+      // Contar membros de forma mais eficiente
+      let memberCount = 1; // Pelo menos o owner
+      try {
+        const { count, error: countError } = await supabase
+          .from('guild_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('guild_id', id);
 
-      if (countError) {
-        console.error('Error counting members:', countError);
+        if (!countError && count !== null) {
+          memberCount = count + 1; // +1 para incluir o owner
+        }
+      } catch (countError) {
+        console.error('Error counting members (non-critical):', countError);
       }
 
       // Verificar papel do usuário na guilda
-      const { data: memberData, error: memberError } = await supabase
-        .from('guild_members')
-        .select('role')
-        .eq('guild_id', id)
-        .eq('profile_id', user.id)
-        .maybeSingle();
+      let userRole = 'não-membro';
+      const isOwner = guildData.owner_id === user.id;
+      
+      if (isOwner) {
+        userRole = 'dono';
+      } else {
+        try {
+          const { data: memberData } = await supabase
+            .from('guild_members')
+            .select('role')
+            .eq('guild_id', id)
+            .eq('profile_id', user.id)
+            .maybeSingle();
 
-      if (memberError && memberError.code !== 'PGRST116') {
-        console.error('Error checking user role:', memberError);
+          if (memberData) {
+            userRole = memberData.role || 'membro';
+          }
+        } catch (memberError) {
+          console.error('Error checking user role (non-critical):', memberError);
+        }
       }
 
-      const isOwner = guildData.owner_id === user.id;
-      const userRole = isOwner ? 'dono' : (memberData?.role || 'não-membro');
+      console.log('User role determined:', { isOwner, userRole, userId: user.id, ownerId: guildData.owner_id });
 
-      console.log('User role determined:', { isOwner, userRole });
-
-      setGuild({
+      const guildWithDetails: Guild = {
         ...guildData,
-        member_count: (memberCount || 0) + 1, // +1 para o owner
+        member_count: memberCount,
         owner_name: guildData.profiles?.full_name || 'Usuário',
         user_role: userRole
-      });
+      };
+
+      setGuild(guildWithDetails);
+      console.log('Guild details set successfully');
 
     } catch (error: any) {
       console.error('Error in fetchGuildDetails:', error);
@@ -131,7 +148,7 @@ const GuildDetails = () => {
         variant: "destructive"
       });
       
-      // Não navegar de volta automaticamente, deixar o usuário decidir
+      // Delay antes de redirecionar
       setTimeout(() => {
         navigate('/guilds');
       }, 3000);
