@@ -43,45 +43,46 @@ const SubjectTopics = () => {
       setLoading(true);
       
       try {
-        // Fetch subject name with simple type handling
-        const subjectQuery = await supabase
+        // Fetch subject name
+        const { data: subjectData } = await supabase
           .from('subjects')
           .select('nome')
           .eq('id', subjectId)
           .single();
         
-        if (subjectQuery.data) {
-          setSubjectName(subjectQuery.data.nome);
+        if (subjectData) {
+          setSubjectName(subjectData.nome);
         }
         
-        // Fetch topics with explicit type casting
-        const topicsQuery = await supabase
+        // Fetch topics - avoid complex type inference
+        const { data: rawTopicsData } = await supabase
           .from('subject_contents')
           .select('id, title, description, difficulty_level, estimated_time, grande_tema, explanation')
           .eq('subject_id', subjectId);
 
-        // Cast the response to avoid TypeScript inference issues
-        const topicsData = topicsQuery.data as any[];
-
-        if (topicsData) {
+        if (rawTopicsData && Array.isArray(rawTopicsData)) {
           const groups: GroupedTopics = {};
           
-          topicsData.forEach((item) => {
-            const theme = item.grande_tema || 'Outros Tópicos';
+          // Process each topic with explicit typing
+          for (const rawItem of rawTopicsData) {
+            const theme: string = rawItem.grande_tema || 'Outros Tópicos';
+            
             if (!groups[theme]) {
               groups[theme] = [];
             }
             
-            groups[theme].push({
-              id: item.id,
-              title: item.title,
-              description: item.description || 'Explore este tópico interessante',
-              difficulty_level: item.difficulty_level || 'medium',
-              estimated_time: item.estimated_time || 15,
-              grande_tema: item.grande_tema,
-              explanation: item.explanation
-            });
-          });
+            const topic: StudyTopic = {
+              id: String(rawItem.id),
+              title: String(rawItem.title || ''),
+              description: String(rawItem.description || 'Explore este tópico interessante'),
+              difficulty_level: String(rawItem.difficulty_level || 'medium'),
+              estimated_time: Number(rawItem.estimated_time || 15),
+              grande_tema: String(rawItem.grande_tema || ''),
+              explanation: rawItem.explanation ? String(rawItem.explanation) : undefined
+            };
+            
+            groups[theme].push(topic);
+          }
           
           setGroupedTopics(groups);
         }
