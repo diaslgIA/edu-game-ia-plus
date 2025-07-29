@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Users, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Users, Lock, Unlock, Loader2 } from 'lucide-react';
 
 const CreateGuild: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ const CreateGuild: React.FC = () => {
     e.preventDefault();
     if (!user || loading) return;
 
+    // Validações
     if (!formData.name.trim()) {
       toast({
         title: "Erro",
@@ -39,9 +40,35 @@ const CreateGuild: React.FC = () => {
       return;
     }
 
+    if (formData.name.trim().length < 3) {
+      toast({
+        title: "Erro",
+        description: "Nome da guilda deve ter pelo menos 3 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.name.trim().length > 50) {
+      toast({
+        title: "Erro",
+        description: "Nome da guilda deve ter no máximo 50 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       const guildCode = generateGuildCode();
+
+      console.log('Creating guild with data:', {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        code: guildCode,
+        isPublic: formData.isPublic,
+        ownerId: user.id
+      });
 
       // Criar guilda usando a função do banco
       const { data, error } = await supabase.rpc('create_guild_with_owner', {
@@ -54,32 +81,70 @@ const CreateGuild: React.FC = () => {
 
       if (error) {
         console.error('Error creating guild:', error);
+        
+        let errorMessage = "Não foi possível criar a guilda. Tente novamente.";
+        
+        if (error.message?.includes('duplicate key')) {
+          errorMessage = "Já existe uma guilda com este nome ou código. Tente novamente.";
+        } else if (error.message?.includes('permission')) {
+          errorMessage = "Você não tem permissão para criar guildas. Verifique se está logado.";
+        }
+        
         toast({
           title: "Erro ao criar guilda",
-          description: "Não foi possível criar a guilda. Tente novamente.",
+          description: errorMessage,
           variant: "destructive"
         });
         return;
       }
 
-      // Parse the JSON response properly
-      const guildResult = typeof data === 'string' ? JSON.parse(data) : data;
+      console.log('Guild creation response:', data);
+
+      // Parse the JSON response properly e verificar se tem ID
+      let guildResult;
+      try {
+        guildResult = typeof data === 'string' ? JSON.parse(data) : data;
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        guildResult = data;
+      }
       
-      if (guildResult && typeof guildResult === 'object' && 'id' in guildResult) {
+      if (guildResult && typeof guildResult === 'object' && 'id' in guildResult && guildResult.id) {
+        console.log('Guild created successfully with ID:', guildResult.id);
+        
         toast({
           title: "Guilda criada!",
           description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
         });
 
+        // Navegar para a nova guilda
         navigate(`/guilds/${guildResult.id}`);
       } else {
         console.error('Unexpected response format:', data);
-        toast({
-          title: "Erro inesperado",
-          description: "Guilda criada, mas houve um problema na navegação.",
-          variant: "destructive"
-        });
-        navigate('/guilds');
+        
+        // Tentar buscar a guilda recém-criada pelo código
+        const { data: searchData, error: searchError } = await supabase
+          .from('guilds')
+          .select('id')
+          .eq('guild_code', guildCode)
+          .eq('owner_id', user.id)
+          .maybeSingle();
+          
+        if (searchData?.id) {
+          console.log('Found guild by code:', searchData.id);
+          toast({
+            title: "Guilda criada!",
+            description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
+          });
+          navigate(`/guilds/${searchData.id}`);
+        } else {
+          console.error('Could not find created guild');
+          toast({
+            title: "Guilda criada",
+            description: "Guilda criada com sucesso! Redirecionando para a lista de guildas.",
+          });
+          navigate('/guilds');
+        }
       }
     } catch (error) {
       console.error('Error creating guild:', error);
@@ -104,6 +169,7 @@ const CreateGuild: React.FC = () => {
               size="sm"
               onClick={() => navigate('/guilds')}
               className="text-white p-2"
+              disabled={loading}
             >
               <ArrowLeft size={20} />
             </Button>
@@ -125,12 +191,13 @@ const CreateGuild: React.FC = () => {
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Digite o nome da sua guilda..."
-                className="bg-white/90 border-white/30"
+                className="bg-white/90 border-white/30 text-gray-900 placeholder:text-gray-500"
                 maxLength={50}
                 required
+                disabled={loading}
               />
               <p className="text-xs text-white/70 mt-1">
-                Máximo 50 caracteres
+                Entre 3 e 50 caracteres ({formData.name.length}/50)
               </p>
             </div>
 
@@ -142,11 +209,12 @@ const CreateGuild: React.FC = () => {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Descreva o objetivo da sua guilda..."
-                className="bg-white/90 border-white/30 min-h-[100px]"
+                className="bg-white/90 border-white/30 min-h-[100px] text-gray-900 placeholder:text-gray-500"
                 maxLength={200}
+                disabled={loading}
               />
               <p className="text-xs text-white/70 mt-1">
-                Máximo 200 caracteres (opcional)
+                Opcional - Máximo 200 caracteres ({formData.description.length}/200)
               </p>
             </div>
 
@@ -160,8 +228,8 @@ const CreateGuild: React.FC = () => {
                     formData.isPublic 
                       ? 'bg-white/20 border-white/50' 
                       : 'bg-white/10 border-white/20'
-                  }`}
-                  onClick={() => setFormData(prev => ({ ...prev, isPublic: true }))}
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => !loading && setFormData(prev => ({ ...prev, isPublic: true }))}
                 >
                   <div className="flex items-center space-x-3">
                     <Unlock size={20} className="text-green-400" />
@@ -179,8 +247,8 @@ const CreateGuild: React.FC = () => {
                     !formData.isPublic 
                       ? 'bg-white/20 border-white/50' 
                       : 'bg-white/10 border-white/20'
-                  }`}
-                  onClick={() => setFormData(prev => ({ ...prev, isPublic: false }))}
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => !loading && setFormData(prev => ({ ...prev, isPublic: false }))}
                 >
                   <div className="flex items-center space-x-3">
                     <Lock size={20} className="text-orange-400" />
@@ -198,11 +266,24 @@ const CreateGuild: React.FC = () => {
             <div className="pt-4">
               <Button
                 type="submit"
-                disabled={loading || !formData.name.trim()}
+                disabled={loading || !formData.name.trim() || formData.name.trim().length < 3}
                 className="w-full bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3"
               >
-                {loading ? 'Criando...' : 'Criar Guilda'}
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={16} />
+                    Criando Guilda...
+                  </>
+                ) : (
+                  'Criar Guilda'
+                )}
               </Button>
+              
+              {formData.name.trim() && formData.name.trim().length < 3 && (
+                <p className="text-yellow-300 text-sm mt-2 text-center">
+                  Nome deve ter pelo menos 3 caracteres
+                </p>
+              )}
             </div>
           </form>
         </div>

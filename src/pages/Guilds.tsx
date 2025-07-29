@@ -33,106 +33,26 @@ const Guilds = () => {
   useEffect(() => {
     if (user) {
       loadGuilds();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
   const loadGuilds = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
-    setLoading(true);
     try {
-      // Buscar guildas onde o usuário é owner
-      const { data: ownedGuilds, error: ownedError } = await supabase
-        .from('guilds')
-        .select('*')
-        .eq('owner_id', user.id);
-
-      if (ownedError) {
-        console.error('Error loading owned guilds:', ownedError);
-      }
-
-      // Buscar guildas onde o usuário é membro
-      const { data: memberGuilds, error: memberError } = await supabase
-        .from('guild_members')
-        .select(`
-          guild_id,
-          guilds (*)
-        `)
-        .eq('profile_id', user.id);
-
-      if (memberError) {
-        console.error('Error loading member guilds:', memberError);
-      }
-
-      // Combinar as guildas e contar membros
-      const allMyGuilds: Guild[] = [];
+      setLoading(true);
+      console.log('Loading guilds for user:', user.id);
       
-      // Adicionar guildas próprias
-      if (ownedGuilds) {
-        for (const guild of ownedGuilds) {
-          const { count } = await supabase
-            .from('guild_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('guild_id', guild.id);
-
-          allMyGuilds.push({
-            ...guild,
-            member_count: (count || 0) + 1, // +1 para incluir o owner
-            description: guild.description || ''
-          });
-        }
-      }
-
-      // Adicionar guildas onde é membro (mas não owner)
-      if (memberGuilds) {
-        for (const membership of memberGuilds) {
-          const guild = (membership as any).guilds;
-          if (guild && !allMyGuilds.find(g => g.id === guild.id)) {
-            const { count } = await supabase
-              .from('guild_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('guild_id', guild.id);
-
-            allMyGuilds.push({
-              ...guild,
-              member_count: (count || 0) + 1, // +1 para incluir o owner
-              description: guild.description || ''
-            });
-          }
-        }
-      }
-
-      setMyGuilds(allMyGuilds);
-
-      // Buscar guildas públicas para descobrir
-      const { data: discoverGuilds, error: discoverError } = await supabase
-        .from('guilds')
-        .select('*')
-        .eq('is_public', true)
-        .neq('owner_id', user.id)
-        .limit(10);
-
-      if (!discoverError && discoverGuilds) {
-        const filteredPublicGuilds = discoverGuilds.filter(guild => 
-          !allMyGuilds.find(myGuild => myGuild.id === guild.id)
-        );
-
-        const publicGuildsWithCount: Guild[] = [];
-        for (const guild of filteredPublicGuilds) {
-          const { count } = await supabase
-            .from('guild_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('guild_id', guild.id);
-
-          publicGuildsWithCount.push({
-            ...guild,
-            member_count: (count || 0) + 1, // +1 para incluir o owner
-            description: guild.description || ''
-          });
-        }
-
-        setPublicGuilds(publicGuildsWithCount);
-      }
+      // Carregar guildas do usuário de forma otimizada
+      await Promise.all([
+        loadMyGuilds(),
+        loadPublicGuilds()
+      ]);
       
     } catch (error) {
       console.error('Error loading guilds:', error);
@@ -146,11 +66,171 @@ const Guilds = () => {
     }
   };
 
+  const loadMyGuilds = async () => {
+    if (!user) return;
+
+    try {
+      // Buscar guildas onde o usuário é owner
+      const { data: ownedGuilds, error: ownedError } = await supabase
+        .from('guilds')
+        .select(`
+          id,
+          name,
+          description,
+          owner_id,
+          created_at,
+          is_public,
+          max_members
+        `)
+        .eq('owner_id', user.id);
+
+      if (ownedError) {
+        console.error('Error loading owned guilds:', ownedError);
+      }
+
+      // Buscar guildas onde o usuário é membro (mas não owner)
+      const { data: membershipData, error: memberError } = await supabase
+        .from('guild_members')
+        .select(`
+          guild_id,
+          guilds!inner (
+            id,
+            name,
+            description,
+            owner_id,
+            created_at,
+            is_public,
+            max_members
+          )
+        `)
+        .eq('profile_id', user.id)
+        .neq('guilds.owner_id', user.id);
+
+      if (memberError) {
+        console.error('Error loading member guilds:', memberError);
+      }
+
+      // Combinar e processar guildas
+      const allMyGuilds: Guild[] = [];
+      
+      // Adicionar guildas próprias
+      if (ownedGuilds) {
+        for (const guild of ownedGuilds) {
+          const memberCount = await getGuildMemberCount(guild.id);
+          allMyGuilds.push({
+            ...guild,
+            member_count: memberCount,
+            description: guild.description || ''
+          });
+        }
+      }
+
+      // Adicionar guildas onde é membro
+      if (membershipData) {
+        for (const membership of membershipData) {
+          const guild = (membership as any).guilds;
+          if (guild) {
+            const memberCount = await getGuildMemberCount(guild.id);
+            allMyGuilds.push({
+              ...guild,
+              member_count: memberCount,
+              description: guild.description || ''
+            });
+          }
+        }
+      }
+
+      console.log('My guilds loaded:', allMyGuilds.length);
+      setMyGuilds(allMyGuilds);
+
+    } catch (error) {
+      console.error('Error in loadMyGuilds:', error);
+    }
+  };
+
+  const loadPublicGuilds = async () => {
+    if (!user) return;
+
+    try {
+      // Buscar guildas públicas que o usuário não faz parte
+      const { data: publicGuildsData, error: publicError } = await supabase
+        .from('guilds')
+        .select(`
+          id,
+          name,
+          description,
+          owner_id,
+          created_at,
+          is_public,
+          max_members
+        `)
+        .eq('is_public', true)
+        .neq('owner_id', user.id)
+        .limit(10);
+
+      if (publicError) {
+        console.error('Error loading public guilds:', publicError);
+        return;
+      }
+
+      if (publicGuildsData) {
+        // Filtrar guildas onde o usuário não é membro
+        const filteredGuilds: Guild[] = [];
+        
+        for (const guild of publicGuildsData) {
+          // Verificar se o usuário já é membro
+          const { data: membership } = await supabase
+            .from('guild_members')
+            .select('guild_id')
+            .eq('guild_id', guild.id)
+            .eq('profile_id', user.id)
+            .maybeSingle();
+
+          if (!membership) {
+            const memberCount = await getGuildMemberCount(guild.id);
+            filteredGuilds.push({
+              ...guild,
+              member_count: memberCount,
+              description: guild.description || ''
+            });
+          }
+        }
+
+        console.log('Public guilds loaded:', filteredGuilds.length);
+        setPublicGuilds(filteredGuilds);
+      }
+      
+    } catch (error) {
+      console.error('Error in loadPublicGuilds:', error);
+    }
+  };
+
+  const getGuildMemberCount = async (guildId: string): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('guild_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('guild_id', guildId);
+
+      if (error) {
+        console.error('Error counting guild members:', error);
+        return 1; // Pelo menos o owner
+      }
+
+      return (count || 0) + 1; // +1 para incluir o owner
+    } catch (error) {
+      console.error('Error in getGuildMemberCount:', error);
+      return 1;
+    }
+  };
+
   const handleGuildClick = (guildId: string) => {
+    console.log('Navigating to guild:', guildId);
     navigate(`/guilds/${guildId}`);
   };
 
   const handleCreateGuild = () => {
+    console.log('Navigating to create guild');
     navigate('/guilds/create');
   };
 

@@ -39,60 +39,102 @@ const GuildDetails = () => {
   const { toast } = useToast();
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const fetchGuildDetails = async () => {
-    if (!id) return;
+    if (!id || !user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
       
-      // Buscar detalhes da guilda
-      const { data: guildData, error } = await supabase
+      console.log('Fetching guild details for:', id);
+      
+      // Buscar detalhes da guilda com informações do owner
+      const { data: guildData, error: guildError } = await supabase
         .from('guilds')
         .select(`
-          *,
+          id,
+          name,
+          description,
+          guild_code,
+          owner_id,
+          total_points,
+          is_public,
+          created_at,
           profiles!guilds_owner_id_fkey(full_name)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Erro ao buscar guilda:', error);
-        throw error;
+      if (guildError) {
+        console.error('Error fetching guild:', guildError);
+        throw new Error('Erro ao carregar dados da guilda');
       }
 
-      // Contar membros
-      const { count: memberCount } = await supabase
+      if (!guildData) {
+        console.error('Guild not found:', id);
+        throw new Error('Guilda não encontrada');
+      }
+
+      console.log('Guild data loaded:', guildData);
+
+      // Contar membros de forma otimizada
+      const { count: memberCount, error: countError } = await supabase
         .from('guild_members')
         .select('*', { count: 'exact', head: true })
         .eq('guild_id', id);
 
+      if (countError) {
+        console.error('Error counting members:', countError);
+      }
+
       // Verificar papel do usuário na guilda
-      const { data: memberData } = await supabase
+      const { data: memberData, error: memberError } = await supabase
         .from('guild_members')
         .select('role')
         .eq('guild_id', id)
-        .eq('profile_id', user?.id)
-        .single();
+        .eq('profile_id', user.id)
+        .maybeSingle();
+
+      if (memberError && memberError.code !== 'PGRST116') {
+        console.error('Error checking user role:', memberError);
+      }
+
+      const isOwner = guildData.owner_id === user.id;
+      const userRole = isOwner ? 'dono' : (memberData?.role || 'não-membro');
+
+      console.log('User role determined:', { isOwner, userRole });
 
       setGuild({
         ...guildData,
-        member_count: memberCount || 0,
+        member_count: (memberCount || 0) + 1, // +1 para o owner
         owner_name: guildData.profiles?.full_name || 'Usuário',
-        user_role: memberData?.role || 'não-membro'
+        user_role: userRole
       });
-    } catch (error) {
-      console.error('Erro ao buscar detalhes da guilda:', error);
+
+    } catch (error: any) {
+      console.error('Error in fetchGuildDetails:', error);
+      const errorMessage = error.message || 'Erro ao carregar detalhes da guilda';
+      setError(errorMessage);
+      
       toast({
         title: "Erro ao carregar guilda",
-        description: "Não foi possível carregar os detalhes da guilda.",
+        description: errorMessage,
         variant: "destructive"
       });
-      navigate('/guilds');
+      
+      // Não navegar de volta automaticamente, deixar o usuário decidir
+      setTimeout(() => {
+        navigate('/guilds');
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -102,12 +144,17 @@ const GuildDetails = () => {
     if (!guild || guild.owner_id !== user?.id) return;
 
     try {
+      console.log('Deleting guild:', guild.id);
+      
       const { error } = await supabase
         .from('guilds')
         .delete()
         .eq('id', guild.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting guild:', error);
+        throw error;
+      }
 
       toast({
         title: "Guilda excluída",
@@ -116,26 +163,32 @@ const GuildDetails = () => {
 
       navigate('/guilds');
     } catch (error) {
-      console.error('Erro ao excluir guilda:', error);
+      console.error('Error in deleteGuild:', error);
       toast({
         title: "Erro ao excluir",
         description: "Não foi possível excluir a guilda.",
         variant: "destructive"
       });
     }
+    setShowDeleteModal(false);
   };
 
   const leaveGuild = async () => {
     if (!guild || !user) return;
 
     try {
+      console.log('Leaving guild:', guild.id);
+      
       const { error } = await supabase
         .from('guild_members')
         .delete()
         .eq('guild_id', guild.id)
         .eq('profile_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error leaving guild:', error);
+        throw error;
+      }
 
       toast({
         title: "Saiu da guilda",
@@ -144,35 +197,52 @@ const GuildDetails = () => {
 
       navigate('/guilds');
     } catch (error) {
-      console.error('Erro ao sair da guilda:', error);
+      console.error('Error in leaveGuild:', error);
       toast({
         title: "Erro ao sair",
         description: "Não foi possível sair da guilda.",
         variant: "destructive"
       });
     }
+    setShowLeaveModal(false);
   };
 
   useEffect(() => {
     fetchGuildDetails();
-  }, [id]);
+  }, [id, user]);
 
   if (loading) {
     return (
       <MobileContainer background="gradient">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white">Carregando...</div>
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Carregando guilda...</p>
+          </div>
         </div>
+        <BottomNavigation />
       </MobileContainer>
     );
   }
 
-  if (!guild) {
+  if (error || !guild) {
     return (
       <MobileContainer background="gradient">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-white">Guilda não encontrada</div>
+        <div className="flex flex-col items-center justify-center h-full text-white p-6">
+          <div className="text-center">
+            <div className="text-6xl mb-4">😔</div>
+            <h2 className="text-xl font-bold mb-2">Ops! Algo deu errado</h2>
+            <p className="text-white/80 mb-6">{error || 'Guilda não encontrada'}</p>
+            <Button 
+              onClick={() => navigate('/guilds')} 
+              className="bg-white text-purple-600 hover:bg-gray-100"
+            >
+              <ArrowLeft className="mr-2" size={16} />
+              Voltar às Guildas
+            </Button>
+          </div>
         </div>
+        <BottomNavigation />
       </MobileContainer>
     );
   }
@@ -207,7 +277,7 @@ const GuildDetails = () => {
                   {guild.guild_code}
                 </span>
               </div>
-              <p className="text-white/80 text-xs">{guild.description}</p>
+              <p className="text-white/80 text-xs">{guild.description || 'Sem descrição'}</p>
             </div>
             
             <div className="flex space-x-2">
@@ -227,7 +297,7 @@ const GuildDetails = () => {
                 >
                   <Trash2 size={16} />
                 </Button>
-              ) : (
+              ) : guild.user_role !== 'não-membro' && (
                 <Button 
                   onClick={() => setShowLeaveModal(true)}
                   className="bg-orange-500 hover:bg-orange-600 text-white px-3"
