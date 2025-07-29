@@ -9,17 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
 
-// Database row type for subject_contents
-interface SubjectContentRow {
-  id: string;
-  title: string;
-  description: string;
-  difficulty_level: string;
-  estimated_time: number;
-  grande_tema: string;
-}
-
-// Fixed interface to match database schema (UUID strings)
+// Simple interface for topics from database
 interface Topic {
   id: string;
   title: string;
@@ -67,38 +57,34 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject
-      const { data: topicsData, error: topicsError } = await supabase
+      // 2. Fetch all topics belonging to this subject - using any type to avoid deep instantiation
+      const { data, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
         .eq('subject_id', subjectId);
 
-      if (topicsError) {
-        console.error('Erro ao buscar tópicos:', topicsError);
-      } else if (topicsData) {
-        // Type assertion to help TypeScript understand the structure
-        const typedTopicsData = topicsData as SubjectContentRow[];
-        
-        // 3. Group topics by "grande_tema" with explicit typing
+      if (error) {
+        console.error('Erro ao buscar tópicos:', error);
+      } else if (data) {
+        // 3. Group topics by "grande_tema"
         const groups: GroupedTopics = {};
         
-        typedTopicsData.forEach((dbTopic) => {
-          const theme = dbTopic.grande_tema;
+        data.forEach((item: any) => {
+          const theme = item.grande_tema;
           if (!groups[theme]) {
             groups[theme] = [];
           }
           
-          // Explicit mapping from database row to Topic interface
-          const topicItem: Topic = {
-            id: dbTopic.id,
-            title: dbTopic.title,
-            description: dbTopic.description,
-            difficulty_level: dbTopic.difficulty_level,
-            estimated_time: dbTopic.estimated_time,
-            grande_tema: dbTopic.grande_tema
+          const topic: Topic = {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            difficulty_level: item.difficulty_level,
+            estimated_time: item.estimated_time,
+            grande_tema: item.grande_tema
           };
           
-          groups[theme].push(topicItem);
+          groups[theme].push(topic);
         });
         
         setGroupedTopics(groups);
