@@ -19,6 +19,9 @@ import Profile from './pages/Profile';
 import Auth from './pages/Auth';
 import Welcome from './pages/Welcome';
 import Subscription from './pages/Subscription';
+import Subscriptions from './pages/Subscriptions';
+import Exercises from './pages/Exercises';
+import Support from './pages/Support';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import LessonViewer from '@/components/LessonViewer';
@@ -55,6 +58,14 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <Subjects />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/exercises" 
+                        element={
+                          <ProtectedRoute>
+                            <Exercises />
                           </ProtectedRoute>
                         } 
                       />
@@ -115,10 +126,26 @@ function App() {
                         } 
                       />
                       <Route 
-                        path="/subscriptions" 
+                        path="/subscription" 
                         element={
                           <ProtectedRoute>
                             <Subscription />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/subscriptions" 
+                        element={
+                          <ProtectedRoute>
+                            <Subscriptions />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/support" 
+                        element={
+                          <ProtectedRoute>
+                            <Support />
                           </ProtectedRoute>
                         } 
                       />

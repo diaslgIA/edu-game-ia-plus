@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Shield, Crown, Search, Loader2 } from 'lucide-react';
+import { Users, Plus, Shield, Search, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GuildCard from '@/components/guild/GuildCard';
 
@@ -17,7 +16,7 @@ interface Guild {
   name: string;
   description: string;
   member_count: number;
-  max_members: number; // This property is required
+  max_members: number;
   owner_id: string;
   created_at: string;
   is_public: boolean;
@@ -26,6 +25,7 @@ interface Guild {
 const Guilds = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [myGuilds, setMyGuilds] = useState<Guild[]>([]);
   const [publicGuilds, setPublicGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ const Guilds = () => {
           owner_id,
           is_public,
           created_at,
-          max_members:max_members,
+          max_members,
           member_count:guild_members(count)
         `)
         .or(`owner_id.eq.${user.id},id.in.(${await getUserGuildIds()})`);
@@ -67,7 +67,7 @@ const Guilds = () => {
           name: guild.name,
           description: guild.description || '',
           member_count: Array.isArray(guild.member_count) ? guild.member_count.length : 1,
-          max_members: guild.max_members || 50, // Provide default value
+          max_members: guild.max_members || 50,
           owner_id: guild.owner_id,
           created_at: guild.created_at,
           is_public: guild.is_public || false
@@ -101,7 +101,7 @@ const Guilds = () => {
           name: guild.name,
           description: guild.description || '',
           member_count: Array.isArray(guild.member_count) ? guild.member_count.length : 1,
-          max_members: guild.max_members || 50, // Provide default value
+          max_members: guild.max_members || 50,
           owner_id: guild.owner_id,
           created_at: guild.created_at,
           is_public: guild.is_public || false
@@ -135,11 +135,11 @@ const Guilds = () => {
   };
 
   const handleGuildClick = (guildId: string) => {
-    // Navigate to guild details - for now just show a toast
-    toast({
-      title: "Guilda selecionada",
-      description: "Funcionalidade de detalhes da guilda em desenvolvimento."
-    });
+    navigate(`/guilds/${guildId}`);
+  };
+
+  const handleCreateGuild = () => {
+    navigate('/guilds/create');
   };
 
   if (loading) {
@@ -196,6 +196,7 @@ const Guilds = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-white text-lg font-semibold">Suas Guildas</h2>
                 <Button 
+                  onClick={handleCreateGuild}
                   className="bg-white/20 hover:bg-white/30 text-white border-white/30"
                   variant="outline"
                 >
@@ -209,7 +210,10 @@ const Guilds = () => {
                   <Shield size={48} className="mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-semibold mb-2">Nenhuma guilda encontrada</h3>
                   <p className="text-sm mb-4">Crie sua primeira guilda ou junte-se a uma existente!</p>
-                  <Button className="bg-white text-purple-600 hover:bg-gray-100">
+                  <Button 
+                    onClick={handleCreateGuild}
+                    className="bg-white text-purple-600 hover:bg-gray-100"
+                  >
                     <Plus className="mr-2" size={16} />
                     Criar Primeira Guilda
                   </Button>
