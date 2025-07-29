@@ -832,6 +832,8 @@ export type Database = {
       }
       subject_contents: {
         Row: {
+          available_badges: Json | null
+          challenge_question: Json | null
           content_data: Json | null
           content_type: string
           created_at: string
@@ -843,6 +845,8 @@ export type Database = {
           explanation: string | null
           grande_tema: string | null
           id: string
+          infographic_url: string | null
+          interactive_activities: Json | null
           is_premium: boolean | null
           key_concepts: Json | null
           order_index: number | null
@@ -854,6 +858,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          available_badges?: Json | null
+          challenge_question?: Json | null
           content_data?: Json | null
           content_type?: string
           created_at?: string
@@ -865,6 +871,8 @@ export type Database = {
           explanation?: string | null
           grande_tema?: string | null
           id?: string
+          infographic_url?: string | null
+          interactive_activities?: Json | null
           is_premium?: boolean | null
           key_concepts?: Json | null
           order_index?: number | null
@@ -876,6 +884,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          available_badges?: Json | null
+          challenge_question?: Json | null
           content_data?: Json | null
           content_type?: string
           created_at?: string
@@ -887,6 +897,8 @@ export type Database = {
           explanation?: string | null
           grande_tema?: string | null
           id?: string
+          infographic_url?: string | null
+          interactive_activities?: Json | null
           is_premium?: boolean | null
           key_concepts?: Json | null
           order_index?: number | null
@@ -1100,10 +1112,12 @@ export type Database = {
       }
       user_activities: {
         Row: {
+          activity_subtype: string | null
           activity_type: string
           correct_answer: number | null
           created_at: string
           id: string
+          interaction_data: Json | null
           is_correct: boolean | null
           metadata: Json | null
           points_earned: number | null
@@ -1115,10 +1129,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activity_subtype?: string | null
           activity_type: string
           correct_answer?: number | null
           created_at?: string
           id?: string
+          interaction_data?: Json | null
           is_correct?: boolean | null
           metadata?: Json | null
           points_earned?: number | null
@@ -1130,10 +1146,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activity_subtype?: string | null
           activity_type?: string
           correct_answer?: number | null
           created_at?: string
           id?: string
+          interaction_data?: Json | null
           is_correct?: boolean | null
           metadata?: Json | null
           points_earned?: number | null
@@ -1145,6 +1163,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_description: string | null
+          badge_icon: string | null
+          badge_id: string
+          badge_name: string
+          content_id: string | null
+          earned_at: string
+          id: string
+          points_awarded: number | null
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id: string
+          badge_name: string
+          content_id?: string | null
+          earned_at?: string
+          id?: string
+          points_awarded?: number | null
+          subject: string
+          user_id: string
+        }
+        Update: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id?: string
+          badge_name?: string
+          content_id?: string | null
+          earned_at?: string
+          id?: string
+          points_awarded?: number | null
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "subject_contents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_progress: {
         Row: {

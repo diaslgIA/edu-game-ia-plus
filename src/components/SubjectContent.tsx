@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Play, Clock, CheckCircle, Target } from 'lucide-react';
+import { ArrowLeft, BookOpen, Play, Clock, CheckCircle, Target, Gamepad2 } from 'lucide-react';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
-import ContentViewer from './ContentViewer';
+import GamifiedContentViewer from './GamifiedContentViewer';
 import SubjectQuiz from './SubjectQuiz';
 
 interface SubjectContentProps {
@@ -38,7 +38,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
 
   if (selectedContent) {
     return (
-      <ContentViewer
+      <GamifiedContentViewer
         subject={subject}
         contentId={selectedContent}
         onBack={() => setSelectedContent(null)}
@@ -77,10 +77,24 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Destaque da Gamificação */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-center">
+          <Gamepad2 className="mx-auto mb-4 text-white" size={48} />
+          <h2 className="text-xl font-bold text-white mb-2">
+            Aprendizado Gamificado 🎮
+          </h2>
+          <p className="text-white/90 text-sm">
+            Cada módulo contém 4 seções interativas: <strong>Teoria → Fixação → Exercícios → Desafio</strong>
+          </p>
+          <p className="text-white/80 text-xs mt-2">
+            Ganhe pontos, desbloqueie conquistas e suba de nível!
+          </p>
+        </div>
+
         {/* Quiz Section */}
         {questions.length > 0 && (
           <div>
-            <h2 className="text-white text-lg font-semibold mb-4">Quiz da Matéria</h2>
+            <h2 className="text-white text-lg font-semibold mb-4">Quiz Geral da Matéria</h2>
             <div
               onClick={() => setShowQuiz(true)}
               className="bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl p-4 cursor-pointer hover:scale-105 transition-all shadow-lg border border-white/10"
@@ -92,13 +106,13 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                 
                 <div className="flex-1">
                   <h3 className="font-bold text-white text-lg mb-1">Quiz de {subject.charAt(0).toUpperCase() + subject.slice(1)}</h3>
-                  <p className="text-white/80 text-sm mb-2">Teste seus conhecimentos</p>
+                  <p className="text-white/80 text-sm mb-2">Teste seus conhecimentos gerais da matéria</p>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
                       {questions.length} questões
                     </span>
                     <span className="text-xs bg-white/20 px-2 py-1 rounded-lg text-white">
-                      Quiz
+                      Quiz Tradicional
                     </span>
                   </div>
                 </div>
@@ -107,27 +121,36 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
           </div>
         )}
 
-        {/* Theory Contents */}
+        {/* Gamified Learning Modules */}
         <div>
-          <h2 className="text-white text-lg font-semibold mb-4">Conteúdos Teóricos</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white text-lg font-semibold">Módulos Gamificados</h2>
+            <div className="flex items-center space-x-2 text-white/60 text-sm">
+              <Clock size={16} />
+              <span>15-20 min cada</span>
+            </div>
+          </div>
+          
           {loading ? (
-            <div className="text-white text-center py-8">Carregando conteúdos...</div>
+            <div className="text-white text-center py-8">Carregando módulos...</div>
           ) : contents.length === 0 ? (
-            <div className="text-white text-center py-8">Nenhum conteúdo disponível ainda.</div>
+            <div className="text-white text-center py-8">Nenhum módulo disponível ainda.</div>
           ) : (
             <div className="space-y-4">
               {contents.map((content) => {
                 const progress = getContentProgress(content.id);
+                const hasInteractiveActivities = content.interactive_activities && Object.keys(content.interactive_activities).length > 0;
+                const hasChallenge = content.challenge_question;
                 
                 return (
                   <div
                     key={content.id}
                     onClick={() => setSelectedContent(content.id)}
-                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
+                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10 group"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
-                        <BookOpen size={24} />
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg relative group-hover:scale-110 transition-all">
+                        <Gamepad2 size={24} />
                         {progress && progress.completed && (
                           <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                             <CheckCircle size={16} className="text-white" />
@@ -139,10 +162,37 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                         <h3 className="font-bold text-white text-lg mb-1">{content.title}</h3>
                         <p className="text-white/80 text-sm mb-2">{content.description}</p>
                         
+                        {/* Indicadores de gamificação */}
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="flex items-center space-x-1 text-xs">
+                            <BookOpen size={12} className="text-blue-400" />
+                            <span className="text-white/80">Teoria</span>
+                          </div>
+                          
+                          {hasInteractiveActivities && (
+                            <div className="flex items-center space-x-1 text-xs">
+                              <Play size={12} className="text-green-400" />
+                              <span className="text-white/80">Interativo</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center space-x-1 text-xs">
+                            <Target size={12} className="text-orange-400" />
+                            <span className="text-white/80">Quiz</span>
+                          </div>
+                          
+                          {hasChallenge && (
+                            <div className="flex items-center space-x-1 text-xs">
+                              <CheckCircle size={12} className="text-purple-400" />
+                              <span className="text-white/80">Desafio</span>
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="flex items-center space-x-4 text-xs">
                           <div className="flex items-center space-x-1">
                             <Clock size={12} className="text-blue-400" />
-                            <span className="text-white/80">{content.estimated_time} min</span>
+                            <span className="text-white/80">15-20 min</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <span className={`text-xs ${getDifficultyColor(content.difficulty_level)}`}>
@@ -159,7 +209,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                         </div>
                       </div>
                       
-                      <div className="text-white/60">
+                      <div className="text-white/60 group-hover:text-white transition-all">
                         <Play size={20} />
                       </div>
                     </div>
