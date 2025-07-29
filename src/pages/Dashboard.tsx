@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -23,16 +22,14 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, updateLastLogin } = useAuth();
+  const { user, profile } = useAuth();
   const { getTotalProgress, loading } = useUserProgress();
   const { t } = useLanguage();
   const { playSound, isMuted } = useSound();
 
   useEffect(() => {
-    if (user) {
-      updateLastLogin();
-    }
-  }, [user, updateLastLogin]);
+    // No updateLastLogin here
+  }, [user]);
 
   const handleNavigation = (path: string) => {
     if (!isMuted) playSound('click');
@@ -91,7 +88,7 @@ const Dashboard = () => {
               </div>
               <div className="flex items-center space-x-1">
                 <Zap size={16} className="text-blue-400" />
-                <span className="text-sm">0 pontos</span>
+                <span className="text-sm">{profile?.points || 0} pontos</span>
               </div>
             </div>
           </div>
