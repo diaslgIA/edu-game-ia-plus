@@ -27,12 +27,19 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
   const { getMentorAffinity, updateAffinity } = useMentorAffinity();
   const { playSound } = useSound();
   const [showAnimation, setShowAnimation] = useState(false);
+  const [localXP, setLocalXP] = useState(0);
 
   useEffect(() => {
     if (mentor && isVisible) {
       setShowAnimation(true);
+      setLocalXP(xpGained);
       updateAffinity(mentor.id, xpGained);
       playSound?.(isCorrect ? 'success' : 'error');
+
+      // Mostrar animação de pontos
+      setTimeout(() => {
+        setLocalXP(0);
+      }, 2000);
     }
   }, [mentor, isVisible, isCorrect, xpGained, updateAffinity, playSound]);
 
@@ -44,7 +51,7 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
     : "Não desanime! Cada erro é uma oportunidade de aprendizado. Vamos revisar juntos.";
 
   return (
-    <div className={`bg-white rounded-2xl shadow-xl p-6 transform transition-all duration-500 ${
+    <div className={`bg-white rounded-2xl shadow-xl p-6 transform transition-all duration-500 relative ${
       showAnimation ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
     }`} style={{ backgroundColor: mentor.backgroundColor }}>
       
@@ -97,11 +104,18 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
         </div>
       )}
 
-      {/* XP Ganho */}
-      <div className="flex items-center justify-center space-x-2 bg-white/70 rounded-lg p-3 mb-3">
+      {/* Pontuação Ganhos */}
+      <div className="flex items-center justify-center space-x-2 bg-white/70 rounded-lg p-3 mb-3 relative">
         <TrendingUp size={16} className="text-blue-500" />
-        <span className="font-medium text-gray-700">+{xpGained} XP</span>
+        <span className="font-medium text-gray-700">+{xpGained} Pontos</span>
         <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: mentor.color }}></div>
+        
+        {/* Animação de pontos flutuantes */}
+        {localXP > 0 && (
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <span className="text-green-500 font-bold text-lg">+{localXP}</span>
+          </div>
+        )}
       </div>
 
       {/* Progresso de Afinidade */}
@@ -120,7 +134,7 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
           />
         </div>
         <p className="text-xs text-gray-600 text-center mt-1">
-          Progresso: {affinity.experience_points % 100}%
+          Progresso: {affinity.experience_points % 100}/100 pontos
         </p>
       </div>
     </div>

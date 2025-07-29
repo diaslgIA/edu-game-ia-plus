@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import GuildDetails from './GuildDetails';
 
 const GuildDetail: React.FC = () => {
-  // Redirect to existing GuildDetails page
-  return <Navigate to="/guilds" replace />;
+  // Redirecionar para GuildDetails usando o mesmo parâmetro
+  return <GuildDetails />;
 };
 
 export default GuildDetail;

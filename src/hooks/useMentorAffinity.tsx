@@ -30,7 +30,7 @@ export const useMentorAffinity = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      if (error && error.code !== 'PGRST116') {
         console.error('Error loading mentor affinities:', error);
         return;
       }
@@ -79,48 +79,23 @@ export const useMentorAffinity = () => {
       const newXP = currentAffinity.experience_points + xpGained;
       const newLevel = Math.floor(newXP / 100) + 1;
 
-      // Primeiro, tentar buscar se já existe
-      const { data: existingData } = await supabase
+      // Usar upsert para evitar conflitos 409
+      const { error } = await supabase
         .from('mentor_affinities')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('mentor_id', mentorId)
-        .single();
+        .upsert({
+          user_id: user.id,
+          mentor_id: mentorId,
+          affinity_level: newLevel,
+          experience_points: newXP,
+          last_interaction: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,mentor_id'
+        });
 
-      if (existingData) {
-        // Atualizar registro existente
-        const { error } = await supabase
-          .from('mentor_affinities')
-          .update({
-            affinity_level: newLevel,
-            experience_points: newXP,
-            last_interaction: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .eq('mentor_id', mentorId);
-
-        if (error) {
-          console.error('Error updating mentor affinity:', error);
-          return;
-        }
-      } else {
-        // Criar novo registro
-        const { error } = await supabase
-          .from('mentor_affinities')
-          .insert({
-            user_id: user.id,
-            mentor_id: mentorId,
-            affinity_level: newLevel,
-            experience_points: newXP,
-            last_interaction: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) {
-          console.error('Error creating mentor affinity:', error);
-          return;
-        }
+      if (error) {
+        console.error('Error updating mentor affinity:', error);
+        return;
       }
 
       // Atualizar estado local

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +41,7 @@ const Guilds = () => {
     
     setLoading(true);
     try {
-      // Buscar guildas do usuário de forma mais simples
+      // Buscar guildas onde o usuário é owner
       const { data: ownedGuilds, error: ownedError } = await supabase
         .from('guilds')
         .select('*')
@@ -51,7 +52,7 @@ const Guilds = () => {
       }
 
       // Buscar guildas onde o usuário é membro
-      const { data: membershipData, error: memberError } = await supabase
+      const { data: memberGuilds, error: memberError } = await supabase
         .from('guild_members')
         .select(`
           guild_id,
@@ -63,32 +64,42 @@ const Guilds = () => {
         console.error('Error loading member guilds:', memberError);
       }
 
-      // Combinar as guildas
-      const allMyGuilds: any[] = [];
+      // Combinar as guildas e contar membros
+      const allMyGuilds: Guild[] = [];
       
       // Adicionar guildas próprias
       if (ownedGuilds) {
-        ownedGuilds.forEach(guild => {
+        for (const guild of ownedGuilds) {
+          const { count } = await supabase
+            .from('guild_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('guild_id', guild.id);
+
           allMyGuilds.push({
             ...guild,
-            member_count: 1,
+            member_count: (count || 0) + 1, // +1 para incluir o owner
             description: guild.description || ''
           });
-        });
+        }
       }
 
-      // Adicionar guildas onde é membro
-      if (membershipData) {
-        membershipData.forEach(membership => {
+      // Adicionar guildas onde é membro (mas não owner)
+      if (memberGuilds) {
+        for (const membership of memberGuilds) {
           const guild = (membership as any).guilds;
           if (guild && !allMyGuilds.find(g => g.id === guild.id)) {
+            const { count } = await supabase
+              .from('guild_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('guild_id', guild.id);
+
             allMyGuilds.push({
               ...guild,
-              member_count: 1,
+              member_count: (count || 0) + 1, // +1 para incluir o owner
               description: guild.description || ''
             });
           }
-        });
+        }
       }
 
       setMyGuilds(allMyGuilds);
@@ -106,11 +117,21 @@ const Guilds = () => {
           !allMyGuilds.find(myGuild => myGuild.id === guild.id)
         );
 
-        setPublicGuilds(filteredPublicGuilds.map(guild => ({
-          ...guild,
-          member_count: 1,
-          description: guild.description || ''
-        })));
+        const publicGuildsWithCount: Guild[] = [];
+        for (const guild of filteredPublicGuilds) {
+          const { count } = await supabase
+            .from('guild_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('guild_id', guild.id);
+
+          publicGuildsWithCount.push({
+            ...guild,
+            member_count: (count || 0) + 1, // +1 para incluir o owner
+            description: guild.description || ''
+          });
+        }
+
+        setPublicGuilds(publicGuildsWithCount);
       }
       
     } catch (error) {

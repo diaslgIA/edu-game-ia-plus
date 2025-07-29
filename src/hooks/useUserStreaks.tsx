@@ -34,7 +34,7 @@ export const useUserStreaks = () => {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Não existe registro, criar um novo
+        // Não existe registro, criar um novo usando upsert
         await createInitialStreak();
       } else if (error) {
         console.error('Error loading user streak:', error);
@@ -60,13 +60,15 @@ export const useUserStreaks = () => {
     try {
       const { data, error } = await supabase
         .from('user_streaks')
-        .insert({
+        .upsert({
           user_id: user.id,
           current_streak: 0,
           longest_streak: 0,
           last_study_date: null,
           streak_frozen: false,
           freeze_count: 0
+        }, {
+          onConflict: 'user_id'
         })
         .select()
         .single();
@@ -109,13 +111,15 @@ export const useUserStreaks = () => {
 
       const { data, error } = await supabase
         .from('user_streaks')
-        .update({
+        .upsert({
+          user_id: user.id,
           current_streak: newCurrentStreak,
           longest_streak: newLongestStreak,
           last_study_date: today,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         })
-        .eq('user_id', user.id)
         .select()
         .single();
 
