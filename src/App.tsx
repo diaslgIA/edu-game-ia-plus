@@ -16,7 +16,6 @@ import Exercises from "./pages/Exercises";
 import Support from "./pages/Support";
 import Guilds from "./pages/Guilds";
 import GuildDetails from "./pages/GuildDetails";
-import GuildCreate from "./pages/GuildCreate";
 import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
 import Premium from "./pages/Premium";
@@ -58,12 +57,6 @@ const App = () => (
                 <Route path="/guilds" element={
                   <ProtectedRoute>
                     <Guilds />
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/guilds/create" element={
-                  <ProtectedRoute>
-                    <GuildCreate />
                   </ProtectedRoute>
                 } />
                 

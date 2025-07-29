@@ -37,12 +37,22 @@ export const useMentorAffinity = () => {
 
       const affinityMap: Record<string, MentorAffinity> = {};
       data?.forEach(affinity => {
+        // Safely handle the unlocked_content field which comes as Json from Supabase
+        let unlockedContent: string[] = [];
+        if (affinity.unlocked_content) {
+          if (Array.isArray(affinity.unlocked_content)) {
+            unlockedContent = affinity.unlocked_content.filter((item): item is string => 
+              typeof item === 'string'
+            );
+          }
+        }
+
         affinityMap[affinity.mentor_id] = {
           mentor_id: affinity.mentor_id,
           affinity_level: affinity.affinity_level,
           experience_points: affinity.experience_points,
           last_interaction: affinity.last_interaction,
-          unlocked_content: Array.isArray(affinity.unlocked_content) ? affinity.unlocked_content : []
+          unlocked_content: unlockedContent
         };
       });
 
