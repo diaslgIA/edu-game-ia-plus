@@ -1,9 +1,12 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
+import UserRankingCard from '@/components/UserRankingCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProgress } from '@/hooks/useUserProgress';
+import { useRankings } from '@/hooks/useRankings';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
@@ -24,11 +27,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { getTotalProgress, loading } = useUserProgress();
+  const { rankings } = useRankings();
   const { t } = useLanguage();
   const { playSound, isMuted } = useSound();
 
   useEffect(() => {
-    // No updateLastLogin here
+    // Dashboard initialization
   }, [user]);
 
   const handleNavigation = (path: string) => {
@@ -37,6 +41,10 @@ const Dashboard = () => {
   };
 
   const totalProgress = loading ? 0 : getTotalProgress();
+
+  // Encontrar dados do usuário no ranking
+  const userRanking = rankings.find(r => r.user_id === user?.id);
+  const totalUsers = rankings.length;
 
   // Menu principal com foco em guilds, rankings e configurações
   const mainMenuItems = [
@@ -105,6 +113,11 @@ const Dashboard = () => {
 
         {/* Conteúdo principal */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* Card de ranking do usuário */}
+          <div className="mb-6">
+            <UserRankingCard />
+          </div>
+
           {/* Menu principal */}
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4 flex items-center space-x-2">
@@ -144,7 +157,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Estatísticas rápidas */}
+          {/* Estatísticas rápidas com dados reais */}
           <div className="mb-8">
             <h2 className="text-white text-xl font-bold mb-4 flex items-center space-x-2">
               <TrendingUp size={24} />
@@ -158,7 +171,7 @@ const Dashboard = () => {
               </div>
               
               <div className="bg-white/15 backdrop-blur-md rounded-2xl p-4 text-center">
-                <div className="text-2xl font-bold text-green-400 mb-1">0</div>
+                <div className="text-2xl font-bold text-green-400 mb-1">{profile?.points || 0}</div>
                 <div className="text-white/80 text-sm">Pontos Ganhos</div>
               </div>
               
@@ -168,7 +181,9 @@ const Dashboard = () => {
               </div>
               
               <div className="bg-white/15 backdrop-blur-md rounded-2xl p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-400 mb-1">-</div>
+                <div className="text-2xl font-bold text-yellow-400 mb-1">
+                  {userRanking ? `${userRanking.position}°` : '-'}
+                </div>
                 <div className="text-white/80 text-sm">Posição Ranking</div>
               </div>
             </div>

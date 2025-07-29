@@ -4,10 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { SoundProvider } from "./contexts/SoundContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,7 +20,7 @@ import Guilds from "./pages/Guilds";
 import GuildDetail from "./pages/GuildDetail";
 import CreateGuild from "./pages/CreateGuild";
 import JoinGuild from "./pages/JoinGuild";
-import Rankings from "./pages/Rankings";
+import Ranking from "./pages/Ranking";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -115,7 +115,7 @@ const App = () => (
                     path="/rankings"
                     element={
                       <ProtectedRoute>
-                        <Rankings />
+                        <Ranking />
                       </ProtectedRoute>
                     }
                   />
