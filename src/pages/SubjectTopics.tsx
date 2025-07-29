@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -8,6 +9,16 @@ import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
+
+// Database row type for subject_contents
+interface SubjectContentRow {
+  id: string;
+  title: string;
+  description: string;
+  difficulty_level: string;
+  estimated_time: number;
+  grande_tema: string;
+}
 
 // Fixed interface to match database schema (UUID strings)
 interface Topic {
@@ -57,31 +68,33 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject
+      // 2. Fetch all topics belonging to this subject with explicit typing
       const { data: topicsData, error: topicsError } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId);
+        .eq('subject_id', subjectId)
+        .returns<SubjectContentRow[]>();
 
       if (topicsError) {
         console.error('Erro ao buscar tópicos:', topicsError);
       } else if (topicsData) {
-        // 3. Group topics by "grande_tema" - Fix the type inference issue
+        // 3. Group topics by "grande_tema" with explicit typing
         const groups: GroupedTopics = {};
         
-        topicsData.forEach((topic) => {
-          const theme = topic.grande_tema;
+        topicsData.forEach((dbTopic: SubjectContentRow) => {
+          const theme = dbTopic.grande_tema;
           if (!groups[theme]) {
             groups[theme] = [];
           }
           
+          // Explicit mapping from database row to Topic interface
           const topicItem: Topic = {
-            id: topic.id,
-            title: topic.title,
-            description: topic.description,
-            difficulty_level: topic.difficulty_level,
-            estimated_time: topic.estimated_time,
-            grande_tema: topic.grande_tema
+            id: dbTopic.id,
+            title: dbTopic.title,
+            description: dbTopic.description,
+            difficulty_level: dbTopic.difficulty_level,
+            estimated_time: dbTopic.estimated_time,
+            grande_tema: dbTopic.grande_tema
           };
           
           groups[theme].push(topicItem);
