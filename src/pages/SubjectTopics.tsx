@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -57,19 +58,22 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject - using any type to avoid deep instantiation
-      const { data, error } = await supabase
+      // 2. Fetch all topics belonging to this subject - cast to any[] immediately
+      const { data: rawData, error } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
         .eq('subject_id', subjectId);
 
       if (error) {
         console.error('Erro ao buscar tópicos:', error);
-      } else if (data) {
+      } else if (rawData) {
+        // Cast to any[] to avoid TypeScript deep instantiation issues
+        const data = rawData as any[];
+        
         // 3. Group topics by "grande_tema"
         const groups: GroupedTopics = {};
         
-        data.forEach((item: any) => {
+        data.forEach((item) => {
           const theme = item.grande_tema;
           if (!groups[theme]) {
             groups[theme] = [];
