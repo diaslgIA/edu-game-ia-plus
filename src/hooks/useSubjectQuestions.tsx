@@ -7,7 +7,7 @@ interface SubjectQuestion {
   subject: string;
   topic: string;
   question: string;
-  options: string[] | any; // Pode vir como array ou objeto do banco
+  options: string[];
   correct_answer: number;
   explanation: string;
   difficulty_level: string;
@@ -39,7 +39,18 @@ export const useSubjectQuestions = (subject: string) => {
       }
 
       console.log('Loaded questions from database:', data);
-      setQuestions(data || []);
+      
+      // Ensure options are always arrays
+      const processedQuestions = (data || []).map(question => ({
+        ...question,
+        options: Array.isArray(question.options) 
+          ? question.options 
+          : typeof question.options === 'object' && question.options !== null
+            ? Object.values(question.options as Record<string, string>)
+            : []
+      }));
+      
+      setQuestions(processedQuestions);
     } catch (error) {
       console.error('Error loading questions:', error);
     } finally {
