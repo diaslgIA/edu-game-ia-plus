@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -187,7 +186,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
       <QuizResults
         score={score}
         totalQuestions={questions.length}
-        timeSpent={timeSpent}
         subject={subject}
         onRestart={restartQuiz}
         onBack={onBack}

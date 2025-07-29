@@ -1,67 +1,62 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, Crown, Lock, Unlock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Users, Shield, Crown } from 'lucide-react';
 
 interface Guild {
   id: string;
   name: string;
   description: string;
-  guild_code: string;
+  member_count: number;
+  max_members: number;
   owner_id: string;
-  total_points: number;
-  is_public: boolean;
   created_at: string;
-  member_count?: number;
+  is_public: boolean;
 }
 
 interface GuildCardProps {
   guild: Guild;
+  showRole?: boolean;
+  onClick?: () => void;
 }
 
-const GuildCard: React.FC<GuildCardProps> = ({ guild }) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(`/guilds/${guild.id}`);
-  };
-
+const GuildCard: React.FC<GuildCardProps> = ({ guild, showRole = false, onClick }) => {
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-shadow bg-white/10 backdrop-blur-md border-white/20 text-white"
-      onClick={handleClick}
+      className={`transition-all hover:shadow-md ${onClick ? 'cursor-pointer' : ''}`}
+      onClick={onClick}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-white">{guild.name}</CardTitle>
-          <div className="flex items-center gap-1">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-lg">{guild.name}</h3>
+          {showRole && (
+            <div className="flex items-center space-x-1 text-sm text-gray-600">
+              <Crown size={16} />
+              <span>Líder</span>
+            </div>
+          )}
+        </div>
+        
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          {guild.description}
+        </p>
+        
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-1 text-gray-500">
+            <Users size={16} />
+            <span>{guild.member_count}/{guild.max_members}</span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
             {guild.is_public ? (
-              <Unlock size={16} className="text-green-400" />
+              <span className="text-green-600 text-xs">Pública</span>
             ) : (
-              <Lock size={16} className="text-orange-400" />
+              <div className="flex items-center space-x-1 text-orange-600">
+                <Shield size={12} />
+                <span className="text-xs">Privada</span>
+              </div>
             )}
           </div>
-        </div>
-        <CardDescription className="text-white/70 line-clamp-2">
-          {guild.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users size={14} className="text-white/60" />
-            <span className="text-sm text-white/80">
-              {guild.member_count || 0} membros
-            </span>
-          </div>
-          <Badge variant="outline" className="text-white border-white/30">
-            {guild.total_points} pts
-          </Badge>
-        </div>
-        <div className="mt-2 text-xs text-white/60">
-          Código: {guild.guild_code}
         </div>
       </CardContent>
     </Card>

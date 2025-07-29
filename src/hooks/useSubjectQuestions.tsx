@@ -40,15 +40,34 @@ export const useSubjectQuestions = (subject: string) => {
 
       console.log('Loaded questions from database:', data);
       
-      // Ensure options are always arrays
-      const processedQuestions = (data || []).map(question => ({
-        ...question,
-        options: Array.isArray(question.options) 
-          ? question.options 
-          : typeof question.options === 'object' && question.options !== null
-            ? Object.values(question.options as Record<string, string>)
-            : []
-      }));
+      // Process questions to ensure proper format
+      const processedQuestions: SubjectQuestion[] = (data || []).map(question => {
+        let options: string[] = [];
+        
+        // Handle different option formats from database
+        if (Array.isArray(question.options)) {
+          options = question.options.map(opt => String(opt));
+        } else if (typeof question.options === 'object' && question.options !== null) {
+          // If it's an object with numeric keys, convert to array
+          const optionsObj = question.options as Record<string, any>;
+          if ('0' in optionsObj) {
+            options = Object.keys(optionsObj).sort().map(key => String(optionsObj[key]));
+          } else {
+            options = Object.values(optionsObj).map(opt => String(opt));
+          }
+        }
+        
+        return {
+          id: question.id,
+          subject: question.subject,
+          topic: question.topic,
+          question: question.question,
+          options,
+          correct_answer: question.correct_answer,
+          explanation: question.explanation || '',
+          difficulty_level: question.difficulty_level || 'medium'
+        };
+      });
       
       setQuestions(processedQuestions);
     } catch (error) {
