@@ -21,10 +21,12 @@ interface Question {
 
 interface SubjectQuizProps {
   subject: string;
+  topic?: string;
   onBack: () => void;
+  onComplete?: () => void;
 }
 
-const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
+const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onComplete }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { questions: dbQuestions, loading } = useSubjectQuestions(subject);
@@ -43,8 +45,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
 
   useEffect(() => {
     if (dbQuestions.length > 0) {
+      // Filter by topic if provided, otherwise use all questions
+      const filteredQuestions = topic 
+        ? dbQuestions.filter(q => q.topic === topic)
+        : dbQuestions;
+        
       // Convert database questions to quiz format
-      const convertedQuestions: Question[] = dbQuestions.slice(0, 10).map(q => ({
+      const convertedQuestions: Question[] = filteredQuestions.slice(0, 10).map(q => ({
         id: q.id,
         question: q.question,
         options: Array.isArray(q.options) ? q.options : [],
@@ -57,7 +64,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
       setQuestions(convertedQuestions);
       setSelectedAnswers(new Array(convertedQuestions.length).fill(null));
     }
-  }, [dbQuestions]);
+  }, [dbQuestions, topic]);
 
   const mapDifficulty = (level: string): 'Fácil' | 'Médio' | 'Difícil' => {
     switch (level.toLowerCase()) {
@@ -129,6 +136,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
 
     // Save quiz score
     await saveQuizScore(subject, finalScore, questions.length, finalTimeSpent);
+    
+    // Call onComplete if provided
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   const restartQuiz = () => {
@@ -187,8 +199,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onBack }) => {
         score={score}
         totalQuestions={questions.length}
         subject={subject}
-        onRestart={restartQuiz}
         onBack={onBack}
+        restartQuiz={restartQuiz}
       />
     );
   }

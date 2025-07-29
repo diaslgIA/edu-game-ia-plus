@@ -23,6 +23,8 @@ export interface Mentor {
   catchPhrase: string;
   encouragementMessages: string[];
   hintStyle: string;
+  subject?: string; // Added subject property
+  description?: string; // Added description property
 }
 
 export const mentorInfo: Record<string, { name: string; expertise: string; description: string }> = {
@@ -73,7 +75,9 @@ const mentorsData: Record<string, Mentor> = {
       'Perfeito! Os números dançam em harmonia!',
       'Magnífico! A geometria sorri para você!'
     ],
-    hintStyle: 'Pense nos fundamentos... Como diria meu teorema:'
+    hintStyle: 'Pense nos fundamentos... Como diria meu teorema:',
+    subject: 'Matemática',
+    description: 'O grande matemático grego que nos ensina os fundamentos da matemática com sabedoria milenar.'
   },
   'ruibarbosa': {
     id: 'ruibarbosa',
@@ -89,7 +93,9 @@ const mentorsData: Record<string, Mentor> = {
       'Brilhante! As palavras obedecem ao seu comando!',
       'Esplêndido! A gramática se curva à sua sabedoria!'
     ],
-    hintStyle: 'Observe a estrutura da frase... Lembre-se:'
+    hintStyle: 'Observe a estrutura da frase... Lembre-se:',
+    subject: 'Português',
+    description: 'O águia de Haia, mestre das letras e da eloquência da língua portuguesa.'
   },
   'einstein': {
     id: 'einstein',
@@ -105,7 +111,9 @@ const mentorsData: Record<string, Mentor> = {
       'Genial! A física não tem segredos para você!',
       'Extraordinário! As leis da natureza são suas amigas!'
     ],
-    hintStyle: 'Pense fora da caixa... Como sempre digo:'
+    hintStyle: 'Pense fora da caixa... Como sempre digo:',
+    subject: 'Física',
+    description: 'O gênio da física moderna que revolucionou nossa compreensão do universo.'
   },
   'marie-curie': {
     id: 'marie-curie',
@@ -121,7 +129,9 @@ const mentorsData: Record<string, Mentor> = {
       'Perfeito! A química flui em suas veias!',
       'Extraordinário! As reações obedecem ao seu comando!'
     ],
-    hintStyle: 'Observe as reações... Lembre-se:'
+    hintStyle: 'Observe as reações... Lembre-se:',
+    subject: 'Química',
+    description: 'A pioneira da química e física, primeira mulher a ganhar um Nobel.'
   },
   'darwin': {
     id: 'darwin',
@@ -137,7 +147,9 @@ const mentorsData: Record<string, Mentor> = {
       'Magnífico! A evolução sorri para você!',
       'Perfeito! A natureza não tem segredos para você!'
     ],
-    hintStyle: 'Observe a natureza... Como sempre notei:'
+    hintStyle: 'Observe a natureza... Como sempre notei:',
+    subject: 'Biologia',
+    description: 'O naturalista que transformou nossa compreensão da vida e evolução.'
   },
   'florestan': {
     id: 'florestan',
@@ -153,7 +165,9 @@ const mentorsData: Record<string, Mentor> = {
       'Brilhante! A história não tem segredos para você!',
       'Magnífico! O conhecimento liberta!'
     ],
-    hintStyle: 'Reflita sobre o contexto social... Como sempre analiso:'
+    hintStyle: 'Reflita sobre o contexto social... Como sempre analiso:',
+    subject: 'História',
+    description: 'O sociólogo brasileiro que nos ajuda a entender a sociedade e a história.'
   }
 };
 
