@@ -6,6 +6,7 @@ import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import GamifiedContentViewer from './GamifiedContentViewer';
 import SubjectQuiz from './SubjectQuiz';
+import ContentInitializerButton from './ContentInitializerButton';
 
 interface SubjectContentProps {
   subject: string;
@@ -57,6 +58,11 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
     );
   }
 
+  const hasRichContent = contents.some(content => 
+    content.interactive_activities && 
+    Object.keys(content.interactive_activities).length > 0
+  );
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -90,6 +96,11 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
             Ganhe pontos, desbloqueie conquistas e suba de nível!
           </p>
         </div>
+
+        {/* Content Initializer - mostrar apenas se não há conteúdo rico */}
+        {!loading && !hasRichContent && (
+          <ContentInitializerButton />
+        )}
 
         {/* Quiz Section */}
         {questions.length > 0 && (
@@ -139,7 +150,8 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
             <div className="space-y-4">
               {contents.map((content) => {
                 const progress = getContentProgress(content.id);
-                const hasInteractiveActivities = content.interactive_activities && Object.keys(content.interactive_activities).length > 0;
+                const hasInteractiveActivities = content.interactive_activities && 
+                  Object.keys(content.interactive_activities).length > 0;
                 const hasChallenge = content.challenge_question;
                 
                 return (
@@ -192,7 +204,7 @@ const SubjectContent: React.FC<SubjectContentProps> = ({ subject, onBack }) => {
                         <div className="flex items-center space-x-4 text-xs">
                           <div className="flex items-center space-x-1">
                             <Clock size={12} className="text-blue-400" />
-                            <span className="text-white/80">15-20 min</span>
+                            <span className="text-white/80">{content.estimated_time || 15}-{(content.estimated_time || 15) + 5} min</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <span className={`text-xs ${getDifficultyColor(content.difficulty_level)}`}>
