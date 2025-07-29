@@ -57,12 +57,12 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject - avoid type inference completely
+      // 2. Fetch all topics belonging to this subject - cast entire response to any
       try {
         const response = await supabase
           .from('subject_contents')
           .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-          .eq('subject_id', subjectId);
+          .eq('subject_id', subjectId) as any;
 
         if (response.error) {
           console.error('Erro ao buscar tópicos:', response.error);
