@@ -24,7 +24,7 @@ const Subjects = () => {
     if (!subjectsByArea[area]) {
       subjectsByArea[area] = [];
     }
-    subjectsByArea[area].push(materia.nome);
+    subjectsByArea[area].push(materia.name);
   });
 
   if (selectedSubject) {
@@ -90,12 +90,12 @@ const Subjects = () => {
             
             <div className="flex items-center space-x-2">
               <Trophy className="text-yellow-400" size={20} />
-              <span className="font-semibold">{profile?.xp_points || 0} XP</span>
+              <span className="font-semibold">{profile?.xp_points || profile?.points || 0} XP</span>
             </div>
             
             <div className="flex items-center space-x-2">
               <Target className="text-green-400" size={20} />
-              <span className="font-semibold">Nível {profile?.global_level || 1}</span>
+              <span className="font-semibold">Nível {profile?.global_level || profile?.level || 1}</span>
             </div>
           </div>
 

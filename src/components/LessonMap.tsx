@@ -16,7 +16,7 @@ const LessonMap: React.FC<LessonMapProps> = ({ subject, onBack }) => {
   const { progress, isLessonUnlocked, getLessonProgress } = useLessonProgress(subject);
 
   // Get lessons for this subject
-  const lessons = conteudoEducacional.conteudos.filter(c => c.materia === subject);
+  const lessons = conteudoEducacional.conteudos.filter(c => c.subject_id === subject);
 
   const getLessonStatus = (lessonIndex: number, lessonId: string) => {
     const lessonProgress = getLessonProgress(lessonId);
@@ -97,7 +97,7 @@ const LessonMap: React.FC<LessonMapProps> = ({ subject, onBack }) => {
                   {/* Lesson Info */}
                   <div className="mt-2 text-center max-w-32">
                     <h3 className="text-sm font-semibold text-gray-800 leading-tight">
-                      {lesson.titulo}
+                      {lesson.title}
                     </h3>
                     
                     {lessonProgress && (

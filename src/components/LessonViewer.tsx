@@ -24,7 +24,7 @@ const LessonViewer: React.FC = () => {
 
   // Find the lesson content
   const lessonIndex = parseInt(lessonId?.replace('lesson_', '') || '0');
-  const lessons = conteudoEducacional.conteudos.filter(c => c.materia === subject);
+  const lessons = conteudoEducacional.conteudos.filter(c => c.subject_id === subject);
   const lesson = lessons[lessonIndex];
 
   const lessonProgress = getLessonProgress(lessonId || '');
@@ -56,9 +56,9 @@ const LessonViewer: React.FC = () => {
   }
 
   const sections = [
-    { title: 'O que é?', content: lesson.explicacao || lesson.detalhes?.['O que é?'] || '' },
-    { title: 'Conceitos Principais', content: lesson.detalhes?.['Conceitos Principais'] || '' },
-    { title: 'Exemplo Prático', content: lesson.detalhes?.['Exemplo Prático'] || '' },
+    { title: 'O que é?', content: lesson.description || lesson.content_data?.sections?.[0]?.content || '' },
+    { title: 'Conceitos Principais', content: lesson.content_data?.sections?.[1]?.content || 'Conceitos principais desta lição...' },
+    { title: 'Exemplo Prático', content: 'Exemplo prático aplicando os conceitos aprendidos...' },
     { title: 'Exercício', content: '', type: 'exercise' }
   ];
 
@@ -110,7 +110,7 @@ const LessonViewer: React.FC = () => {
         await unlockAchievement({
           achievement_id: `perfect_${subject}_${lessonId}`,
           achievement_name: 'Execução Perfeita',
-          achievement_description: `Completou ${lesson.titulo} sem errar!`,
+          achievement_description: `Completou ${lesson.title} sem errar!`,
           achievement_icon: '👑',
           points_awarded: 20,
           subject: subject,
@@ -118,14 +118,14 @@ const LessonViewer: React.FC = () => {
       }
     }
 
-    navigate(`/subjects/${subject}`);
+    navigate(`/subjects`);
   };
 
   const renderExercise = () => {
     // Simple multiple choice question based on lesson content
-    const question = `Qual é o conceito principal de ${lesson.titulo}?`;
+    const question = `Qual é o conceito principal de ${lesson.title}?`;
     const options = [
-      lesson.explicacao?.substring(0, 50) + '...',
+      lesson.description?.substring(0, 50) + '...',
       'Uma alternativa incorreta relacionada ao tema',
       'Outra opção incorreta mas plausível',
       'Uma quarta opção também incorreta'
@@ -205,7 +205,7 @@ const LessonViewer: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            {lesson.titulo}
+            {lesson.title}
           </h2>
           
           <h3 className="text-lg font-semibold text-blue-600 mb-4">

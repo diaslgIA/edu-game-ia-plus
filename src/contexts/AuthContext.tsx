@@ -18,6 +18,11 @@ interface Profile {
   first_login: boolean;
   last_login: string | null;
   login_streak: number | null;
+  xp_points?: number;
+  global_level?: number;
+  hearts?: number;
+  gems?: number;
+  daily_goal_lessons?: number;
   created_at: string;
   updated_at: string;
 }
