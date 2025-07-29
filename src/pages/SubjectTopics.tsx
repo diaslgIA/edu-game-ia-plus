@@ -1,32 +1,32 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
-import ContentViewer from '@/components/ContentViewer';
+import TextContentViewer from '@/components/TextContentViewer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubjectContents } from '@/hooks/useSubjectContents'; // Mantido se você usa em outro lugar
 import { useSound } from '@/contexts/SoundContext';
 
-// A sua interface de Tópico, ajustada para o ID numérico
+// Interface simplificada para o tópico
 interface Topic {
-  id: number; // Alterado para number para corresponder ao banco de dados
+  id: string;
   title: string;
   description: string;
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
+  explanation?: string;
 }
 
-// Uma nova interface para agrupar os tópicos por tema
+// Interface para agrupar os tópicos por tema
 interface GroupedTopics {
   [key: string]: Topic[];
 }
 
 const SubjectTopics = () => {
-  // CORREÇÃO: Pega o ID numérico da matéria da URL
-  const { subjectId } = useParams<{ subjectId: string }>();
+  const { subject } = useParams<{ subject: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
   
@@ -36,56 +36,54 @@ const SubjectTopics = () => {
   const [subjectName, setSubjectName] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
-  // Mantido para a lógica de progresso
-  const { getContentProgress } = useSubjectContents(subjectName || '');
-
   useEffect(() => {
-    // Se não houver ID na URL, não faz nada
-    if (!subjectId) return;
+    if (!subject) return;
 
     const fetchAndGroupTopics = async () => {
       setLoading(true);
       
-      // 1. Busca o nome da matéria para exibir no cabeçalho
-      const { data: subjectData, error: subjectError } = await supabase
-        .from('subjects')
-        .select('nome')
-        .eq('id', subjectId)
-        .single();
+      // Decodificar o nome da matéria da URL
+      const decodedSubject = decodeURIComponent(subject);
+      setSubjectName(decodedSubject);
       
-      if (subjectError) {
-        console.error('Erro ao buscar o nome da matéria:', subjectError);
-      } else if (subjectData) {
-        setSubjectName(subjectData.nome);
-      }
-      
-      // 2. Busca todos os tópicos que pertencem a esta matéria
+      // Buscar tópicos diretamente pelo nome da matéria
       const { data: topicsData, error: topicsError } = await supabase
         .from('subject_contents')
-        .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId); // A CONEXÃO CORRETA
+        .select('id, title, description, difficulty_level, estimated_time, grande_tema, explanation')
+        .eq('subject', decodedSubject);
 
       if (topicsError) {
         console.error('Erro ao buscar tópicos:', topicsError);
       } else if (topicsData) {
-        // 3. Agrupa os tópicos pelo "grande_tema", preservando sua lógica visual
-        const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
+        // Agrupar os tópicos pelo "grande_tema"
+        const groups: GroupedTopics = {};
+        
+        for (const item of topicsData) {
+          const topic: Topic = {
+            id: item.id,
+            title: item.title,
+            description: item.description || '',
+            difficulty_level: item.difficulty_level || 'medium',
+            estimated_time: item.estimated_time || 15,
+            grande_tema: item.grande_tema || 'Geral',
+            explanation: item.explanation
+          };
+          
           const theme = topic.grande_tema;
-          if (!acc[theme]) {
-            acc[theme] = [];
+          if (!groups[theme]) {
+            groups[theme] = [];
           }
-          acc[theme].push(topic as Topic);
-          return acc;
-        }, {} as GroupedTopics);
+          groups[theme].push(topic);
+        }
+        
         setGroupedTopics(groups);
       }
       setLoading(false);
     };
     
     fetchAndGroupTopics();
-  }, [subjectId]);
+  }, [subject]);
 
-  // Suas funções de ajuda permanecem as mesmas
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'text-green-400';
@@ -104,9 +102,9 @@ const SubjectTopics = () => {
     }
   };
 
-  const handleTopicClick = (topicId: number) => {
+  const handleTopicClick = (topicId: string) => {
     if (!isMuted) playSound('click');
-    setSelectedTopicId(String(topicId));
+    setSelectedTopicId(topicId);
   };
 
   const handleBack = () => {
@@ -114,26 +112,31 @@ const SubjectTopics = () => {
     if (selectedTopicId) {
       setSelectedTopicId(null);
     } else {
-      navigate('/subjects'); // Volta para a lista de áreas/matérias
+      navigate('/subjects');
     }
   };
 
-  // Se um tópico foi selecionado, mostrar o ContentViewer
+  // Se um tópico foi selecionado, mostrar o TextContentViewer
   if (selectedTopicId) {
-    return (
-      <MobileContainer background="gradient">
-        <ContentViewer
-          subject={subjectName}
-          contentId={selectedTopicId}
-          onBack={handleBack}
-          onComplete={() => setSelectedTopicId(null)}
-        />
-        <BottomNavigation />
-      </MobileContainer>
-    );
+    const selectedTopic = Object.values(groupedTopics)
+      .flat()
+      .find(topic => topic.id === selectedTopicId);
+      
+    if (selectedTopic) {
+      return (
+        <MobileContainer background="gradient">
+          <TextContentViewer
+            topic={selectedTopic}
+            onBack={handleBack}
+            onComplete={() => setSelectedTopicId(null)}
+          />
+          <BottomNavigation />
+        </MobileContainer>
+      );
+    }
   }
 
-  // A renderização principal, agora com os dados agrupados
+  // Renderização principal com os dados agrupados
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
@@ -161,37 +164,37 @@ const SubjectTopics = () => {
                   <span>{theme}</span>
                 </h2>
                 <div className="space-y-4">
-                  {groupedTopics[theme].map((topic) => {
-                    const progress = getContentProgress(String(topic.id));
-                    return (
-                      <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
-                            <BookOpen size={24} />
-                            {progress && progress.completed && (
-                              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                <CheckCircle size={16} className="text-white" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
-                            <p className="text-white/80 text-sm mb-2">{topic.description}</p>
-                            <div className="flex items-center space-x-4 text-xs">
-                              <div className="flex items-center space-x-1">
-                                <Clock size={12} className="text-blue-400" />
-                                <span className="text-white/80">{topic.estimated_time} min</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>{getDifficultyText(topic.difficulty_level)}</span>
-                              </div>
+                  {groupedTopics[theme].map((topic) => (
+                    <div 
+                      key={topic.id} 
+                      onClick={() => handleTopicClick(topic.id)} 
+                      className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg">
+                          <BookOpen size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
+                          <p className="text-white/80 text-sm mb-2">{topic.description}</p>
+                          <div className="flex items-center space-x-4 text-xs">
+                            <div className="flex items-center space-x-1">
+                              <Clock size={12} className="text-blue-400" />
+                              <span className="text-white/80">{topic.estimated_time} min</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
+                                {getDifficultyText(topic.difficulty_level)}
+                              </span>
                             </div>
                           </div>
-                          <div className="text-white/60"><Play size={20} /></div>
+                        </div>
+                        <div className="text-white/60">
+                          <Play size={20} />
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))
