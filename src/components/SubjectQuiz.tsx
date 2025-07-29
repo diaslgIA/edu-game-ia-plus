@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Trophy, Clock, Heart } from 'lucide-react';
 import QuizQuestion from '@/components/quiz/QuizQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
+import QuizMentorFeedback from '@/components/quiz/QuizMentorFeedback';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useUserActivities } from '@/hooks/useUserActivities';
@@ -37,6 +38,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<any>(null);
   const [score, setScore] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
   const [startTime] = useState(Date.now());
@@ -45,12 +48,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
 
   useEffect(() => {
     if (dbQuestions.length > 0) {
-      // Filter by topic if provided, otherwise use all questions
       const filteredQuestions = topic 
         ? dbQuestions.filter(q => q.topic === topic)
         : dbQuestions;
         
-      // Convert database questions to quiz format
       const convertedQuestions: Question[] = filteredQuestions.slice(0, 10).map(q => ({
         id: q.id,
         question: q.question,
@@ -81,6 +82,30 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
 
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = answerIndex === currentQuestion.correctAnswer;
+    const pointsEarned = isCorrect ? 10 : 0;
+    
+    // Update score immediately
+    setScore(prevScore => prevScore + pointsEarned);
+    
+    // Record the question activity
+    await recordQuizQuestion(
+      subject,
+      currentQuestion.topic || 'Geral',
+      currentQuestion.id,
+      answerIndex,
+      currentQuestion.correctAnswer,
+      5
+    );
+
+    // Show mentor feedback
+    setFeedbackData({
+      subject,
+      isCorrect,
+      explanation: currentQuestion.explanation || 'Explicação não disponível.',
+      xpGained: pointsEarned,
+      isVisible: true
+    });
+    setShowFeedback(true);
     
     if (!isCorrect) {
       const newHearts = hearts - 1;
@@ -96,16 +121,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
         return;
       }
     }
+  };
 
-    // Record the question activity
-    await recordQuizQuestion(
-      subject,
-      currentQuestion.topic || 'Geral',
-      currentQuestion.id,
-      answerIndex,
-      currentQuestion.correctAnswer,
-      5 // approximate time per question
-    );
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
+    setFeedbackData(null);
   };
 
   const handleNext = () => {
@@ -125,19 +145,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
   const finishQuiz = async () => {
     const finalTimeSpent = Math.floor((Date.now() - startTime) / 1000);
     setTimeSpent(finalTimeSpent);
-    
-    const correctAnswers = selectedAnswers.reduce((count, answer, index) => {
-      return answer === questions[index]?.correctAnswer ? count + 1 : count;
-    }, 0);
-    
-    const finalScore = correctAnswers * 10;
-    setScore(finalScore);
     setShowResults(true);
 
     // Save quiz score
-    await saveQuizScore(subject, finalScore, questions.length, finalTimeSpent);
+    await saveQuizScore(subject, score, questions.length, finalTimeSpent);
     
-    // Call onComplete if provided
     if (onComplete) {
       onComplete();
     }
@@ -151,6 +163,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
     setTimeSpent(0);
     setHearts(3);
     setGameOver(false);
+    setShowFeedback(false);
+    setFeedbackData(null);
   };
 
   if (loading) {
@@ -238,7 +252,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100 relative">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white shadow-sm">
         <Button variant="ghost" onClick={onBack}>
@@ -300,13 +314,33 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onBack, onCom
           
           <Button
             onClick={handleNext}
-            disabled={selectedAnswers[currentQuestionIndex] === null}
+            disabled={selectedAnswers[currentQuestionIndex] === null || showFeedback}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {currentQuestionIndex === questions.length - 1 ? 'Finalizar' : 'Próxima'}
           </Button>
         </div>
       </div>
+
+      {/* Mentor Feedback Overlay */}
+      {showFeedback && feedbackData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-md w-full">
+            <QuizMentorFeedback
+              {...feedbackData}
+              onClose={handleFeedbackClose}
+            />
+            <div className="mt-4 text-center">
+              <Button 
+                onClick={handleFeedbackClose}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

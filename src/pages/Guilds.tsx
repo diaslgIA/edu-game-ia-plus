@@ -10,7 +10,6 @@ import { Users, Plus, Shield, Search, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import GuildCard from '@/components/guild/GuildCard';
 
-// Define Guild interface to match what we expect
 interface Guild {
   id: string;
   name: string;
@@ -42,7 +41,7 @@ const Guilds = () => {
     
     setLoading(true);
     try {
-      // Load guilds where user is a member or owner
+      // Load user's guilds (owned or member)
       const { data: memberGuilds, error: memberError } = await supabase
         .from('guilds')
         .select(`
@@ -53,85 +52,68 @@ const Guilds = () => {
           is_public,
           created_at,
           max_members,
-          member_count:guild_members(count)
+          guild_members!inner (
+            profile_id
+          )
         `)
-        .or(`owner_id.eq.${user.id},id.in.(${await getUserGuildIds()})`);
+        .or(`owner_id.eq.${user.id},guild_members.profile_id.eq.${user.id}`);
 
       if (memberError) {
         console.error('Error loading member guilds:', memberError);
-        setMyGuilds([]);
+        // Try simpler query if complex one fails
+        const { data: simpleGuilds } = await supabase
+          .from('guilds')
+          .select('*')
+          .eq('owner_id', user.id);
+        
+        setMyGuilds(simpleGuilds?.map(guild => ({
+          ...guild,
+          member_count: 1,
+          description: guild.description || ''
+        })) || []);
       } else {
-        // Process the data to ensure proper format
-        const processedMyGuilds = (memberGuilds || []).map(guild => ({
-          id: guild.id,
-          name: guild.name,
-          description: guild.description || '',
-          member_count: Array.isArray(guild.member_count) ? guild.member_count.length : 1,
-          max_members: guild.max_members || 50,
-          owner_id: guild.owner_id,
-          created_at: guild.created_at,
-          is_public: guild.is_public || false
-        }));
-        setMyGuilds(processedMyGuilds);
+        // Remove duplicates and format data
+        const uniqueGuilds = memberGuilds?.reduce((acc: any[], current) => {
+          const existing = acc.find(item => item.id === current.id);
+          if (!existing) {
+            acc.push({
+              ...current,
+              member_count: 1, // Default value for now
+              description: current.description || ''
+            });
+          }
+          return acc;
+        }, []);
+        
+        setMyGuilds(uniqueGuilds || []);
       }
 
       // Load public guilds for discovery
       const { data: discoverGuilds, error: discoverError } = await supabase
         .from('guilds')
-        .select(`
-          id,
-          name,
-          description,
-          owner_id,
-          is_public,
-          created_at,
-          max_members,
-          member_count:guild_members(count)
-        `)
+        .select('*')
         .eq('is_public', true)
+        .neq('owner_id', user.id) // Don't show user's own guilds
         .limit(10);
 
-      if (discoverError) {
-        console.error('Error loading public guilds:', discoverError);
-        setPublicGuilds([]);
-      } else {
-        // Process the data to ensure proper format
-        const processedPublicGuilds = (discoverGuilds || []).map(guild => ({
-          id: guild.id,
-          name: guild.name,
-          description: guild.description || '',
-          member_count: Array.isArray(guild.member_count) ? guild.member_count.length : 1,
-          max_members: guild.max_members || 50,
-          owner_id: guild.owner_id,
-          created_at: guild.created_at,
-          is_public: guild.is_public || false
-        }));
-        setPublicGuilds(processedPublicGuilds);
+      if (!discoverError && discoverGuilds) {
+        setPublicGuilds(discoverGuilds.map(guild => ({
+          ...guild,
+          member_count: 1,
+          description: guild.description || ''
+        })));
       }
       
     } catch (error) {
       console.error('Error loading guilds:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar as guildas.",
+        description: "Não foi possível carregar as guildas. Tente novamente.",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to get guild IDs where user is a member
-  const getUserGuildIds = async (): Promise<string> => {
-    if (!user) return '';
-    
-    const { data } = await supabase
-      .from('guild_members')
-      .select('guild_id')
-      .eq('profile_id', user.id);
-    
-    if (!data || data.length === 0) return 'null'; // Return 'null' to avoid SQL error
-    return data.map(item => item.guild_id).join(',');
   };
 
   const handleGuildClick = (guildId: string) => {
