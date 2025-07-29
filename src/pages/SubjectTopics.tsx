@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -7,11 +6,12 @@ import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubjectContents } from '@/hooks/useSubjectContents';
+import { useSubjectContents } from '@/hooks/useSubjectContents'; // Mantido se você usa em outro lugar
 import { useSound } from '@/contexts/SoundContext';
 
+// A sua interface de Tópico, ajustada para o ID numérico
 interface Topic {
-  id: string;
+  id: number; // Alterado para number para corresponder ao banco de dados
   title: string;
   description: string;
   difficulty_level: string;
@@ -19,66 +19,73 @@ interface Topic {
   grande_tema: string;
 }
 
+// Uma nova interface para agrupar os tópicos por tema
+interface GroupedTopics {
+  [key: string]: Topic[];
+}
+
 const SubjectTopics = () => {
-  const { subject, theme } = useParams<{ subject: string; theme: string }>();
+  // CORREÇÃO: Pega o ID numérico da matéria da URL
+  const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
-  const [topics, setTopics] = useState<Topic[]>([]);
+  
+  // Estados para gerir os dados
+  const [groupedTopics, setGroupedTopics] = useState<GroupedTopics>({});
   const [loading, setLoading] = useState(true);
+  const [subjectName, setSubjectName] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
-  const subjectNames: { [key: string]: string } = {
-    'matematica': 'Matemática',
-    'portugues': 'Português', 
-    'fisica': 'Física',
-    'quimica': 'Química',
-    'biologia': 'Biologia',
-    'historia': 'História',
-    'geografia': 'Geografia',
-    'filosofia': 'Filosofia',
-    'sociologia': 'Sociologia',
-    'ingles': 'Inglês',
-    'espanhol': 'Espanhol',
-    'literatura': 'Literatura',
-    'redacao': 'Redação'
-  };
-
-  const capitalizedSubject = subjectNames[subject?.toLowerCase() || ''] || subject;
-  const { getContentProgress } = useSubjectContents(capitalizedSubject || '');
+  // Mantido para a lógica de progresso
+  const { getContentProgress } = useSubjectContents(subjectName || '');
 
   useEffect(() => {
-    if (subject && theme) {
-      loadTopics();
-    }
-  }, [subject, theme]);
+    // Se não houver ID na URL, não faz nada
+    if (!subjectId) return;
 
-  const loadTopics = async () => {
-    try {
+    const fetchAndGroupTopics = async () => {
       setLoading(true);
       
-      // Decodificar o tema da URL
-      const decodedTheme = decodeURIComponent(theme || '').replace(/-/g, ' ');
+      // 1. Busca o nome da matéria para exibir no cabeçalho
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subjects')
+        .select('nome')
+        .eq('id', subjectId)
+        .single();
       
-      const { data, error } = await supabase
+      if (subjectError) {
+        console.error('Erro ao buscar o nome da matéria:', subjectError);
+      } else if (subjectData) {
+        setSubjectName(subjectData.nome);
+      }
+      
+      // 2. Busca todos os tópicos que pertencem a esta matéria
+      const { data: topicsData, error: topicsError } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject', capitalizedSubject)
-        .ilike('grande_tema', `%${decodedTheme}%`)
-        .order('order_index', { ascending: true });
+        .eq('subject_id', subjectId); // A CONEXÃO CORRETA
 
-      if (error) {
-        console.error('Error loading topics:', error);
-        return;
+      if (topicsError) {
+        console.error('Erro ao buscar tópicos:', topicsError);
+      } else if (topicsData) {
+        // 3. Agrupa os tópicos pelo "grande_tema", preservando sua lógica visual
+        const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
+          const theme = topic.grande_tema;
+          if (!acc[theme]) {
+            acc[theme] = [];
+          }
+          acc[theme].push(topic as Topic);
+          return acc;
+        }, {} as GroupedTopics);
+        setGroupedTopics(groups);
       }
-
-      setTopics(data || []);
-    } catch (error) {
-      console.error('Error loading topics:', error);
-    } finally {
       setLoading(false);
-    }
-  };
+    };
+    
+    fetchAndGroupTopics();
+  }, [subjectId]);
 
+  // Suas funções de ajuda permanecem as mesmas
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'text-green-400';
@@ -97,9 +104,9 @@ const SubjectTopics = () => {
     }
   };
 
-  const handleTopicClick = (topicId: string) => {
+  const handleTopicClick = (topicId: number) => {
     if (!isMuted) playSound('click');
-    setSelectedTopicId(topicId);
+    setSelectedTopicId(String(topicId));
   };
 
   const handleBack = () => {
@@ -107,20 +114,16 @@ const SubjectTopics = () => {
     if (selectedTopicId) {
       setSelectedTopicId(null);
     } else {
-      navigate(`/subjects/${subject}`);
+      navigate('/subjects'); // Volta para a lista de áreas/matérias
     }
   };
-
-  if (!subject || !theme) {
-    return <div>Parâmetros inválidos</div>;
-  }
 
   // Se um tópico foi selecionado, mostrar o ContentViewer
   if (selectedTopicId) {
     return (
       <MobileContainer background="gradient">
         <ContentViewer
-          subject={capitalizedSubject || ''}
+          subject={subjectName}
           contentId={selectedTopicId}
           onBack={handleBack}
           onComplete={() => setSelectedTopicId(null)}
@@ -130,100 +133,71 @@ const SubjectTopics = () => {
     );
   }
 
-  const themeDisplayName = topics.length > 0 ? topics[0].grande_tema : decodeURIComponent(theme).replace(/-/g, ' ');
-
+  // A renderização principal, agora com os dados agrupados
   return (
     <MobileContainer background="gradient">
       <div className="flex flex-col h-full pb-20">
-        {/* Header */}
         <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleBack}
-            className="text-white p-2 hover:bg-white/20 rounded-xl"
-          >
+          <Button variant="ghost" size="sm" onClick={handleBack} className="text-white p-2 hover:bg-white/20 rounded-xl">
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{themeDisplayName}</h1>
-            <p className="text-white/80 text-sm">{capitalizedSubject}</p>
+            <h1 className="text-lg font-semibold">{subjectName || "Carregando..."}</h1>
           </div>
         </div>
-
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-4">
-            <h2 className="text-white text-lg font-semibold mb-4 flex items-center space-x-2">
-              <BookOpen size={20} />
-              <span>Tópicos de Estudo</span>
-            </h2>
-
-            {loading ? (
-              <div className="text-white text-center py-8">Carregando tópicos...</div>
-            ) : topics.length === 0 ? (
-              <div className="text-white text-center py-8">
-                <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Nenhum tópico encontrado para este tema ainda.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {topics.map((topic) => {
-                  const progress = getContentProgress(topic.id);
-                  
-                  return (
-                    <div
-                      key={topic.id}
-                      onClick={() => handleTopicClick(topic.id)}
-                      className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
-                          <BookOpen size={24} />
-                          {progress && progress.completed && (
-                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                              <CheckCircle size={16} className="text-white" />
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
-                          <p className="text-white/80 text-sm mb-2">{topic.description}</p>
-                          
-                          <div className="flex items-center space-x-4 text-xs">
-                            <div className="flex items-center space-x-1">
-                              <Clock size={12} className="text-blue-400" />
-                              <span className="text-white/80">{topic.estimated_time} min</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
-                                {getDifficultyText(topic.difficulty_level)}
-                              </span>
-                            </div>
-                            {progress && progress.progress_percentage > 0 && (
-                              <div className="flex items-center space-x-1">
-                                <span className="text-green-400 text-xs">
-                                  {progress.progress_percentage}% concluído
-                                </span>
+          {loading ? (
+            <div className="text-white text-center py-8">Carregando tópicos...</div>
+          ) : Object.keys(groupedTopics).length === 0 ? (
+            <div className="text-white text-center py-8">
+              <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+              <p>Nenhum tópico encontrado para esta matéria ainda.</p>
+            </div>
+          ) : (
+            Object.keys(groupedTopics).map(theme => (
+              <div key={theme} className="mb-6">
+                <h2 className="text-white text-xl font-bold mb-4 flex items-center space-x-2">
+                  <BookOpen size={20} />
+                  <span>{theme}</span>
+                </h2>
+                <div className="space-y-4">
+                  {groupedTopics[theme].map((topic) => {
+                    const progress = getContentProgress(String(topic.id));
+                    return (
+                      <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
+                            <BookOpen size={24} />
+                            {progress && progress.completed && (
+                              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <CheckCircle size={16} className="text-white" />
                               </div>
                             )}
                           </div>
-                        </div>
-                        
-                        <div className="text-white/60">
-                          <Play size={20} />
+                          <div className="flex-1">
+                            <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
+                            <p className="text-white/80 text-sm mb-2">{topic.description}</p>
+                            <div className="flex items-center space-x-4 text-xs">
+                              <div className="flex items-center space-x-1">
+                                <Clock size={12} className="text-blue-400" />
+                                <span className="text-white/80">{topic.estimated_time} min</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>{getDifficultyText(topic.difficulty_level)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-white/60"><Play size={20} /></div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </div>
+            ))
+          )}
         </div>
       </div>
-      
       <BottomNavigation />
     </MobileContainer>
   );
