@@ -6,6 +6,7 @@ import { useSubjectContents } from '@/hooks/useSubjectContents';
 import InteractiveSection from './interactive/InteractiveSection';
 import ChallengeSection from './interactive/ChallengeSection';
 import SubjectQuiz from './SubjectQuiz';
+import { SubjectContent } from '@/types/subject-content';
 
 interface GamifiedContentViewerProps {
   subject: string;
@@ -27,7 +28,7 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [completedSections, setCompletedSections] = useState<Set<SectionType>>(new Set());
 
-  const content = contents.find(c => c.id === contentId);
+  const content = contents.find(c => c.id === contentId) as SubjectContent | undefined;
   const progress = getContentProgress(contentId);
 
   useEffect(() => {

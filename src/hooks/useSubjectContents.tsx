@@ -1,134 +1,137 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-// (Mantenha as interfaces SubjectContent e ContentProgress como estão)
-interface SubjectContent {
-  id: string;
-  subject: string;
-  title: string;
-  description?: string;
-  content_type: string;
-  content_data?: any;
-  difficulty_level?: string;
-  estimated_time?: number;
-  is_premium?: boolean;
-  order_index?: number;
-  created_at: string;
-  updated_at: string;
-  grande_tema?: string; // Garanta que esta propriedade exista
-}
+import { useAuth } from '@/contexts/AuthContext';
+import { SubjectContent } from '@/types/subject-content';
 
 interface ContentProgress {
-  id: string;
-  user_id: string;
   content_id: string;
-  completed: boolean;
-  progress_percentage: number;
-  time_spent: number;
-  last_accessed: string;
-  created_at: string;
+  progress_percentage: number | null;
+  completed: boolean | null;
+  time_spent: number | null;
+  last_accessed: string | null;
 }
 
 export const useSubjectContents = (subject: string) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
-  const [progress, setProgress] = useState<ContentProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState<ContentProgress[]>([]);
+  const { user } = useAuth();
 
-  // (A função loadContents continua a mesma)
-  const loadContents = useCallback(async () => {
-    try {
+  useEffect(() => {
+    const fetchContents = async () => {
       setLoading(true);
-      
-      const { data: contentsData, error: contentsError } = await supabase
-        .from('subject_contents')
-        .select('*')
-        .eq('subject', subject)
-        .order('order_index', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('subject_contents')
+          .select('*')
+          .eq('subject', subject)
+          .order('order_index', { ascending: true });
 
-      if (contentsError) throw contentsError;
-      setContents(contentsData || []);
+        if (error) {
+          console.error('Erro ao buscar conteúdos:', error);
+        }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: progressData, error: progressError } = await supabase
+        if (data) {
+          setContents(data as SubjectContent[]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContents();
+  }, [subject]);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
           .from('content_progress')
           .select('*')
           .eq('user_id', user.id);
 
-        if (progressError) throw progressError;
-        setProgress(progressData || []);
-      }
-    } catch (error) {
-      console.error('Error loading contents:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [subject]);
+        if (error) {
+          console.error('Erro ao buscar progresso:', error);
+        }
 
-  useEffect(() => {
-    if (subject) {
-      loadContents();
-    }
-  }, [subject, loadContents]);
-  
-  // NOVA FUNÇÃO ADICIONADA AQUI
-  const getGrandesTemas = useCallback(async (): Promise<string[]> => {
+        if (data) {
+          setProgress(data as ContentProgress[]);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar progresso:', error);
+      }
+    };
+
+    fetchProgress();
+  }, [user]);
+
+  const updateContentProgress = async (
+    contentId: string,
+    updates: Partial<ContentProgress>
+  ) => {
+    if (!user) return;
+
     try {
       const { data, error } = await supabase
-        .from('subject_contents')
-        .select('grande_tema')
-        .eq('subject', subject)
-        .not('grande_tema', 'is', null);
+        .from('content_progress')
+        .upsert(
+          {
+            user_id: user.id,
+            content_id: contentId,
+            ...updates,
+            last_accessed: new Date().toISOString(),
+          },
+          { onConflict: 'user_id, content_id' }
+        )
+        .select()
 
       if (error) {
-        console.error('Erro ao buscar grandes temas:', error);
-        return [];
+        console.error('Erro ao atualizar progresso:', error);
+        return false;
       }
-      
-      // Filtra para retornar apenas os temas únicos
-      const temasUnicos = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
-      return temasUnicos;
 
+      // Update local state
+      setProgress((prevProgress) => {
+        const existingProgressIndex = prevProgress.findIndex(
+          (p) => p.content_id === contentId
+        );
+
+        if (existingProgressIndex > -1) {
+          const updatedProgress = [...prevProgress];
+          updatedProgress[existingProgressIndex] = {
+            ...updatedProgress[existingProgressIndex],
+            ...updates,
+            content_id: contentId
+          };
+          return updatedProgress;
+        } else {
+          return [...prevProgress, { content_id: contentId, ...updates }];
+        }
+      });
+
+      return true;
     } catch (error) {
-      console.error('Erro na função getGrandesTemas:', error);
-      return [];
-    }
-  }, [subject]);
-
-  const updateContentProgress = async (contentId: string, progressData: Partial<ContentProgress>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('content_progress')
-        .upsert({
-          user_id: user.id,
-          content_id: contentId,
-          ...progressData
-        });
-
-      if (error) throw error;
-      
-      // Reload progress after update
-      await loadContents();
-    } catch (error) {
-      console.error('Error updating content progress:', error);
+      console.error('Erro ao atualizar progresso:', error);
+      return false;
     }
   };
 
-  const getContentProgress = (contentId: string): ContentProgress | null => {
-    return progress.find(p => p.content_id === contentId) || null;
+  const getContentProgress = (contentId: string) => {
+    return progress.find((p) => p.content_id === contentId) || {
+      content_id: contentId,
+      progress_percentage: 0,
+      completed: false,
+      time_spent: 0,
+      last_accessed: null
+    };
   };
 
   return {
     contents,
-    progress,
     loading,
-    getGrandesTemas, // EXPORTAMOS A NOVA FUNÇÃO
-    updateContentProgress,
     getContentProgress,
-    refreshContents: loadContents
+    updateContentProgress,
   };
 };

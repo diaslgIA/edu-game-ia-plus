@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { GameController2, Trophy, Clock } from 'lucide-react';
+import { Gamepad2, Trophy, Clock } from 'lucide-react';
 import FlashcardGame from './FlashcardGame';
 import DragDropActivity from './DragDropActivity';
 import FillBlanksGame from './FillBlanksGame';
@@ -166,7 +165,7 @@ const InteractiveSection: React.FC<InteractiveSectionProps> = ({
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <GameController2 className="mx-auto mb-4 text-cyan-400" size={48} />
+        <Gamepad2 className="mx-auto mb-4 text-cyan-400" size={48} />
         <h2 className="text-2xl font-bold text-white mb-2">Fixação Interativa</h2>
         <p className="text-white/80 mb-4">
           Pratique e internalize o conteúdo com atividades gamificadas
