@@ -62,12 +62,25 @@ const CreateGuild: React.FC = () => {
         return;
       }
 
-      toast({
-        title: "Guilda criada!",
-        description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
-      });
+      // Parse the JSON response properly
+      const guildResult = typeof data === 'string' ? JSON.parse(data) : data;
+      
+      if (guildResult && typeof guildResult === 'object' && 'id' in guildResult) {
+        toast({
+          title: "Guilda criada!",
+          description: `Guilda "${formData.name}" criada com sucesso. Código: ${guildCode}`,
+        });
 
-      navigate(`/guilds/${data.id}`);
+        navigate(`/guilds/${guildResult.id}`);
+      } else {
+        console.error('Unexpected response format:', data);
+        toast({
+          title: "Erro inesperado",
+          description: "Guilda criada, mas houve um problema na navegação.",
+          variant: "destructive"
+        });
+        navigate('/guilds');
+      }
     } catch (error) {
       console.error('Error creating guild:', error);
       toast({
