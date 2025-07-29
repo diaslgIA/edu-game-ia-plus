@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -69,7 +70,7 @@ export const useSubjectContents = (subject: string) => {
 
   const updateContentProgress = async (
     contentId: string,
-    updates: Partial<ContentProgress>
+    updates: Partial<Omit<ContentProgress, 'content_id'>>
   ) => {
     if (!user) return;
 
@@ -103,11 +104,21 @@ export const useSubjectContents = (subject: string) => {
           updatedProgress[existingProgressIndex] = {
             ...updatedProgress[existingProgressIndex],
             ...updates,
-            content_id: contentId
+            content_id: contentId,
+            progress_percentage: updates.progress_percentage ?? updatedProgress[existingProgressIndex].progress_percentage,
+            completed: updates.completed ?? updatedProgress[existingProgressIndex].completed,
+            time_spent: updates.time_spent ?? updatedProgress[existingProgressIndex].time_spent,
+            last_accessed: new Date().toISOString()
           };
           return updatedProgress;
         } else {
-          return [...prevProgress, { content_id: contentId, ...updates }];
+          return [...prevProgress, { 
+            content_id: contentId, 
+            progress_percentage: updates.progress_percentage ?? null,
+            completed: updates.completed ?? null,
+            time_spent: updates.time_spent ?? null,
+            last_accessed: new Date().toISOString()
+          }];
         }
       });
 
@@ -118,7 +129,7 @@ export const useSubjectContents = (subject: string) => {
     }
   };
 
-  const getContentProgress = (contentId: string) => {
+  const getContentProgress = (contentId: string): ContentProgress => {
     return progress.find((p) => p.content_id === contentId) || {
       content_id: contentId,
       progress_percentage: 0,
