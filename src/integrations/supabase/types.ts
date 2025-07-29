@@ -691,6 +691,7 @@ export type Database = {
           guild_code: string
           id: string
           is_public: boolean | null
+          max_members: number | null
           name: string
           owner_id: string
           total_points: number | null
@@ -701,6 +702,7 @@ export type Database = {
           guild_code: string
           id?: string
           is_public?: boolean | null
+          max_members?: number | null
           name: string
           owner_id: string
           total_points?: number | null
@@ -711,6 +713,7 @@ export type Database = {
           guild_code?: string
           id?: string
           is_public?: boolean | null
+          max_members?: number | null
           name?: string
           owner_id?: string
           total_points?: number | null
