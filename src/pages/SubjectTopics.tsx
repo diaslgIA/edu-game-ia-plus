@@ -43,27 +43,30 @@ const SubjectTopics = () => {
       setLoading(true);
       
       try {
-        // Fetch subject name
-        const subjectResponse = await supabase
+        // Fetch subject name with simple type handling
+        const subjectQuery = await supabase
           .from('subjects')
           .select('nome')
           .eq('id', subjectId)
           .single();
         
-        if (subjectResponse.data) {
-          setSubjectName(subjectResponse.data.nome);
+        if (subjectQuery.data) {
+          setSubjectName(subjectQuery.data.nome);
         }
         
-        // Fetch topics with explicit typing
-        const topicsResponse = await supabase
+        // Fetch topics with explicit type casting
+        const topicsQuery = await supabase
           .from('subject_contents')
           .select('id, title, description, difficulty_level, estimated_time, grande_tema, explanation')
           .eq('subject_id', subjectId);
 
-        if (topicsResponse.data) {
+        // Cast the response to avoid TypeScript inference issues
+        const topicsData = topicsQuery.data as any[];
+
+        if (topicsData) {
           const groups: GroupedTopics = {};
           
-          topicsResponse.data.forEach((item: any) => {
+          topicsData.forEach((item) => {
             const theme = item.grande_tema || 'Outros Tópicos';
             if (!groups[theme]) {
               groups[theme] = [];
