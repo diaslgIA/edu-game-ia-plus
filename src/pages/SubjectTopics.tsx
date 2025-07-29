@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -58,41 +57,45 @@ const SubjectTopics = () => {
         setSubjectName(subjectData.nome);
       }
       
-      // 2. Fetch all topics belonging to this subject - cast to any[] immediately
-      const { data: rawData, error } = await supabase
-        .from('subject_contents')
-        .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId);
+      // 2. Fetch all topics belonging to this subject - avoid type inference completely
+      try {
+        const response = await supabase
+          .from('subject_contents')
+          .select('id, title, description, difficulty_level, estimated_time, grande_tema')
+          .eq('subject_id', subjectId);
 
-      if (error) {
-        console.error('Erro ao buscar tópicos:', error);
-      } else if (rawData) {
-        // Cast to any[] to avoid TypeScript deep instantiation issues
-        const data = rawData as any[];
-        
-        // 3. Group topics by "grande_tema"
-        const groups: GroupedTopics = {};
-        
-        data.forEach((item) => {
-          const theme = item.grande_tema;
-          if (!groups[theme]) {
-            groups[theme] = [];
+        if (response.error) {
+          console.error('Erro ao buscar tópicos:', response.error);
+        } else if (response.data) {
+          // Extract data and process it without complex types
+          const rawItems = response.data;
+          const groups: GroupedTopics = {};
+          
+          // Process each item manually to avoid type issues
+          for (const item of rawItems) {
+            const theme = item.grande_tema || 'Outros';
+            if (!groups[theme]) {
+              groups[theme] = [];
+            }
+            
+            const topic: Topic = {
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              difficulty_level: item.difficulty_level,
+              estimated_time: item.estimated_time,
+              grande_tema: item.grande_tema
+            };
+            
+            groups[theme].push(topic);
           }
           
-          const topic: Topic = {
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            difficulty_level: item.difficulty_level,
-            estimated_time: item.estimated_time,
-            grande_tema: item.grande_tema
-          };
-          
-          groups[theme].push(topic);
-        });
-        
-        setGroupedTopics(groups);
+          setGroupedTopics(groups);
+        }
+      } catch (error) {
+        console.error('Erro ao processar tópicos:', error);
       }
+      
       setLoading(false);
     };
     
