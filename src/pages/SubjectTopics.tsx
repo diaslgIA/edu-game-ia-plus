@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
-import { conteudoLocal } from '@/data/conteudoLocal';
+import { conteudoEducacional } from '@/data/conteudoLocal';
 
 interface Topic {
   id: string;
@@ -43,13 +42,13 @@ const SubjectTopics = () => {
       setLoading(true);
       
       // Buscar o nome da matéria
-      const subject = conteudoLocal.materias.find(m => m.id === subjectId);
+      const subject = conteudoEducacional.materias.find(m => m.id === subjectId);
       if (subject) {
         setSubjectName(subject.name);
       }
       
       // Buscar todos os tópicos que pertencem a esta matéria
-      const topicsData = conteudoLocal.topicos.filter(topic => topic.subject_id === subjectId);
+      const topicsData = conteudoEducacional.conteudos.filter(topic => topic.subject_id === subjectId);
       
       // Agrupar os tópicos pelo "grande_tema"
       const groups: GroupedTopics = topicsData.reduce((acc, topic) => {

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Play } from 'lucide-react';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
-import { conteudoLocal } from '@/data/conteudoLocal';
+import { conteudoEducacional } from '@/data/conteudoLocal';
 
 interface ContentViewerProps {
   subject: string;
@@ -23,7 +23,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
   const [currentSection, setCurrentSection] = useState(0);
 
   // Buscar o conteúdo localmente
-  const content = conteudoLocal.topicos.find(t => t.id === contentId);
+  const content = conteudoEducacional.conteudos.find(t => t.id === contentId);
   const progress = getContentProgress(contentId);
 
   useEffect(() => {
