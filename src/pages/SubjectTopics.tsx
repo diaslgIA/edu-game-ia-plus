@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -6,12 +7,12 @@ import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubjectContents } from '@/hooks/useSubjectContents'; // Mantido se você usa em outro lugar
+import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
 
-// A sua interface de Tópico, ajustada para o ID numérico
+// Interface corrigida para usar string (UUID) em vez de number
 interface Topic {
-  id: number; // Alterado para number para corresponder ao banco de dados
+  id: string;
   title: string;
   description: string;
   difficulty_level: string;
@@ -19,13 +20,13 @@ interface Topic {
   grande_tema: string;
 }
 
-// Uma nova interface para agrupar os tópicos por tema
+// Interface para agrupar os tópicos por tema
 interface GroupedTopics {
   [key: string]: Topic[];
 }
 
 const SubjectTopics = () => {
-  // CORREÇÃO: Pega o ID numérico da matéria da URL
+  // Pega o nome da matéria diretamente da URL
   const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
@@ -36,45 +37,59 @@ const SubjectTopics = () => {
   const [subjectName, setSubjectName] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
-  // Mantido para a lógica de progresso
+  // Mapeamento dos IDs para nomes corretos das matérias
+  const subjectNames: { [key: string]: string } = {
+    'matematica': 'Matemática',
+    'portugues': 'Português',
+    'fisica': 'Física',
+    'quimica': 'Química',
+    'biologia': 'Biologia',
+    'historia': 'História',
+    'geografia': 'Geografia',
+    'filosofia': 'Filosofia',
+    'sociologia': 'Sociologia',
+    'ingles': 'Inglês',
+    'espanhol': 'Espanhol',
+    'literatura': 'Literatura',
+    'redacao': 'Redação'
+  };
+
   const { getContentProgress } = useSubjectContents(subjectName || '');
 
   useEffect(() => {
-    // Se não houver ID na URL, não faz nada
     if (!subjectId) return;
 
     const fetchAndGroupTopics = async () => {
       setLoading(true);
       
-      // 1. Busca o nome da matéria para exibir no cabeçalho
-      const { data: subjectData, error: subjectError } = await supabase
-        .from('subjects')
-        .select('nome')
-        .eq('id', subjectId)
-        .single();
+      // Define o nome da matéria baseado no ID da URL
+      const mappedSubjectName = subjectNames[subjectId.toLowerCase()] || subjectId;
+      setSubjectName(mappedSubjectName);
       
-      if (subjectError) {
-        console.error('Erro ao buscar o nome da matéria:', subjectError);
-      } else if (subjectData) {
-        setSubjectName(subjectData.nome);
-      }
-      
-      // 2. Busca todos os tópicos que pertencem a esta matéria
+      // Busca todos os conteúdos que pertencem a esta matéria
       const { data: topicsData, error: topicsError } = await supabase
         .from('subject_contents')
         .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject_id', subjectId); // A CONEXÃO CORRETA
+        .eq('subject', mappedSubjectName);
 
       if (topicsError) {
         console.error('Erro ao buscar tópicos:', topicsError);
       } else if (topicsData) {
-        // 3. Agrupa os tópicos pelo "grande_tema", preservando sua lógica visual
+        // Agrupa os tópicos pelo "grande_tema"
         const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
-          const theme = topic.grande_tema;
+          const theme = topic.grande_tema || 'Outros';
           if (!acc[theme]) {
             acc[theme] = [];
           }
-          acc[theme].push(topic as Topic);
+          // Cast explícito para Topic já que sabemos que os tipos são compatíveis
+          acc[theme].push({
+            id: topic.id,
+            title: topic.title,
+            description: topic.description || '',
+            difficulty_level: topic.difficulty_level || 'medium',
+            estimated_time: topic.estimated_time || 15,
+            grande_tema: topic.grande_tema || 'Outros'
+          } as Topic);
           return acc;
         }, {} as GroupedTopics);
         setGroupedTopics(groups);
@@ -104,9 +119,9 @@ const SubjectTopics = () => {
     }
   };
 
-  const handleTopicClick = (topicId: number) => {
+  const handleTopicClick = (topicId: string) => {
     if (!isMuted) playSound('click');
-    setSelectedTopicId(String(topicId));
+    setSelectedTopicId(topicId);
   };
 
   const handleBack = () => {
@@ -114,7 +129,7 @@ const SubjectTopics = () => {
     if (selectedTopicId) {
       setSelectedTopicId(null);
     } else {
-      navigate('/subjects'); // Volta para a lista de áreas/matérias
+      navigate('/subjects');
     }
   };
 
@@ -151,7 +166,8 @@ const SubjectTopics = () => {
           ) : Object.keys(groupedTopics).length === 0 ? (
             <div className="text-white text-center py-8">
               <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Nenhum tópico encontrado para esta matéria ainda.</p>
+              <p>Nenhum tópico encontrado para {subjectName}.</p>
+              <p className="text-xs mt-2 opacity-70">Verifique se o conteúdo foi inserido no banco de dados.</p>
             </div>
           ) : (
             Object.keys(groupedTopics).map(theme => (
@@ -162,7 +178,7 @@ const SubjectTopics = () => {
                 </h2>
                 <div className="space-y-4">
                   {groupedTopics[theme].map((topic) => {
-                    const progress = getContentProgress(String(topic.id));
+                    const progress = getContentProgress(topic.id);
                     return (
                       <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
                         <div className="flex items-center space-x-4">

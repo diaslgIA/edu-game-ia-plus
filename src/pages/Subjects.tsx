@@ -20,6 +20,12 @@ const Subjects = () => {
     navigate(path);
   };
 
+  // Navegação direta para os tópicos da matéria
+  const handleSubjectClick = (subjectId: string) => {
+    if (!isMuted) playSound('click');
+    navigate(`/subjects/${subjectId}`);
+  };
+
   // Áreas do conhecimento com suas respectivas matérias
   const knowledgeAreas = [
     {
@@ -105,7 +111,7 @@ const Subjects = () => {
                       return (
                         <div
                           key={subIndex}
-                          onClick={() => handleNavigation(`/subjects/${subject.id}`)}
+                          onClick={() => handleSubjectClick(subject.id)}
                           className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10"
                         >
                           <div className="flex items-center space-x-4">
@@ -115,7 +121,7 @@ const Subjects = () => {
                             
                             <div className="flex-1">
                               <h4 className="font-bold text-white text-lg mb-1">{subject.name}</h4>
-                              <p className="text-white/80 text-sm mb-2">Grandes temas e conteúdos organizados</p>
+                              <p className="text-white/80 text-sm mb-2">Tópicos e conteúdos organizados</p>
                               
                               <div className="flex items-center space-x-4 text-xs">
                                 <div className="flex items-center space-x-1">
