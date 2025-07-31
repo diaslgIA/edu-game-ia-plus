@@ -26,16 +26,17 @@ interface GroupedTopics {
 }
 
 const SubjectTopics = () => {
-  // Pega o nome da matéria diretamente da URL
-  const { subjectId } = useParams<{ subjectId: string }>();
+  // Corrigido: pega subjectName da URL em vez de subjectId
+  const { subjectName } = useParams<{ subjectName: string }>();
   const navigate = useNavigate();
   const { playSound, isMuted } = useSound();
   
   // Estados para gerir os dados
   const [groupedTopics, setGroupedTopics] = useState<GroupedTopics>({});
   const [loading, setLoading] = useState(true);
-  const [subjectName, setSubjectName] = useState('');
+  const [displaySubjectName, setDisplaySubjectName] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Mapeamento dos IDs para nomes corretos das matérias
   const subjectNames: { [key: string]: string } = {
@@ -54,51 +55,76 @@ const SubjectTopics = () => {
     'redacao': 'Redação'
   };
 
-  const { getContentProgress } = useSubjectContents(subjectName || '');
+  const { getContentProgress } = useSubjectContents(displaySubjectName || '');
 
   useEffect(() => {
-    if (!subjectId) return;
-
     const fetchAndGroupTopics = async () => {
+      console.log('SubjectTopics - subjectName from URL:', subjectName);
+      
+      if (!subjectName) {
+        console.error('SubjectTopics - No subjectName provided');
+        setError('Nome da matéria não fornecido');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
+      setError(null);
       
       // Define o nome da matéria baseado no ID da URL
-      const mappedSubjectName = subjectNames[subjectId.toLowerCase()] || subjectId;
-      setSubjectName(mappedSubjectName);
+      const mappedSubjectName = subjectNames[subjectName.toLowerCase()] || subjectName;
+      console.log('SubjectTopics - Mapped subject name:', mappedSubjectName);
+      setDisplaySubjectName(mappedSubjectName);
       
-      // Busca todos os conteúdos que pertencem a esta matéria
-      const { data: topicsData, error: topicsError } = await supabase
-        .from('subject_contents')
-        .select('id, title, description, difficulty_level, estimated_time, grande_tema')
-        .eq('subject', mappedSubjectName);
+      try {
+        // Busca todos os conteúdos que pertencem a esta matéria
+        const { data: topicsData, error: topicsError } = await supabase
+          .from('subject_contents')
+          .select('id, title, description, difficulty_level, estimated_time, grande_tema')
+          .eq('subject', mappedSubjectName);
 
-      if (topicsError) {
-        console.error('Erro ao buscar tópicos:', topicsError);
-      } else if (topicsData) {
-        // Agrupa os tópicos pelo "grande_tema"
-        const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
-          const theme = topic.grande_tema || 'Outros';
-          if (!acc[theme]) {
-            acc[theme] = [];
-          }
-          // Cast explícito para Topic já que sabemos que os tipos são compatíveis
-          acc[theme].push({
-            id: topic.id,
-            title: topic.title,
-            description: topic.description || '',
-            difficulty_level: topic.difficulty_level || 'medium',
-            estimated_time: topic.estimated_time || 15,
-            grande_tema: topic.grande_tema || 'Outros'
-          } as Topic);
-          return acc;
-        }, {} as GroupedTopics);
-        setGroupedTopics(groups);
+        console.log('SubjectTopics - Query result:', { data: topicsData, error: topicsError });
+
+        if (topicsError) {
+          console.error('Erro ao buscar tópicos:', topicsError);
+          setError('Erro ao carregar tópicos');
+        } else if (topicsData) {
+          console.log('SubjectTopics - Topics found:', topicsData.length);
+          
+          // Agrupa os tópicos pelo "grande_tema"
+          const groups: GroupedTopics = topicsData.reduce((acc, topic) => {
+            const theme = topic.grande_tema || 'Outros';
+            if (!acc[theme]) {
+              acc[theme] = [];
+            }
+            // Cast explícito para Topic já que sabemos que os tipos são compatíveis
+            acc[theme].push({
+              id: topic.id,
+              title: topic.title,
+              description: topic.description || '',
+              difficulty_level: topic.difficulty_level || 'medium',
+              estimated_time: topic.estimated_time || 15,
+              grande_tema: topic.grande_tema || 'Outros'
+            } as Topic);
+            return acc;
+          }, {} as GroupedTopics);
+          
+          console.log('SubjectTopics - Grouped topics:', groups);
+          setGroupedTopics(groups);
+        } else {
+          console.log('SubjectTopics - No topics found');
+          setGroupedTopics({});
+        }
+      } catch (error) {
+        console.error('SubjectTopics - Exception during fetch:', error);
+        setError('Erro inesperado ao carregar tópicos');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     fetchAndGroupTopics();
-  }, [subjectId]);
+  }, [subjectName]);
 
   // Suas funções de ajuda permanecem as mesmas
   const getDifficultyColor = (difficulty: string) => {
@@ -120,11 +146,13 @@ const SubjectTopics = () => {
   };
 
   const handleTopicClick = (topicId: string) => {
+    console.log('SubjectTopics - Topic clicked:', topicId);
     if (!isMuted) playSound('click');
     setSelectedTopicId(topicId);
   };
 
   const handleBack = () => {
+    console.log('SubjectTopics - Back button clicked');
     if (!isMuted) playSound('click');
     if (selectedTopicId) {
       setSelectedTopicId(null);
@@ -138,7 +166,7 @@ const SubjectTopics = () => {
     return (
       <MobileContainer background="gradient">
         <ContentViewer
-          subject={subjectName}
+          subject={displaySubjectName}
           contentId={selectedTopicId}
           onBack={handleBack}
           onComplete={() => setSelectedTopicId(null)}
@@ -157,16 +185,22 @@ const SubjectTopics = () => {
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{subjectName || "Carregando..."}</h1>
+            <h1 className="text-lg font-semibold">{displaySubjectName || "Carregando..."}</h1>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="text-white text-center py-8">Carregando tópicos...</div>
+          ) : error ? (
+            <div className="text-white text-center py-8">
+              <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+              <p className="text-red-400">{error}</p>
+              <p className="text-xs mt-2 opacity-70">Tente novamente ou volte para a lista de matérias.</p>
+            </div>
           ) : Object.keys(groupedTopics).length === 0 ? (
             <div className="text-white text-center py-8">
               <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Nenhum tópico encontrado para {subjectName}.</p>
+              <p>Nenhum tópico encontrado para {displaySubjectName}.</p>
               <p className="text-xs mt-2 opacity-70">Verifique se o conteúdo foi inserido no banco de dados.</p>
             </div>
           ) : (

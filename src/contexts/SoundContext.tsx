@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 interface SoundContextType {
@@ -144,8 +143,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Volume final muito baixo
-      gainNode.gain.setValueAtTime(musicVolume * 0.2, audioContext.currentTime);
+      // Volume final muito baixo - corrigido para evitar valores próximos de zero
+      const targetVolume = Math.max(0.001, musicVolume * 0.2);
+      gainNode.gain.setValueAtTime(targetVolume, audioContext.currentTime);
       source.loop = true;
       source.start();
 
@@ -210,13 +210,18 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [isMusicPlaying, isMuted]);
 
-  // Ajustar volume da música
+  // Ajustar volume da música - corrigido para evitar valores próximos de zero
   useEffect(() => {
     if (musicGainRef.current && !isMuted && isMusicPlaying) {
-      musicGainRef.current.gain.setValueAtTime(
-        musicVolume * 0.2, 
-        backgroundMusicRef.current?.currentTime || 0
-      );
+      const targetVolume = Math.max(0.001, musicVolume * 0.2);
+      try {
+        musicGainRef.current.gain.setValueAtTime(
+          targetVolume, 
+          backgroundMusicRef.current?.currentTime || 0
+        );
+      } catch (error) {
+        console.warn('Erro ao ajustar volume da música:', error);
+      }
     }
   }, [musicVolume, isMuted, isMusicPlaying]);
 
@@ -276,18 +281,36 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Transições suaves entre notas
       frequencies.forEach((freq, index) => {
         if (index > 0) {
-          oscillator.frequency.exponentialRampToValueAtTime(
-            freq, 
-            audioContext.currentTime + (index * 0.15)
-          );
+          try {
+            oscillator.frequency.exponentialRampToValueAtTime(
+              freq, 
+              audioContext.currentTime + (index * 0.15)
+            );
+          } catch (error) {
+            // Fallback para linear se exponential falhar
+            oscillator.frequency.linearRampToValueAtTime(
+              freq,
+              audioContext.currentTime + (index * 0.15)
+            );
+          }
         }
       });
 
-      // Envelope muito mais suave
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume * 0.15, audioContext.currentTime + 0.05); // Volume muito baixo
-      gainNode.gain.exponentialRampToValueAtTime(volume * 0.03, audioContext.currentTime + 0.4);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+      // Envelope muito mais suave - valores corrigidos para evitar problemas
+      const initialVolume = Math.max(0.001, volume * 0.15);
+      const sustainVolume = Math.max(0.001, volume * 0.03);
+      
+      gainNode.gain.setValueAtTime(0.001, audioContext.currentTime); // Valor mínimo seguro
+      gainNode.gain.linearRampToValueAtTime(initialVolume, audioContext.currentTime + 0.05);
+      
+      try {
+        gainNode.gain.exponentialRampToValueAtTime(sustainVolume, audioContext.currentTime + 0.4);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+      } catch (error) {
+        // Fallback para linear se exponential falhar
+        gainNode.gain.linearRampToValueAtTime(sustainVolume, audioContext.currentTime + 0.4);
+        gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+      }
 
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.8);
