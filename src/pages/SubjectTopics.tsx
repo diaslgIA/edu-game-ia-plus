@@ -5,7 +5,7 @@ import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import ContentViewer from '@/components/ContentViewer';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, Play, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Play, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
 import { useSound } from '@/contexts/SoundContext';
@@ -18,6 +18,10 @@ interface Topic {
   difficulty_level: string;
   estimated_time: number;
   grande_tema: string;
+  content_data?: any;
+  detailed_explanation?: string;
+  explanation?: string;
+  examples?: string;
 }
 
 // Interface para agrupar os tópicos por tema
@@ -80,7 +84,7 @@ const SubjectTopics = () => {
         // Busca todos os conteúdos que pertencem a esta matéria
         const { data: topicsData, error: topicsError } = await supabase
           .from('subject_contents')
-          .select('id, title, description, difficulty_level, estimated_time, grande_tema')
+          .select('id, title, description, difficulty_level, estimated_time, grande_tema, content_data, detailed_explanation, explanation, examples')
           .eq('subject', mappedSubjectName);
 
         console.log('SubjectTopics - Query result:', { data: topicsData, error: topicsError });
@@ -104,7 +108,11 @@ const SubjectTopics = () => {
               description: topic.description || '',
               difficulty_level: topic.difficulty_level || 'medium',
               estimated_time: topic.estimated_time || 15,
-              grande_tema: topic.grande_tema || 'Outros'
+              grande_tema: topic.grande_tema || 'Outros',
+              content_data: topic.content_data,
+              detailed_explanation: topic.detailed_explanation,
+              explanation: topic.explanation,
+              examples: topic.examples
             } as Topic);
             return acc;
           }, {} as GroupedTopics);
@@ -125,6 +133,53 @@ const SubjectTopics = () => {
     
     fetchAndGroupTopics();
   }, [subjectName]);
+
+  // Função para analisar o status do conteúdo
+  const getContentStatus = (topic: Topic) => {
+    let hasStructuredContent = false;
+    let hasBasicContent = false;
+
+    // Verificar se há content_data estruturado
+    if (topic.content_data) {
+      if ((topic.content_data.sections && Array.isArray(topic.content_data.sections)) ||
+          (topic.content_data.slides && Array.isArray(topic.content_data.slides))) {
+        hasStructuredContent = true;
+      }
+    }
+
+    // Verificar se há conteúdo básico
+    if (topic.detailed_explanation || topic.explanation || topic.description || topic.examples) {
+      hasBasicContent = true;
+    }
+
+    if (hasStructuredContent) {
+      return {
+        status: 'complete',
+        label: 'Completo',
+        icon: BookOpen,
+        color: 'text-green-400',
+        bgColor: 'bg-green-500/20'
+      };
+    }
+
+    if (hasBasicContent) {
+      return {
+        status: 'basic',
+        label: 'Básico',
+        icon: FileText,
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-500/20'
+      };
+    }
+
+    return {
+      status: 'developing',
+      label: 'Em desenvolvimento',
+      icon: AlertTriangle,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/20'
+    };
+  };
 
   // Suas funções de ajuda permanecem as mesmas
   const getDifficultyColor = (difficulty: string) => {
@@ -213,11 +268,14 @@ const SubjectTopics = () => {
                 <div className="space-y-4">
                   {groupedTopics[theme].map((topic) => {
                     const progress = getContentProgress(topic.id);
+                    const contentStatus = getContentStatus(topic);
+                    const StatusIcon = contentStatus.icon;
+                    
                     return (
                       <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
                         <div className="flex items-center space-x-4">
                           <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
-                            <BookOpen size={24} />
+                            <StatusIcon size={24} />
                             {progress && progress.completed && (
                               <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                                 <CheckCircle size={16} className="text-white" />
@@ -225,8 +283,15 @@ const SubjectTopics = () => {
                             )}
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-bold text-white text-lg mb-1">{topic.title}</h3>
-                            <p className="text-white/80 text-sm mb-2">{topic.description}</p>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-bold text-white text-lg">{topic.title}</h3>
+                              <span className={`text-xs px-2 py-1 rounded-full ${contentStatus.bgColor} ${contentStatus.color}`}>
+                                {contentStatus.label}
+                              </span>
+                            </div>
+                            <p className="text-white/80 text-sm mb-2">
+                              {topic.description || 'Descrição em breve...'}
+                            </p>
                             <div className="flex items-center space-x-4 text-xs">
                               <div className="flex items-center space-x-1">
                                 <Clock size={12} className="text-blue-400" />
@@ -235,6 +300,13 @@ const SubjectTopics = () => {
                               <div className="flex items-center space-x-1">
                                 <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>{getDifficultyText(topic.difficulty_level)}</span>
                               </div>
+                              {progress && progress.progress_percentage > 0 && (
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-green-400 text-xs">
+                                    {progress.progress_percentage}% concluído
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="text-white/60"><Play size={20} /></div>
