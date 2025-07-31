@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -34,7 +35,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider>
         <LanguageProvider>
           <SoundProvider>
             <AuthProvider>
@@ -50,7 +51,7 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/subjects" element={<Subjects />} />
-                    <Route path="/subjects/:subjectId" element={<SubjectTopics />} />
+                    <Route path="/subjects/:subjectName" element={<SubjectTopics />} />
                     <Route path="/exercises" element={<Exercises />} />
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/ranking" element={<Ranking />} />
