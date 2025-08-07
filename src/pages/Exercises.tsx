@@ -1,214 +1,235 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import MobileContainer from '@/components/MobileContainer';
-import BottomNavigation from '@/components/BottomNavigation';
-import SubjectQuiz from '@/components/SubjectQuiz';
-import MentorWelcome from '@/components/MentorWelcome';
-import { useUserProgress } from '@/hooks/useUserProgress';
-import { useLanguage } from '@/contexts/LanguageContext';
+import React, { useState } from 'react';
+import { ArrowLeft, Book, Target, Trophy, Zap, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle } from 'lucide-react';
-
-type ExerciseMode = 'selection' | 'quiz' | 'mentor-welcome';
+import DynamicSubjectQuiz from '@/components/DynamicSubjectQuiz';
 
 const Exercises = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { getSubjectProgress, updateProgress } = useUserProgress();
-  const { t } = useLanguage();
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
-  const [showMentorWelcome, setShowMentorWelcome] = useState(false);
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
-  useEffect(() => {
-    const subjectFromUrl = searchParams.get('subject');
-    if (subjectFromUrl) {
-      setSelectedSubject(subjectFromUrl);
+  const subjects = [
+    { 
+      id: 'matemática', 
+      name: 'Matemática', 
+      icon: '📊', 
+      color: 'bg-blue-500',
+      description: 'Álgebra, Geometria e Cálculo'
+    },
+    { 
+      id: 'física', 
+      name: 'Física', 
+      icon: '⚡', 
+      color: 'bg-purple-500',
+      description: 'Mecânica, Eletricidade e Óptica'
+    },
+    { 
+      id: 'química', 
+      name: 'Química', 
+      icon: '🧪', 
+      color: 'bg-green-500',
+      description: 'Orgânica, Inorgânica e Físico-Química'
+    },
+    { 
+      id: 'biologia', 
+      name: 'Biologia', 
+      icon: '🧬', 
+      color: 'bg-emerald-500',
+      description: 'Genética, Ecologia e Evolução'
+    },
+    { 
+      id: 'história', 
+      name: 'História', 
+      icon: '📚', 
+      color: 'bg-amber-500',
+      description: 'Brasil, Mundial e Contemporânea'
+    },
+    { 
+      id: 'sociologia', 
+      name: 'Sociologia', 
+      icon: '👥', 
+      color: 'bg-teal-500',
+      description: 'Sociedade, Cultura e Política'
+    },
+    { 
+      id: 'português', 
+      name: 'Português', 
+      icon: '📝', 
+      color: 'bg-rose-500',
+      description: 'Gramática, Literatura e Redação'
+    },
+    { 
+      id: 'inglês', 
+      name: 'Inglês', 
+      icon: '🇺🇸', 
+      color: 'bg-indigo-500',
+      description: 'Grammar, Reading e Vocabulary'
+    },
+    { 
+      id: 'espanhol', 
+      name: 'Espanhol', 
+      icon: '🇪🇸', 
+      color: 'bg-red-500',
+      description: 'Gramática, Conversação e Literatura'
+    },
+    { 
+      id: 'literatura', 
+      name: 'Literatura', 
+      icon: '📖', 
+      color: 'bg-violet-500',
+      description: 'Clássicos, Modernos e Análise'
     }
-  }, [searchParams]);
+  ];
 
-  const subjects = useMemo(() => [
-    { id: 'matematica', name: 'Matemática', description: 'Números, álgebra, geometria e cálculos', color: 'from-blue-500 to-blue-700', icon: '📐', difficulty: 'Médio', exercises: 45 },
-    { id: 'portugues', name: 'Português', description: 'Gramática, literatura e redação', color: 'from-green-500 to-green-700', icon: '📚', difficulty: 'Fácil', exercises: 52 },
-    { id: 'fisica', name: 'Física', description: 'Mecânica, eletricidade e termodinâmica', color: 'from-purple-500 to-purple-700', icon: '⚡', difficulty: 'Difícil', exercises: 38 },
-    { id: 'quimica', name: 'Química', description: 'Átomos, moléculas e reações químicas', color: 'from-orange-500 to-orange-700', icon: '🧪', difficulty: 'Médio', exercises: 41 },
-    { id: 'biologia', name: 'Biologia', description: 'Vida, células e evolução', color: 'from-teal-500 to-teal-700', icon: '🧬', difficulty: 'Médio', exercises: 47 },
-    { id: 'historia', name: 'História', description: 'Civilizações, eventos e culturas', color: 'from-amber-500 to-amber-700', icon: '🏛️', difficulty: 'Fácil', exercises: 36 },
-    { id: 'geografia', name: 'Geografia', description: 'Países, climas e relevos', color: 'from-emerald-500 to-emerald-700', icon: '🌍', difficulty: 'Fácil', exercises: 33 },
-    { id: 'filosofia', name: 'Filosofia', description: 'Pensamento crítico e reflexão', color: 'from-indigo-500 to-indigo-700', icon: '🤔', difficulty: 'Médio', exercises: 24 },
-    { id: 'sociologia', name: 'Sociologia', description: 'Sociedade e relações humanas', color: 'from-pink-500 to-pink-700', icon: '👥', difficulty: 'Fácil', exercises: 28 },
-    { id: 'ingles', name: 'Inglês', description: 'Gramática, vocabulário e conversação', color: 'from-blue-600 to-indigo-600', icon: '🇺🇸', difficulty: 'Médio', exercises: 15 },
-    { id: 'espanhol', name: 'Espanhol', description: 'Idioma, cultura e comunicação', color: 'from-red-500 to-red-700', icon: '🇪🇸', difficulty: 'Médio', exercises: 8 },
-    { id: 'literatura', name: 'Literatura', description: 'Obras clássicas e análise textual', color: 'from-violet-500 to-violet-700', icon: '📖', difficulty: 'Médio', exercises: 12 }
-  ], []);
-
-  const activities = useMemo(() => [
-    { id: 'quiz', name: t('activity_quiz_name'), icon: Trophy, color: 'bg-yellow-500', description: t('activity_quiz_desc') }
-  ], [t]);
-
-  const handleSubjectSelect = (subjectName: string) => {
-    setSelectedSubject(subjectName);
-    setShowMentorWelcome(true);
-    setExerciseMode('mentor-welcome');
+  const handleSubjectSelect = (subjectId: string) => {
+    setSelectedSubject(subjectId);
+    setShowResult(false);
+    setQuizScore(null);
   };
 
-  const handleMentorWelcomeClose = () => {
-    setShowMentorWelcome(false);
-    setExerciseMode('quiz');
+  const handleQuizComplete = (score: number, timeSpent: number) => {
+    setQuizScore(score);
+    setShowResult(true);
+    console.log('Quiz completed:', { score, timeSpent });
   };
 
-  const handleQuizComplete = async (score: number, timeSpent: number) => {
-    if (selectedSubject) {
-      await updateProgress(selectedSubject, 1);
-    }
-    setExerciseMode('selection');
+  const handleBackToSubjects = () => {
     setSelectedSubject(null);
+    setShowResult(false);
+    setQuizScore(null);
   };
 
-  const handleBackToSelection = () => {
-    setExerciseMode('selection');
-    setSelectedSubject(null);
-  };
-
-  const currentSubject = subjects.find(s => s.name === selectedSubject);
-
-  // Tela de Boas-vindas do Mentor
-  if (exerciseMode === 'mentor-welcome' && selectedSubject && currentSubject) {
+  if (selectedSubject) {
     return (
-      <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20">
-          <MentorWelcome
-            subject={selectedSubject}
-            onClose={handleMentorWelcomeClose}
-          />
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
-    );
-  }
-
-  if (exerciseMode === 'quiz' && selectedSubject && currentSubject) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20">
-          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleBackToSelection}
-              className="text-white p-2 hover:bg-white/20 rounded-xl"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <h1 className="text-lg font-semibold">Quiz - {currentSubject.name}</h1>
-          </div>
-          
-          <div className="p-6 flex-1 min-h-0">
-            <SubjectQuiz 
-              subject={selectedSubject}
-              onComplete={handleQuizComplete}
-              onBack={handleBackToSelection}
-            />
-          </div>
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-4">
+        <DynamicSubjectQuiz
+          subject={selectedSubject}
+          onComplete={handleQuizComplete}
+          onBack={handleBackToSubjects}
+        />
+      </div>
     );
   }
 
   return (
-    <MobileContainer background="gradient">
-      <div className="flex flex-col h-full pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-4">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="text-white p-2 hover:bg-white/20 rounded-xl"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="text-lg font-semibold flex items-center space-x-2">
-            <span>{t('exercises_title')}</span>
-            <Target size={20} />
-          </h1>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <Trophy className="text-yellow-500 mr-3" size={32} />
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+              Exercícios Práticos
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
+            Teste seus conhecimentos com questões dinâmicas e personalizadas
+          </p>
         </div>
 
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 gap-3">
-            {activities.map((activity) => (
-              <div key={activity.id} className="bg-white/15 backdrop-blur-md rounded-xl p-3 text-center shadow-lg">
-                <activity.icon className="w-6 h-6 text-white mx-auto mb-1" />
-                <p className="text-white text-xs font-medium">{activity.name}</p>
-                <p className="text-white/80 text-xs">{activity.description}</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full mr-4">
+                <Target className="text-blue-600 dark:text-blue-400" size={24} />
               </div>
-            ))}
+              <div>
+                <h3 className="font-bold text-gray-800 dark:text-white">Questões Dinâmicas</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Sistema inteligente de exercícios</p>
+              </div>
+            </div>
           </div>
 
-          {/* Subjects Grid */}
-          <div>
-            <h2 className="text-white text-lg font-semibold mb-4">{t('select_subject')}</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {subjects.map((subject) => {
-                const subjectProgress = getSubjectProgress(subject.name);
-                const hasLimitedContent = subject.exercises < 20;
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full mr-4">
+                <Zap className="text-green-600 dark:text-green-400" size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800 dark:text-white">Feedback Imediato</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Respostas com explicações detalhadas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full mr-4">
+                <Star className="text-purple-600 dark:text-purple-400" size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800 dark:text-white">Mentores Virtuais</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Orientação personalizada por matéria</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subject Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {subjects.map((subject) => (
+            <div
+              key={subject.id}
+              onClick={() => handleSubjectSelect(subject.id)}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 hover:scale-105 group"
+            >
+              <div className="text-center">
+                <div className={`${subject.color} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                  <span className="text-2xl text-white">{subject.icon}</span>
+                </div>
                 
-                return (
-                  <div
-                    key={subject.id}
-                    onClick={() => handleSubjectSelect(subject.name)}
-                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10 relative"
-                  >
-                    {hasLimitedContent && (
-                      <div className="absolute top-2 right-2">
-                        <div className="bg-yellow-500/80 text-yellow-900 text-xs px-2 py-1 rounded-full font-medium">
-                          Em desenvolvimento
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
-                        {subject.icon}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-bold text-white text-lg mb-1">{subject.name}</h3>
-                        <p className="text-white/80 text-sm mb-2">{subject.description}</p>
-                        
-                        <div className="flex items-center space-x-4 text-xs">
-                          <div className="flex items-center space-x-1">
-                            <Target size={12} className="text-blue-400" />
-                            <span className="text-white/80">{subject.exercises} exercícios</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock size={12} className="text-green-400" />
-                            <span className="text-white/80">{subject.difficulty}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star size={12} className="text-yellow-400" />
-                            <span className="text-white/80">{subjectProgress.progress_percentage}%</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-white/60 text-2xl">
-                        →
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                  {subject.name}
+                </h3>
+                
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                  {subject.description}
+                </p>
+                
+                <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center">
+                    <Book className="mr-1" size={12} />
+                    Questões Dinâmicas
+                  </span>
+                  <span className="flex items-center">
+                    <Target className="mr-1" size={12} />
+                    15 mins
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Info Section */}
+        <div className="mt-12 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800 rounded-xl p-8 text-white text-center">
+          <h2 className="text-2xl font-bold mb-4">Sistema de Quiz Dinâmico</h2>
+          <p className="text-blue-100 dark:text-blue-200 mb-6 max-w-2xl mx-auto">
+            Nosso novo sistema carrega questões dinamicamente do banco de dados, proporcionando uma experiência 
+            mais rica e atualizada. Cada exercício é personalizado com mentores virtuais especializados em cada matéria.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-3xl mb-2">🎯</div>
+              <h4 className="font-semibold mb-1">Questões Inteligentes</h4>
+              <p className="text-sm text-blue-100">Algoritmo que adapta a dificuldade</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-3xl mb-2">🤖</div>
+              <h4 className="font-semibold mb-1">Mentores Virtuais</h4>
+              <p className="text-sm text-blue-100">Feedback personalizado por IA</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-3xl mb-2">📊</div>
+              <h4 className="font-semibold mb-1">Análise Detalhada</h4>
+              <p className="text-sm text-blue-100">Relatórios de desempenho completos</p>
             </div>
           </div>
         </div>
       </div>
-      
-      <BottomNavigation />
-    </MobileContainer>
+    </div>
   );
 };
 
