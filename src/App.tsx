@@ -59,7 +59,8 @@ function App() {
                     <Route path="/subscriptions" element={<Subscriptions />} />
                     <Route path="/support" element={<Support />} />
                     <Route path="/guilds" element={<Guilds />} />
-                    <Route path="/guild/:guildId" element={<GuildDetails />} />
+                    <Route path="/guilds/:id" element={<GuildDetails />} />
+                    <Route path="/guild/:id" element={<GuildDetails />} />
                     <Route path="/mentor-images" element={<MentorImages />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

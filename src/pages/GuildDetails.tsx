@@ -45,10 +45,15 @@ const GuildDetails = () => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const fetchGuildDetails = async () => {
-    if (!id) return;
+    if (!id) {
+      console.error('Guild ID not found in URL parameters');
+      navigate('/guilds');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('Fetching guild details for ID:', id);
       
       // Buscar detalhes da guilda
       const { data: guildData, error } = await supabase
@@ -65,31 +70,47 @@ const GuildDetails = () => {
         throw error;
       }
 
+      console.log('Guild data fetched:', guildData);
+
       // Contar membros
       const { count: memberCount } = await supabase
         .from('guild_members')
         .select('*', { count: 'exact', head: true })
         .eq('guild_id', id);
 
-      // Verificar papel do usuário na guilda
-      const { data: memberData } = await supabase
-        .from('guild_members')
-        .select('role')
-        .eq('guild_id', id)
-        .eq('profile_id', user?.id)
-        .single();
+      console.log('Member count:', memberCount);
+
+      // Verificar papel do usuário na guilda (usar maybeSingle para evitar erro)
+      let userRole = 'não-membro';
+      if (user?.id) {
+        const { data: memberData, error: memberError } = await supabase
+          .from('guild_members')
+          .select('role')
+          .eq('guild_id', id)
+          .eq('profile_id', user.id)
+          .maybeSingle();
+
+        if (memberError) {
+          console.warn('Error checking user membership:', memberError);
+        } else if (memberData) {
+          userRole = memberData.role;
+          console.log('User role in guild:', userRole);
+        }
+      }
 
       setGuild({
         ...guildData,
         member_count: memberCount || 0,
         owner_name: guildData.profiles?.full_name || 'Usuário',
-        user_role: memberData?.role || 'não-membro'
+        user_role: userRole
       });
-    } catch (error) {
+
+      console.log('Guild state set successfully');
+    } catch (error: any) {
       console.error('Erro ao buscar detalhes da guilda:', error);
       toast({
         title: "Erro ao carregar guilda",
-        description: "Não foi possível carregar os detalhes da guilda.",
+        description: `Não foi possível carregar os detalhes da guilda: ${error.message}`,
         variant: "destructive"
       });
       navigate('/guilds');
@@ -170,8 +191,14 @@ const GuildDetails = () => {
   if (!guild) {
     return (
       <MobileContainer background="gradient">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-white">Guilda não encontrada</div>
+        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+          <div className="text-white mb-4">Guilda não encontrada</div>
+          <Button 
+            onClick={() => navigate('/guilds')}
+            className="bg-white/20 hover:bg-white/30 text-white"
+          >
+            Voltar às Guildas
+          </Button>
         </div>
       </MobileContainer>
     );
@@ -182,6 +209,7 @@ const GuildDetails = () => {
   const canInviteMore = (guild.member_count || 0) < 20;
   const canManageRequests = isOwner || guild.user_role === 'líder';
   const canManageBattles = isOwner || guild.user_role === 'líder';
+  const isMember = guild.user_role !== 'não-membro';
 
   return (
     <MobileContainer background="gradient">
@@ -227,7 +255,7 @@ const GuildDetails = () => {
                 >
                   <Trash2 size={16} />
                 </Button>
-              ) : (
+              ) : isMember && (
                 <Button 
                   onClick={() => setShowLeaveModal(true)}
                   className="bg-orange-500 hover:bg-orange-600 text-white px-3"
@@ -257,74 +285,99 @@ const GuildDetails = () => {
               ⚠️ Guilda lotada (20/20 membros)
             </div>
           )}
+
+          {!isMember && (
+            <div className="mt-2 text-xs text-orange-400">
+              ℹ️ Você não é membro desta guilda
+            </div>
+          )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex-1 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-md mx-3 mt-3">
-              <TabsTrigger value="chat" className="text-xs">
-                <MessageSquare size={12} className="mr-1" />
-                Chat
-              </TabsTrigger>
-              <TabsTrigger value="mural" className="text-xs">
-                <FileText size={12} className="mr-1" />
-                Mural
-              </TabsTrigger>
-              <TabsTrigger value="membros" className="text-xs">
-                <Users size={12} className="mr-1" />
-                Membros
-              </TabsTrigger>
-              <TabsTrigger value="xp" className="text-xs">
-                <Star size={12} className="mr-1" />
-                XP
-              </TabsTrigger>
-              <TabsTrigger value="batalhas" className="text-xs">
-                <Zap size={12} className="mr-1" />
-                Batalhas
-              </TabsTrigger>
-              {canManageRequests && (
-                <TabsTrigger value="solicitacoes" className="text-xs">
-                  <UserCheck size={12} className="mr-1" />
-                  Solicitações
+        {/* Content - Only show tabs if user is a member */}
+        {isMember ? (
+          <div className="flex-1 overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+              <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-md mx-3 mt-3">
+                <TabsTrigger value="chat" className="text-xs">
+                  <MessageSquare size={12} className="mr-1" />
+                  Chat
                 </TabsTrigger>
-              )}
-            </TabsList>
-            
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="chat" className="h-full m-0">
-                <GuildChat guildId={guild.id} />
-              </TabsContent>
-              <TabsContent value="mural" className="h-full m-0">
-                <GuildMural guildId={guild.id} />
-              </TabsContent>
-              <TabsContent value="membros" className="h-full m-0">
-                <GuildMembers guildId={guild.id} isOwner={isOwner} onMemberUpdate={fetchGuildDetails} />
-              </TabsContent>
-              <TabsContent value="xp" className="h-full m-0">
-                <div className="p-3">
-                  <GuildMemberXP guildId={guild.id} />
-                </div>
-              </TabsContent>
-              <TabsContent value="batalhas" className="h-full m-0">
-                <div className="p-3">
-                  <GuildBattles 
-                    guildId={guild.id} 
-                    isOwner={isOwner} 
-                    isLeader={guild.user_role === 'líder'}
-                  />
-                </div>
-              </TabsContent>
-              {canManageRequests && (
-                <TabsContent value="solicitacoes" className="h-full m-0">
+                <TabsTrigger value="mural" className="text-xs">
+                  <FileText size={12} className="mr-1" />
+                  Mural
+                </TabsTrigger>
+                <TabsTrigger value="membros" className="text-xs">
+                  <Users size={12} className="mr-1" />
+                  Membros
+                </TabsTrigger>
+                <TabsTrigger value="xp" className="text-xs">
+                  <Star size={12} className="mr-1" />
+                  XP
+                </TabsTrigger>
+                <TabsTrigger value="batalhas" className="text-xs">
+                  <Zap size={12} className="mr-1" />
+                  Batalhas
+                </TabsTrigger>
+                {canManageRequests && (
+                  <TabsTrigger value="solicitacoes" className="text-xs">
+                    <UserCheck size={12} className="mr-1" />
+                    Solicitações
+                  </TabsTrigger>
+                )}
+              </TabsList>
+              
+              <div className="flex-1 overflow-hidden">
+                <TabsContent value="chat" className="h-full m-0">
+                  <GuildChat guildId={guild.id} />
+                </TabsContent>
+                <TabsContent value="mural" className="h-full m-0">
+                  <GuildMural guildId={guild.id} />
+                </TabsContent>
+                <TabsContent value="membros" className="h-full m-0">
+                  <GuildMembers guildId={guild.id} isOwner={isOwner} onMemberUpdate={fetchGuildDetails} />
+                </TabsContent>
+                <TabsContent value="xp" className="h-full m-0">
                   <div className="p-3">
-                    <GuildJoinRequests guildId={guild.id} onRequestHandled={fetchGuildDetails} />
+                    <GuildMemberXP guildId={guild.id} />
                   </div>
                 </TabsContent>
-              )}
+                <TabsContent value="batalhas" className="h-full m-0">
+                  <div className="p-3">
+                    <GuildBattles 
+                      guildId={guild.id} 
+                      isOwner={isOwner} 
+                      isLeader={guild.user_role === 'líder'}
+                    />
+                  </div>
+                </TabsContent>
+                {canManageRequests && (
+                  <TabsContent value="solicitacoes" className="h-full m-0">
+                    <div className="p-3">
+                      <GuildJoinRequests guildId={guild.id} onRequestHandled={fetchGuildDetails} />
+                    </div>
+                  </TabsContent>
+                )}
+              </div>
+            </Tabs>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center text-white/80">
+              <Users size={48} className="mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <p className="text-sm mb-4">
+                Esta guilda é {guild.is_public ? 'pública' : 'privada'}. 
+                Você precisa ser membro para ver o conteúdo interno.
+              </p>
+              <Button 
+                onClick={() => navigate('/guilds')}
+                className="bg-white/20 hover:bg-white/30 text-white"
+              >
+                Voltar às Guildas
+              </Button>
             </div>
-          </Tabs>
-        </div>
+          </div>
+        )}
 
         {/* Modals */}
         <GuildInviteModal
