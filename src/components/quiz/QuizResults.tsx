@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Trophy } from 'lucide-react';
-import { useSound } from '@/contexts/SoundContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Trophy, Star, Target, Clock } from 'lucide-react';
 
 interface QuizResultsProps {
   subject: string;
@@ -10,146 +9,106 @@ interface QuizResultsProps {
   totalQuestions: number;
   saving: boolean;
   onBack: () => void;
+  hasLimitedQuestions?: boolean;
 }
 
-const QuizResults: React.FC<QuizResultsProps> = ({ 
-  subject, 
-  score, 
-  totalQuestions, 
-  saving, 
-  onBack 
+const QuizResults: React.FC<QuizResultsProps> = ({
+  subject,
+  score,
+  totalQuestions,
+  saving,
+  onBack,
+  hasLimitedQuestions = false
 }) => {
-  const { isMuted } = useSound();
-  const { t, language } = useLanguage();
-  const percentage = Math.round((score / (totalQuestions * 10)) * 100);
+  const maxPossibleScore = totalQuestions * 10;
+  const percentage = Math.round((score / maxPossibleScore) * 100);
   
-  useEffect(() => {
-    if (isMuted) return;
+  const getPerformanceMessage = () => {
+    if (percentage >= 90) return { message: "Excelente! Você domina esta matéria!", icon: "🏆", color: "text-yellow-600" };
+    if (percentage >= 70) return { message: "Muito bom! Continue praticando!", icon: "🌟", color: "text-green-600" };
+    if (percentage >= 50) return { message: "Bom trabalho! Há espaço para melhoria.", icon: "👍", color: "text-blue-600" };
+    return { message: "Continue estudando! A prática leva à perfeição.", icon: "📚", color: "text-orange-600" };
+  };
 
-    const correctAnswers = Math.round(score / 10);
+  const performance = getPerformanceMessage();
 
-    const getResultMessage = () => {
-      const halfQuestions = totalQuestions / 2;
-      
-      if (correctAnswers > halfQuestions) {
-        return t('quiz_feedback_good', { correct: correctAnswers, total: totalQuestions });
-      } else {
-        return t('quiz_feedback_bad', { correct: correctAnswers, total: totalQuestions });
-      }
-    };
-    
-    const message = getResultMessage();
-    const utterance = new SpeechSynthesisUtterance(message);
-    
-    // Map context language to BCP 47 language tags for speech synthesis
-    const langMap: { [key: string]: string } = {
-        pt: 'pt-BR',
-        en: 'en-US',
-        es: 'es-ES',
-        ja: 'ja-JP',
-        fr: 'fr-FR',
-        de: 'de-DE',
-        it: 'it-IT',
-        ko: 'ko-KR',
-        zh: 'zh-CN',
-        ar: 'ar-SA',
-        ru: 'ru-RU',
-        hi: 'hi-IN',
-    };
-    utterance.lang = langMap[language] || 'en-US';
-    
-    // Configurações para voz feminina mais suave e natural
-    utterance.rate = 0.8; // Um pouco mais devagar para soar mais natural
-    utterance.pitch = 1.2; // Pitch um pouco mais alto para soar feminino
-    utterance.volume = 0.8; // Volume moderado
-
-    const speak = () => {
-        const voices = window.speechSynthesis.getVoices();
-        
-        // Procurar especificamente por vozes femininas
-        const femaleVoices = voices.filter(voice => 
-            voice.lang === utterance.lang && (
-                voice.name.toLowerCase().includes('female') ||
-                voice.name.toLowerCase().includes('woman') ||
-                voice.name.toLowerCase().includes('maria') ||
-                voice.name.toLowerCase().includes('luciana') ||
-                voice.name.toLowerCase().includes('ana') ||
-                voice.name.toLowerCase().includes('samantha') ||
-                voice.name.toLowerCase().includes('karen') ||
-                voice.name.toLowerCase().includes('alice') ||
-                voice.name.toLowerCase().includes('sarah') ||
-                voice.name.toLowerCase().includes('amelie') ||
-                voice.name.toLowerCase().includes('paulina') ||
-                voice.name.toLowerCase().includes('monica') ||
-                voice.name.toLowerCase().includes('kyoko') ||
-                voice.name.toLowerCase().includes('li-mu') ||
-                voice.name.toLowerCase().includes('fiona') ||
-                voice.name.toLowerCase().includes('veena') ||
-                voice.name.toLowerCase().includes('milena') ||
-                voice.name.toLowerCase().includes('catherine') ||
-                voice.name.toLowerCase().includes('zuzana') ||
-                voice.name.toLowerCase().includes('tessa')
-            )
-        );
-        
-        // Se não encontrar vozes femininas específicas, usar as com qualidade mais alta
-        const preferredVoice = femaleVoices.length > 0 
-            ? femaleVoices[0] 
-            : voices.find(voice => 
-                voice.lang === utterance.lang && 
-                voice.localService === false // Vozes de rede tendem a ser de melhor qualidade
-              ) || voices.find(voice => voice.lang === utterance.lang);
-        
-        if (preferredVoice) {
-            utterance.voice = preferredVoice;
-        }
-        
-        window.speechSynthesis.speak(utterance);
-    };
-
-    if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = speak;
-    } else {
-        speak();
-    }
-
-    return () => {
-      window.speechSynthesis.cancel();
-    };
-  }, [score, totalQuestions, isMuted, t, language]);
-  
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center">
-      <Trophy className="mx-auto mb-4 text-yellow-500" size={64} />
-      <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-        {t('quiz_results_title', { subject })}
-      </h3>
-      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-lg p-4 mb-6">
-        <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">{t('quiz_results_points', { score })}</div>
-        <div className="text-lg text-orange-700 dark:text-orange-300">{t('quiz_results_percentage', { percentage, subject })}</div>
-        <div className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-          {saving ? t('quiz_results_saving') : t('quiz_results_saved')}
+    <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center min-h-full flex flex-col">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="text-6xl mb-4">{performance.icon}</div>
+        <h2 className="text-2xl font-bold mb-2">Quiz Finalizado!</h2>
+        <h3 className="text-lg text-gray-600 dark:text-gray-400">{subject}</h3>
+      </div>
+
+      {/* Limited Questions Warning */}
+      {hasLimitedQuestions && (
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg p-4 mb-6">
+          <div className="text-yellow-800 dark:text-yellow-200">
+            <p className="font-bold text-sm mb-1">⚠️ Versão Prévia</p>
+            <p className="text-xs">
+              Esta matéria possui conteúdo limitado. Mais questões serão adicionadas em atualizações futuras!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Score Display */}
+      <div className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-6 mb-6">
+        <div className="flex justify-center items-center mb-4">
+          <Trophy className="w-8 h-8 text-yellow-500 mr-3" />
+          <div>
+            <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">{score}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">de {maxPossibleScore} pontos</div>
+          </div>
+        </div>
+        
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-3">
+          <div 
+            className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-500"
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+        
+        <div className="text-2xl font-bold mb-2">{percentage}%</div>
+      </div>
+
+      {/* Performance Message */}
+      <div className="bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-6">
+        <p className={`text-lg font-bold mb-2 ${performance.color}`}>
+          {performance.message}
+        </p>
+        
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center">
+            <Target className="w-4 h-4 mr-2 text-blue-500" />
+            <span>{totalQuestions} questões</span>
+          </div>
+          <div className="flex items-center">
+            <Star className="w-4 h-4 mr-2 text-yellow-500" />
+            <span>{Math.round(score / totalQuestions * 10)/10} pts/questão</span>
+          </div>
         </div>
       </div>
-      
-      {/* Informações adicionais sobre desempenho */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{score}/{totalQuestions * 10}</div>
-          <div className="text-sm text-blue-700 dark:text-blue-300">{t('quiz_results_score')}</div>
+
+      {/* Saving Status */}
+      {saving && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg p-3 mb-4">
+          <p className="text-blue-700 dark:text-blue-300 text-sm">
+            💾 Salvando seu progresso...
+          </p>
         </div>
-        <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round(score / 10)}/{totalQuestions}</div>
-          <div className="text-sm text-green-700 dark:text-green-300">{t('quiz_results_correct')}</div>
-        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="mt-auto pt-4">
+        <Button 
+          onClick={onBack}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
+        >
+          Voltar aos Exercícios
+        </Button>
       </div>
-      
-      <Button 
-        onClick={onBack}
-        className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl"
-      >
-        {t('quiz_results_back')}
-      </Button>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 export interface Mentor {
   id: string;
   name: string;
@@ -260,7 +261,7 @@ export const getMentorBySubject = (subject: string): Mentor | null => {
     'espanhol': 'dali'
   };
 
-  const mentorId = subjectMapping[subject.toLowerCase()];
+  const mentorId = subjectMapping[subject] || subjectMapping[subject.toLowerCase()];
   return mentors.find(m => m.id === mentorId) || mentors[0]; // Fallback para Pitágoras
 };
 

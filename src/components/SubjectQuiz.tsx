@@ -45,6 +45,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const [gameCompleted, setGameCompleted] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [finalScore, setFinalScore] = useState(0);
+  const [hasLimitedQuestions, setHasLimitedQuestions] = useState(false);
   
   // Estados dos mentores
   const [showMentorGuide, setShowMentorGuide] = useState(false);
@@ -63,6 +64,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       if (topic) {
         filteredQuestions = questions.filter(q => q.topic === topic);
       }
+      
+      // Verificar se há questões limitadas
+      const isLimited = filteredQuestions.length < 10;
+      setHasLimitedQuestions(isLimited);
       
       const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
       const selectedQuestions = shuffled.slice(0, Math.min(15, filteredQuestions.length));
@@ -264,8 +269,14 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     return (
       <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 p-6 text-center rounded-lg">
         <h3 className="text-xl font-bold mb-4">
-          Nenhuma questão disponível para {subject}
+          📚 Conteúdo em Desenvolvimento
         </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          As questões para {subject} estão sendo preparadas pela nossa equipe pedagógica.
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
+          Em breve teremos exercícios completos disponíveis!
+        </p>
         <Button onClick={onBack} className="mt-4">
           Voltar
         </Button>
@@ -313,6 +324,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         totalQuestions={quizQuestions.length}
         saving={saving}
         onBack={onBack}
+        hasLimitedQuestions={hasLimitedQuestions}
       />
     );
   }
@@ -321,15 +333,110 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const isCorrect = selectedAnswer === question.correctAnswer;
   const xpGained = isCorrect ? 10 : 3;
 
+  // Function to get the correct mentor feedback component
+  const getMentorFeedbackComponent = () => {
+    const subjectLower = subject.toLowerCase();
+    
+    if (subjectLower === 'matemática' || subjectLower === 'matematica') {
+      return (
+        <QuizPythagorasFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'física' || subjectLower === 'fisica') {
+      return (
+        <QuizEinsteinFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'química' || subjectLower === 'quimica') {
+      return (
+        <QuizMarieCurieFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'biologia') {
+      return (
+        <QuizDarwinFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          points={xpGained}
+          affinityLevel={1}
+          affinityProgress={35}
+        />
+      );
+    } else if (subjectLower === 'sociologia') {
+      return (
+        <QuizFlorestenFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          points={xpGained}
+          affinityLevel={1}
+          affinityProgress={25}
+        />
+      );
+    } else if (subjectLower === 'português' || subjectLower === 'portugues') {
+      return (
+        <QuizRuiBarbosaFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          points={xpGained}
+          affinityLevel={1}
+          affinityProgress={40}
+        />
+      );
+    } else if (subjectLower === 'história' || subjectLower === 'historia') {
+      return (
+        <QuizZumbiFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          points={xpGained}
+          affinityLevel={1}
+          affinityProgress={30}
+        />
+      );
+    } else {
+      return (
+        <QuizMentorFeedback
+          subject={subject}
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    }
+  };
+
   return (
     <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 h-full flex flex-col rounded-lg relative">
+      {hasLimitedQuestions && (
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 mb-4">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+            ⚠️ Esta matéria possui questões limitadas. Mais conteúdo será adicionado em breve!
+          </p>
+        </div>
+      )}
+
       {showMentorGuide && (
         <QuizMentorGuide
           subject={subject}
           questionDifficulty={question.difficulty}
           isVisible={showMentorGuide}
           onClose={() => setShowMentorGuide(false)}
-          onHintRequest={handleHintRequest}
+          onHintRequest={() => {
+            setShowMentorGuide(false);
+            setShowMentorHint(true);
+          }}
         />
       )}
 
@@ -337,7 +444,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <QuizMentorHint
           subject={subject}
           hint={question.explanation || "Esta questão requer atenção aos detalhes. Analise cada opção cuidadosamente."}
-          onUseHint={handleUseHint}
+          onUseHint={() => setShowMentorHint(false)}
           onClose={() => setShowMentorHint(false)}
           isVisible={showMentorHint}
         />
@@ -357,73 +464,12 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           question={question}
           selectedAnswer={selectedAnswer}
           showResult={showResult}
-          onAnswerSelect={handleAnswerSelect}
+          onAnswerSelect={setSelectedAnswer}
         />
 
         {showMentorFeedback && showResult && (
           <div className="mt-4">
-            {subject.toLowerCase() === 'matemática' ? (
-              <QuizPythagorasFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                xpGained={xpGained}
-                isVisible={showMentorFeedback}
-              />
-            ) : subject.toLowerCase() === 'física' ? (
-              <QuizEinsteinFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                xpGained={xpGained}
-                isVisible={showMentorFeedback}
-              />
-            ) : subject.toLowerCase() === 'química' ? (
-              <QuizMarieCurieFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                xpGained={xpGained}
-                isVisible={showMentorFeedback}
-              />
-            ) : subject.toLowerCase() === 'biologia' ? (
-              <QuizDarwinFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                points={xpGained}
-                affinityLevel={1}
-                affinityProgress={35}
-              />
-            ) : subject.toLowerCase() === 'sociologia' ? (
-              <QuizFlorestenFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                points={xpGained}
-                affinityLevel={1}
-                affinityProgress={25}
-              />
-            ) : subject.toLowerCase() === 'português' ? (
-              <QuizRuiBarbosaFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                points={xpGained}
-                affinityLevel={1}
-                affinityProgress={40}
-              />
-            ) : subject.toLowerCase() === 'história' ? (
-              <QuizZumbiFeedback
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                points={xpGained}
-                affinityLevel={1}
-                affinityProgress={30}
-              />
-            ) : (
-              <QuizMentorFeedback
-                subject={subject}
-                isCorrect={isCorrect}
-                explanation={question.explanation}
-                xpGained={xpGained}
-                isVisible={showMentorFeedback}
-              />
-            )}
+            {getMentorFeedbackComponent()}
           </div>
         )}
 
@@ -446,7 +492,41 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
-              onClick={handleSubmitAnswer}
+              onClick={() => {
+                setShowResult(true);
+                setShowMentorGuide(false);
+                
+                const isCorrect = selectedAnswer === question.correctAnswer;
+                const questionScore = isCorrect ? 10 : 0;
+                const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
+                
+                const newScore = score + questionScore;
+                setScore(newScore);
+                
+                recordQuizQuestion(
+                  subject,
+                  question.topic,
+                  question.id || `${subject}-${currentQuestion}`,
+                  selectedAnswer || -1,
+                  question.correctAnswer,
+                  timeSpentOnQuestion
+                ).catch(error => {
+                  console.error('Erro ao registrar atividade da questão:', error);
+                });
+                
+                if (isCorrect) {
+                  setExperience(prev => Math.min(prev + 10, 100));
+                } else {
+                  setExperience(prev => Math.min(prev + 3, 100));
+                }
+                
+                if (experience >= 100) {
+                  setAffinityLevel(prev => prev + 1);
+                  setExperience(0);
+                }
+                
+                setShowMentorFeedback(true);
+              }}
               disabled={selectedAnswer === null}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-blue-700 active:border-b-2 active:border-r-2 disabled:opacity-50"
             >
@@ -454,7 +534,43 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
             </Button>
           ) : (
             <Button 
-              onClick={handleNextQuestion}
+              onClick={() => {
+                setShowMentorFeedback(false);
+                
+                if (currentQuestion < quizQuestions.length - 1) {
+                  setCurrentQuestion(currentQuestion + 1);
+                  setSelectedAnswer(null);
+                  setShowResult(false);
+                  setTimeLeft(180);
+                  setQuestionStartTime(Date.now());
+                } else {
+                  const timeSpent = Math.round((Date.now() - startTime) / 1000);
+                  const calculatedFinalScore = score;
+                  
+                  setFinalScore(calculatedFinalScore);
+                  setGameCompleted(true);
+                  
+                  console.log('🎯 Finalizando quiz:', { subject, finalScore: calculatedFinalScore, timeSpent });
+                  
+                  saveQuizScore(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
+                    .then((success) => {
+                      if (success) {
+                        console.log('✅ Quiz salvo com sucesso!');
+                        if (playSound) playSound('success');
+                      }
+                    })
+                    .catch(error => {
+                      console.error('❌ Erro ao salvar quiz:', error);
+                    });
+                  
+                  recordQuizComplete(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
+                    .catch(error => {
+                      console.error('Erro ao registrar conclusão do quiz:', error);
+                    });
+                  
+                  onComplete(calculatedFinalScore, timeSpent);
+                }
+              }}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
               {currentQuestion < quizQuestions.length - 1 ? 'Próxima' : 'Finalizar Quiz'}
