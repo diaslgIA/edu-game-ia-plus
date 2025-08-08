@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fallbackQuestions } from '@/data/fallbackQuestions';
 
 interface SubjectQuestion {
   id: string;
@@ -23,7 +24,7 @@ export const useSubjectQuestions = (subjectVariants: string[]) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const retryCountRef = useRef(0);
-  const maxRetries = 2;
+  const maxRetries = 3;
 
   const cacheKey = subjectVariants.sort().join(',');
 
@@ -70,7 +71,7 @@ export const useSubjectQuestions = (subjectVariants: string[]) => {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const isCache Valid = (timestamp: number) => {
+  const isCacheValid = (timestamp: number) => {
     return Date.now() - timestamp < CACHE_DURATION;
   };
 
@@ -120,17 +121,37 @@ export const useSubjectQuestions = (subjectVariants: string[]) => {
         retryCountRef.current = 0; // Reset retry count on success
       } else {
         console.log('No questions found for subjects:', subjectVariants);
-        setQuestions([]);
+        // Usar questões de fallback se não houver dados
+        const relevantFallbackQuestions = fallbackQuestions.filter(q => 
+          subjectVariants.some(subject => 
+            q.subject.toLowerCase().includes(subject.toLowerCase()) ||
+            subject.toLowerCase().includes(q.subject.toLowerCase())
+          )
+        );
+        setQuestions(relevantFallbackQuestions);
       }
     } catch (error) {
       console.error('Error loading questions:', error);
       setError('Erro ao carregar questões');
       
-      // Retry logic
-      if (retryCountRef.current < maxRetries) {
-        retryCountRef.current++;
-        console.log(`Retrying... attempt ${retryCountRef.current}`);
-        setTimeout(() => loadQuestions(), 1000 * retryCountRef.current);
+      // Usar questões de fallback em caso de erro
+      const relevantFallbackQuestions = fallbackQuestions.filter(q => 
+        subjectVariants.some(subject => 
+          q.subject.toLowerCase().includes(subject.toLowerCase()) ||
+          subject.toLowerCase().includes(q.subject.toLowerCase())
+        )
+      );
+      
+      if (relevantFallbackQuestions.length > 0) {
+        setQuestions(relevantFallbackQuestions);
+        setError(null); // Limpar erro se temos fallbacks
+      } else {
+        // Retry logic
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          console.log(`Retrying... attempt ${retryCountRef.current}`);
+          setTimeout(() => loadQuestions(), 1000 * retryCountRef.current);
+        }
       }
     } finally {
       setLoading(false);
