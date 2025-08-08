@@ -1,168 +1,311 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { SubjectContent } from '@/types/subject-content';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, BookOpen, Target, Star } from 'lucide-react';
-import ContentSlides from './ContentSlides';
+import { ArrowLeft, Clock, BookOpen, CheckCircle, Play, Trophy, Star, Target } from 'lucide-react';
+import { useSubjectContents } from '@/hooks/useSubjectContents';
 import InteractiveSection from './interactive/InteractiveSection';
 import ChallengeSection from './interactive/ChallengeSection';
 import SubjectQuiz from './SubjectQuiz';
-import { useSubjectContents } from '@/hooks/useSubjectContents';
-import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
-import { toast } from '@/hooks/use-toast';
-import { getSubjectVariants } from '@/utils/subjectMapping';
+import { SubjectContent } from '@/types/subject-content';
 
 interface GamifiedContentViewerProps {
+  subject: string;
   contentId: string;
   onBack: () => void;
-  onComplete: () => void;
-  subject: string;
+  onComplete?: (contentId: string) => void;
 }
 
+type SectionType = 'theory' | 'interactive' | 'quiz' | 'challenge' | 'completed';
+
 const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({ 
+  subject, 
   contentId, 
   onBack, 
-  onComplete, 
-  subject 
+  onComplete 
 }) => {
-  const subjectVariants = getSubjectVariants(subject);
-  const { updateContentProgress } = useSubjectContents(subjectVariants);
-  const { getQuestionsByTopic } = useSubjectQuestions(subjectVariants);
-  const [content, setContent] = useState<SubjectContent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [sectionCompleted, setSectionCompleted] = useState<boolean[]>([]);
+  const { contents, updateContentProgress, getContentProgress } = useSubjectContents(subject);
+  const [currentSection, setCurrentSection] = useState<SectionType>('theory');
+  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [completedSections, setCompletedSections] = useState<Set<SectionType>>(new Set());
+
+  const content = contents.find(c => c.id === contentId) as SubjectContent | undefined;
+  const progress = getContentProgress(contentId);
 
   useEffect(() => {
-    const loadContent = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('subject_contents')
-          .select('*')
-          .eq('id', contentId)
-          .single();
+    setStartTime(Date.now());
+  }, []);
 
-        if (error) {
-          console.error('Error loading content:', error);
-          toast({
-            title: "Erro ao carregar conteúdo",
-            description: "Houve um problema ao carregar o conteúdo. Por favor, tente novamente.",
-            variant: "destructive",
-          });
-          return;
-        }
+  const handleSectionComplete = async (section: SectionType) => {
+    const newCompleted = new Set(completedSections).add(section);
+    setCompletedSections(newCompleted);
 
-        setContent(data as SubjectContent);
-        
-        // Inicializar array de seções completadas baseado nas seções disponíveis
-        const availableSections = getAvailableSections(data as SubjectContent);
-        setSectionCompleted(new Array(availableSections.length).fill(false));
-      } finally {
-        setLoading(false);
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+    const progressPercentage = Math.round((newCompleted.size / 4) * 100);
+    
+    await updateContentProgress(contentId, {
+      completed: progressPercentage === 100,
+      progress_percentage: progressPercentage,
+      time_spent: (progress?.time_spent || 0) + timeSpent
+    });
+
+    // Avançar para próxima seção
+    if (section === 'theory') {
+      setCurrentSection('interactive');
+    } else if (section === 'interactive') {
+      setCurrentSection('quiz');
+    } else if (section === 'quiz') {
+      setCurrentSection('challenge');
+    } else if (section === 'challenge') {
+      setCurrentSection('completed');
+      if (onComplete) {
+        setTimeout(() => onComplete(contentId), 2000);
       }
-    };
+    }
 
-    loadContent();
-  }, [contentId]);
-
-  const handleSectionComplete = () => {
-    const updatedSections = [...sectionCompleted];
-    updatedSections[currentSection] = true;
-    setSectionCompleted(updatedSections);
+    setStartTime(Date.now());
   };
-
-  const handleNext = async () => {
-    if (!content) return;
-    
-    const availableSections = getAvailableSections(content);
-    
-    if (currentSection < availableSections.length - 1) {
-      const nextSection = currentSection + 1;
-      setCurrentSection(nextSection);
-
-      // Update progress when moving to the next section
-      const progressPercentage = ((nextSection) / availableSections.length) * 100;
-      await updateContentProgress(contentId, { progress_percentage: progressPercentage });
-    } else {
-      // Mark as complete and go back
-      await updateContentProgress(contentId, { completed: true, progress_percentage: 100 });
-      onComplete();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentSection > 0) {
-      setCurrentSection(currentSection - 1);
-    }
-  };
-
-  // Determinar quantas seções existem baseado no conteúdo disponível
-  const getAvailableSections = (contentData: SubjectContent) => {
-    const sections = [];
-    
-    // Seção 1: Sempre existe (teoria)
-    sections.push({ type: 'theory', name: 'Teoria' });
-    
-    // Seção 2: Atividades interativas (se existirem)
-    if (contentData?.interactive_activities && Object.keys(contentData.interactive_activities).length > 0) {
-      sections.push({ type: 'interactive', name: 'Interativo' });
-    }
-    
-    // Seção 3: Quiz (se existirem questões para o tópico)
-    const topicQuestions = getQuestionsByTopic(contentData?.topic_name || contentData?.title || '');
-    if (topicQuestions.length > 0) {
-      sections.push({ type: 'quiz', name: 'Quiz' });
-    }
-    
-    // Seção 4: Desafio (se existir)
-    if (contentData?.challenge_question) {
-      sections.push({ type: 'challenge', name: 'Desafio' });
-    }
-    
-    return sections;
-  };
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Carregando conteúdo...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!content) {
     return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
-        <div className="text-white text-center">
-          <h2 className="text-xl font-bold mb-4">Conteúdo não encontrado</h2>
-          <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600">
-            Voltar
-          </Button>
-        </div>
+      <div className="p-6 text-center">
+        <h3 className="text-xl font-bold text-white mb-4">Conteúdo não encontrado</h3>
+        <Button onClick={onBack} variant="outline">
+          <ArrowLeft className="mr-2" size={16} />
+          Voltar
+        </Button>
       </div>
     );
   }
 
-  const availableSections = getAvailableSections(content);
-  const currentSectionData = availableSections[currentSection];
+  const getDifficultyColor = (difficulty?: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'hard': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
 
-  if (!currentSectionData) {
+  const getSectionIcon = (section: SectionType) => {
+    switch (section) {
+      case 'theory': return <BookOpen size={20} />;
+      case 'interactive': return <Play size={20} />;
+      case 'quiz': return <Target size={20} />;
+      case 'challenge': return <Star size={20} />;
+      case 'completed': return <Trophy size={20} />;
+    }
+  };
+
+  const sections = [
+    { key: 'theory', name: 'Teoria', duration: '3-5 min' },
+    { key: 'interactive', name: 'Fixação', duration: '5-7 min' },
+    { key: 'quiz', name: 'Exercícios', duration: '5-8 min' },
+    { key: 'challenge', name: 'Desafio', duration: '2-3 min' }
+  ];
+
+  const renderProgressBar = () => {
+    const completedCount = completedSections.size;
+    const currentIndex = sections.findIndex(s => s.key === currentSection);
+    const totalSections = sections.length;
+    
     return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
-        <div className="text-white text-center">
-          <h2 className="text-xl font-bold mb-4">Seção não encontrada</h2>
-          <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600">
-            Voltar
-          </Button>
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white font-semibold">Progresso do Módulo</span>
+          <span className="text-white/80">{completedCount}/{totalSections} seções</span>
+        </div>
+        
+        <div className="bg-white/20 rounded-full h-3 mb-4">
+          <div 
+            className="bg-gradient-to-r from-green-500 to-blue-500 h-full rounded-full transition-all duration-500"
+            style={{ width: `${(completedCount / totalSections) * 100}%` }}
+          />
+        </div>
+        
+        <div className="grid grid-cols-4 gap-2">
+          {sections.map((section, index) => (
+            <div 
+              key={section.key}
+              className={`text-center p-2 rounded-lg ${
+                completedSections.has(section.key as SectionType) 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : section.key === currentSection
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'bg-white/10 text-white/60'
+              }`}
+            >
+              <div className="flex justify-center mb-1">
+                {getSectionIcon(section.key as SectionType)}
+              </div>
+              <div className="text-xs font-semibold">{section.name}</div>
+              <div className="text-xs opacity-75">{section.duration}</div>
+            </div>
+          ))}
         </div>
       </div>
     );
-  }
+  };
+
+  const renderCurrentSection = () => {
+    switch (currentSection) {
+      case 'theory':
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <BookOpen className="mx-auto mb-4 text-blue-400" size={48} />
+              <h2 className="text-2xl font-bold text-white mb-2">Introdução Teórica</h2>
+              <p className="text-white/80">
+                Aprenda os conceitos fundamentais de forma clara e objetiva
+              </p>
+            </div>
+
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
+              <h2 className="text-xl font-bold text-white mb-4">{content.title}</h2>
+              
+              {content.infographic_url && (
+                <div className="mb-6">
+                  <img 
+                    src={content.infographic_url} 
+                    alt={`Infográfico - ${content.title}`}
+                    className="w-full rounded-lg shadow-lg"
+                  />
+                </div>
+              )}
+              
+              <div className="text-white/90 text-base leading-relaxed space-y-4">
+                {content.content_data?.sections ? (
+                  content.content_data.sections.map((section: any, index: number) => (
+                    <div key={index} className="mb-6">
+                      <h3 className="text-lg font-semibold text-white mb-3">{section.title}</h3>
+                      <div className="whitespace-pre-line leading-relaxed">
+                        {section.content}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="whitespace-pre-line">
+                    {content.description || 'Conteúdo teórico não disponível.'}
+                  </div>
+                )}
+              </div>
+              
+              {content.examples && (
+                <div className="mt-6 p-4 bg-blue-500/20 rounded-xl">
+                  <h4 className="text-white font-semibold mb-2">💡 Exemplos Práticos:</h4>
+                  <div className="text-white/90 whitespace-pre-line">
+                    {content.examples}
+                  </div>
+                </div>
+              )}
+              
+              {content.study_tips && (
+                <div className="mt-4 p-4 bg-green-500/20 rounded-xl">
+                  <h4 className="text-white font-semibold mb-2">📚 Dicas de Estudo:</h4>
+                  <div className="text-white/90 whitespace-pre-line">
+                    {content.study_tips}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="text-center">
+              <Button 
+                onClick={() => handleSectionComplete('theory')}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-8 py-3"
+              >
+                <CheckCircle className="mr-2" size={16} />
+                Continuar para Fixação
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'interactive':
+        if (!content.interactive_activities || Object.keys(content.interactive_activities).length === 0) {
+          // Se não há atividades interativas, pular para quiz
+          setTimeout(() => handleSectionComplete('interactive'), 100);
+          return <div className="text-center text-white">Preparando exercícios...</div>;
+        }
+        
+        return (
+          <InteractiveSection
+            contentId={contentId}
+            subject={subject}
+            activities={content.interactive_activities}
+            onComplete={() => handleSectionComplete('interactive')}
+          />
+        );
+
+      case 'quiz':
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <Target className="mx-auto mb-4 text-orange-400" size={48} />
+              <h2 className="text-2xl font-bold text-white mb-2">Exercícios Práticos</h2>
+              <p className="text-white/80">
+                Teste seus conhecimentos com questões direcionadas
+              </p>
+            </div>
+            
+            <SubjectQuiz
+              subject={subject}
+              topic={content.title}
+              onComplete={() => handleSectionComplete('quiz')}
+              onBack={() => setCurrentSection('interactive')}
+            />
+          </div>
+        );
+
+      case 'challenge':
+        if (!content.challenge_question) {
+          // Se não há desafio, finalizar
+          setTimeout(() => handleSectionComplete('challenge'), 100);
+          return <div className="text-center text-white">Finalizando módulo...</div>;
+        }
+        
+        return (
+          <ChallengeSection
+            contentId={contentId}
+            subject={subject}
+            challenge={content.challenge_question}
+            onComplete={() => handleSectionComplete('challenge')}
+          />
+        );
+
+      case 'completed':
+        return (
+          <div className="text-center p-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-2xl">
+            <Trophy className="mx-auto mb-4 text-yellow-300" size={72} />
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Módulo Concluído! 🎉
+            </h2>
+            <p className="text-white/90 text-lg mb-6">
+              Parabéns! Você dominou: <strong>{content.title}</strong>
+            </p>
+            
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-6">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-white">{completedSections.size}</div>
+                  <div className="text-white/80 text-sm">Seções Concluídas</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{Math.round(((progress?.time_spent || 0) / 60))}</div>
+                  <div className="text-white/80 text-sm">Minutos Estudados</div>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-white/70 text-sm">
+              Voltando ao menu em instantes...
+            </p>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -176,86 +319,29 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-lg font-semibold">{content.title}</h1>
-        
-        {/* Progress indicator */}
-        <div className="ml-auto flex items-center space-x-2">
-          <div className="text-xs bg-white/20 px-2 py-1 rounded-lg">
-            {currentSection + 1}/{availableSections.length}
+        <div className="flex-1">
+          <h1 className="text-lg font-semibold">{content.title}</h1>
+          <div className="flex items-center space-x-4 text-sm text-white/80">
+            <div className="flex items-center space-x-1">
+              <Clock size={14} />
+              <span>15-20 min</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={getDifficultyColor(content.difficulty_level)}>
+                {content.difficulty_level === 'easy' ? 'Fácil' : 
+                 content.difficulty_level === 'medium' ? 'Médio' : 'Difícil'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Content sections */}
-      <div className="flex-1 overflow-hidden">
-        {currentSectionData.type === 'theory' && (
-          <ContentSlides 
-            content={content} 
-            onComplete={handleSectionComplete}
-          />
-        )}
-        
-        {currentSectionData.type === 'interactive' && content.interactive_activities && (
-          <InteractiveSection
-            contentId={contentId}
-            subject={subject}
-            activities={content.interactive_activities}
-            onComplete={handleSectionComplete}
-          />
-        )}
-        
-        {currentSectionData.type === 'quiz' && (
-          <div className="h-full">
-            <SubjectQuiz
-              subject={subject}
-              topic={content.topic_name || content.title}
-              onComplete={handleSectionComplete}
-              onBack={() => {}} // Empty since we handle navigation here
-            />
-          </div>
-        )}
-        
-        {currentSectionData.type === 'challenge' && content.challenge_question && (
-          <ChallengeSection
-            contentId={contentId}
-            subject={subject}
-            challenge={content.challenge_question}
-            onComplete={handleSectionComplete}
-          />
-        )}
-      </div>
+      {/* Progress Bar */}
+      {renderProgressBar()}
 
-      {/* Navigation */}
-      <div className="p-4 bg-white/10 backdrop-blur-md">
-        <div className="flex justify-between items-center">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentSection === 0}
-            variant="outline"
-            className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-          >
-            Anterior
-          </Button>
-          
-          <div className="flex space-x-2">
-            {availableSections.map((section, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index <= currentSection ? 'bg-yellow-400' : 'bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-          
-          <Button
-            onClick={handleNext}
-            disabled={currentSection >= availableSections.length - 1 || !sectionCompleted[currentSection]}
-            className="bg-yellow-400 hover:bg-yellow-500 text-gray-800"
-          >
-            {currentSection === availableSections.length - 1 ? 'Finalizar' : 'Próximo'}
-          </Button>
-        </div>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {renderCurrentSection()}
       </div>
     </div>
   );

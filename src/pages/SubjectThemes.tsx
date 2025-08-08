@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, ChevronRight, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSound } from '@/contexts/SoundContext';
-import { getSubjectDisplayName, getSubjectVariants } from '@/utils/subjectMapping';
 
 interface Theme {
   grande_tema: string;
@@ -19,27 +19,35 @@ const SubjectThemes = () => {
   const [themes, setThemes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const subjectVariants = getSubjectVariants(subject);
-  const capitalizedSubject = getSubjectDisplayName(subject);
+  const subjectNames: { [key: string]: string } = {
+    'matematica': 'Matemática',
+    'portugues': 'Português',
+    'fisica': 'Física',
+    'quimica': 'Química',
+    'biologia': 'Biologia',
+    'historia': 'História',
+    'geografia': 'Geografia',
+    'filosofia': 'Filosofia',
+    'sociologia': 'Sociologia',
+  };
+
+  const capitalizedSubject = subjectNames[subject.toLowerCase()] || subject;
 
   useEffect(() => {
     const loadThemes = async () => {
       if (!subject) return;
       setLoading(true);
       
-      console.log('Loading themes for subject variants:', subjectVariants);
-      
       const { data, error } = await supabase
         .from('subject_contents')
         .select('grande_tema')
-        .in('subject', subjectVariants)
+        .eq('subject', capitalizedSubject)
         .not('grande_tema', 'is', null);
 
       if (error) {
         console.error("Error loading themes:", error);
         setThemes([]);
       } else {
-        console.log('Found themes:', data);
         const uniqueThemes = [...new Set(data.map(item => item.grande_tema).filter(Boolean) as string[])];
         setThemes(uniqueThemes);
       }
@@ -47,7 +55,7 @@ const SubjectThemes = () => {
     };
 
     loadThemes();
-  }, [subject, subjectVariants]);
+  }, [subject, capitalizedSubject]);
 
   const handleThemeClick = (theme: string) => {
     if (!isMuted) playSound('click');

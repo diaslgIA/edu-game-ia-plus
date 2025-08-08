@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Gamepad2, Trophy, Clock } from 'lucide-react';
@@ -11,7 +10,7 @@ interface InteractiveSectionProps {
   contentId: string;
   subject: string;
   activities: any;
-  onComplete: (...args: any[]) => void | Promise<void>; // ampliado para compatibilidade
+  onComplete: () => void;
 }
 
 const InteractiveSection: React.FC<InteractiveSectionProps> = ({
@@ -41,9 +40,7 @@ const InteractiveSection: React.FC<InteractiveSectionProps> = ({
 
     // Se todas as atividades foram concluídas, finalizar seção
     if (completedActivities.size + 1 >= getAvailableActivities().length) {
-      setTimeout(() => {
-        void onComplete();
-      }, 1000);
+      setTimeout(onComplete, 1000);
     }
   };
 
