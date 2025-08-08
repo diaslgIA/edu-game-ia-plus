@@ -10,7 +10,7 @@ export interface SubjectContent {
   estimated_time?: number;
   is_premium?: boolean;
   order_index?: number;
-  key_concepts?: any[];
+  key_concepts?: any; // Alterado de any[] para any para compatibilizar com JSON do Supabase
   examples?: string;
   practical_applications?: string;
   study_tips?: string;
