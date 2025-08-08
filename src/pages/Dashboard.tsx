@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
 import { useUserProgress } from '@/hooks/useUserProgress';
+import { useUserActivities } from '@/hooks/useUserActivities';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SettingsModal from '@/components/SettingsModal';
@@ -20,7 +21,29 @@ const Dashboard = () => {
   const { t } = useLanguage();
   const { playSound, isMuted } = useSound();
   const { getTotalProgress } = useUserProgress();
+  const { getUserActivities } = useUserActivities();
   const [showSettings, setShowSettings] = useState(false);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+
+  // Fetch recent activities
+  useEffect(() => {
+    const fetchRecentActivities = async () => {
+      if (!user) return;
+      
+      setActivitiesLoading(true);
+      try {
+        const activities = await getUserActivities(undefined, 5);
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error('Erro ao buscar atividades recentes:', error);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    };
+
+    fetchRecentActivities();
+  }, [user, getUserActivities]);
 
   const handleNavigation = (path: string) => {
     if (!isMuted) playSound('click');
@@ -38,6 +61,7 @@ const Dashboard = () => {
   };
 
   const totalProgress = getTotalProgress();
+  const currentStreak = profile?.login_streak || 0;
 
   const stats = [
     { icon: Trophy, label: 'Pontos', value: profile?.points || 0, color: 'text-yellow-500' },
@@ -75,6 +99,43 @@ const Dashboard = () => {
       path: '/ranking'
     }
   ];
+
+  const getActivityLabel = (activityType: string) => {
+    switch (activityType) {
+      case 'quiz_complete':
+        return 'Quiz';
+      case 'quiz_question':
+        return 'Questão';
+      case 'interactive_activity':
+        return 'Atividade Interativa';
+      default:
+        return 'Atividade';
+    }
+  };
+
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'quiz_complete':
+      case 'quiz_question':
+        return Star;
+      case 'interactive_activity':
+        return BookOpen;
+      default:
+        return Star;
+    }
+  };
+
+  const getActivityIconColor = (activityType: string) => {
+    switch (activityType) {
+      case 'quiz_complete':
+      case 'quiz_question':
+        return 'text-yellow-400';
+      case 'interactive_activity':
+        return 'text-blue-400';
+      default:
+        return 'text-yellow-400';
+    }
+  };
 
   return (
     <MobileContainer background="gradient">
@@ -177,7 +238,7 @@ const Dashboard = () => {
                   <p className="text-xs opacity-80 truncate">Mantenha o ritmo!</p>
                 </div>
                 <div className="text-center flex-shrink-0">
-                  <div className="text-sm sm:text-lg font-bold">7</div>
+                  <div className="text-sm sm:text-lg font-bold">{currentStreak}</div>
                   <div className="text-xs opacity-80">dias</div>
                 </div>
               </div>
@@ -186,7 +247,7 @@ const Dashboard = () => {
                   <div
                     key={i}
                     className={`flex-1 h-2 rounded-full ${
-                      i < 5 ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
+                      i < Math.min(currentStreak, 7) ? 'bg-yellow-400 shadow-lg' : 'bg-white/20'
                     }`}
                   />
                 ))}
@@ -198,24 +259,38 @@ const Dashboard = () => {
           <div className="px-2 sm:px-3 py-1 sm:py-2 mb-3">
             <h2 className="text-white text-xs sm:text-sm font-semibold mb-2 sm:mb-3">Atividade Recente</h2>
             <div className="space-y-1.5 sm:space-y-2">
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-                <div className="flex items-center space-x-2">
-                  <Star className="text-yellow-400 flex-shrink-0" size={14} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-xs sm:text-sm truncate">Matemática - Função Quadrática</p>
-                    <p className="text-xs opacity-80 truncate">Concluído • 85 pontos</p>
-                  </div>
+              {activitiesLoading ? (
+                <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
+                  <p className="text-xs opacity-80">Carregando atividades...</p>
                 </div>
-              </div>
-              <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
-                <div className="flex items-center space-x-2">
-                  <Star className="text-blue-400 flex-shrink-0" size={14} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-xs sm:text-sm truncate">Português - Interpretação de Texto</p>
-                    <p className="text-xs opacity-80 truncate">Em progresso • 42 pontos</p>
-                  </div>
+              ) : recentActivities.length === 0 ? (
+                <div className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
+                  <p className="text-xs opacity-80">Você ainda não tem atividades recentes</p>
                 </div>
-              </div>
+              ) : (
+                recentActivities.map((activity: any) => {
+                  const ActivityIcon = getActivityIcon(activity.activity_type);
+                  const iconColor = getActivityIconColor(activity.activity_type);
+                  const activityLabel = getActivityLabel(activity.activity_type);
+                  
+                  return (
+                    <div key={activity.id} className="bg-white/20 backdrop-blur-md rounded-lg p-2 sm:p-3 text-white shadow-lg border border-white/10">
+                      <div className="flex items-center space-x-2">
+                        <ActivityIcon className={`${iconColor} flex-shrink-0`} size={14} />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-xs sm:text-sm truncate">
+                            {activity.subject} - {activityLabel}
+                            {activity.topic && ` - ${activity.topic}`}
+                          </p>
+                          <p className="text-xs opacity-80 truncate">
+                            Concluído • +{activity.points_earned || 0} pontos
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

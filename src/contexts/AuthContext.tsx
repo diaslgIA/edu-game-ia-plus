@@ -66,6 +66,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateLoginStreakIfNeeded = async (userId: string) => {
+    try {
+      console.log('Atualizando streak de login para usuário:', userId);
+      
+      // Buscar perfil atual
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('last_login, login_streak')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar perfil para streak:', fetchError);
+        return;
+      }
+
+      const now = new Date();
+      const lastLogin = currentProfile?.last_login ? new Date(currentProfile.last_login) : null;
+      let newStreak = currentProfile?.login_streak || 0;
+
+      if (lastLogin) {
+        // Calcular diferença em dias
+        const diffTime = now.getTime() - lastLogin.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        console.log('Diferença em dias desde último login:', diffDays);
+
+        if (diffDays === 0) {
+          // Mesmo dia, não altera streak
+          console.log('Mesmo dia, mantendo streak:', newStreak);
+          return;
+        } else if (diffDays === 1) {
+          // Dia consecutivo, incrementa
+          newStreak = newStreak + 1;
+          console.log('Dia consecutivo, incrementando streak para:', newStreak);
+        } else {
+          // Mais de 1 dia, reseta para 1
+          newStreak = 1;
+          console.log('Mais de 1 dia sem login, resetando streak para:', newStreak);
+        }
+      } else {
+        // Primeiro login ou last_login null
+        newStreak = 1;
+        console.log('Primeiro login, definindo streak como:', newStreak);
+      }
+
+      // Atualizar no banco
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          last_login: now.toISOString(),
+          login_streak: newStreak
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Erro ao atualizar streak:', updateError);
+      } else {
+        console.log('Streak atualizada com sucesso para:', newStreak);
+      }
+
+    } catch (error) {
+      console.error('Erro inesperado ao atualizar streak:', error);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       const profileData = await fetchProfile(user.id);
@@ -98,6 +164,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
+          
+          // Atualizar streak ao obter sessão inicial
+          await updateLoginStreakIfNeeded(initialSession.user.id);
+          
           const profileData = await fetchProfile(initialSession.user.id);
           setProfile(profileData);
         }
@@ -112,13 +182,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Atualizar streak quando houver mudança de autenticação (login/refresh)
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            await updateLoginStreakIfNeeded(session.user.id);
+          }
+          
           // Defer profile fetch to avoid potential deadlock
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
