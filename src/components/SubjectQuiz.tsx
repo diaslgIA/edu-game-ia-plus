@@ -65,12 +65,35 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         filteredQuestions = questions.filter(q => q.topic === topic);
       }
       
-      // Verificar se há questões limitadas
-      const isLimited = filteredQuestions.length < 10;
+      // Priorizar questões difíceis, depois médias, depois fáceis
+      const hardQuestions = filteredQuestions.filter(q => 
+        q.difficulty_level?.toLowerCase() === 'hard' || 
+        q.difficulty_level?.toLowerCase() === 'difícil' ||
+        q.difficulty_level?.toLowerCase() === 'dificil'
+      );
+      const mediumQuestions = filteredQuestions.filter(q => 
+        q.difficulty_level?.toLowerCase() === 'medium' || 
+        q.difficulty_level?.toLowerCase() === 'médio' ||
+        q.difficulty_level?.toLowerCase() === 'medio'
+      );
+      const easyQuestions = filteredQuestions.filter(q => 
+        q.difficulty_level?.toLowerCase() === 'easy' || 
+        q.difficulty_level?.toLowerCase() === 'fácil' ||
+        q.difficulty_level?.toLowerCase() === 'facil'
+      );
+      
+      // Combinar questões priorizando as difíceis
+      let prioritizedQuestions = [
+        ...hardQuestions.sort(() => Math.random() - 0.5),
+        ...mediumQuestions.sort(() => Math.random() - 0.5),
+        ...easyQuestions.sort(() => Math.random() - 0.5)
+      ];
+      
+      // Se não há questões suficientes, usar todas disponíveis
+      const isLimited = filteredQuestions.length < 15;
       setHasLimitedQuestions(isLimited);
       
-      const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
-      const selectedQuestions = shuffled.slice(0, Math.min(15, filteredQuestions.length));
+      const selectedQuestions = prioritizedQuestions.slice(0, Math.min(15, prioritizedQuestions.length));
       
       const formattedQuestions = selectedQuestions.map(q => {
         let optionsArray = [];
@@ -89,7 +112,8 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         
         const difficultyMap: { [key: string]: string } = {
           'easy': 'Fácil', 'medium': 'Médio', 'hard': 'Difícil',
-          'facil': 'Fácil', 'medio': 'Médio', 'dificil': 'Difícil'
+          'facil': 'Fácil', 'medio': 'Médio', 'dificil': 'Difícil',
+          'fácil': 'Fácil', 'médio': 'Médio', 'difícil': 'Difícil'
         };
         
         return {
@@ -99,11 +123,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           correctAnswer: q.correct_answer,
           explanation: q.explanation || "Explicação não disponível.",
           topic: q.topic || subject,
-          difficulty: difficultyMap[q.difficulty_level?.toLowerCase()] || 'Médio'
+          difficulty: difficultyMap[q.difficulty_level?.toLowerCase()] || 'Difícil'
         };
       });
       
       setQuizQuestions(formattedQuestions);
+      console.log('Questões processadas:', formattedQuestions.length, 'Distribuição de dificuldade:', {
+        difícil: formattedQuestions.filter(q => q.difficulty === 'Difícil').length,
+        médio: formattedQuestions.filter(q => q.difficulty === 'Médio').length,
+        fácil: formattedQuestions.filter(q => q.difficulty === 'Fácil').length
+      });
     }
   }, [questions, subject, topic]);
 
@@ -149,11 +178,9 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     const questionScore = isCorrect ? 10 : 0;
     const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
     
-    // Atualizar score imediatamente
     const newScore = score + questionScore;
     setScore(newScore);
     
-    // Registrar atividade da questão (não crítico)
     recordQuizQuestion(
       subject,
       question.topic,
@@ -192,13 +219,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const calculatedFinalScore = score;
       
-      // Mostrar resultado imediatamente
       setFinalScore(calculatedFinalScore);
       setGameCompleted(true);
       
       console.log('🎯 Finalizando quiz:', { subject, finalScore: calculatedFinalScore, timeSpent });
       
-      // Salvar em background
       saveQuizScore(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
         .then((success) => {
           if (success) {
@@ -210,13 +235,11 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           console.error('❌ Erro ao salvar quiz:', error);
         });
       
-      // Registrar conclusão em background
       recordQuizComplete(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
         .catch(error => {
           console.error('Erro ao registrar conclusão do quiz (não crítico):', error);
         });
       
-      // Completar quiz imediatamente
       onComplete(calculatedFinalScore, timeSpent);
     }
   };
@@ -333,7 +356,6 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
   const isCorrect = selectedAnswer === question.correctAnswer;
   const xpGained = isCorrect ? 10 : 3;
 
-  // Function to get the correct mentor feedback component
   const getMentorFeedbackComponent = () => {
     const subjectLower = subject.toLowerCase();
     
@@ -423,6 +445,14 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 mb-4">
           <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             ⚠️ Esta matéria possui questões limitadas. Mais conteúdo será adicionado em breve!
+          </p>
+        </div>
+      )}
+
+      {!hasLimitedQuestions && (
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-3 mb-4">
+          <p className="text-red-800 dark:text-red-200 text-sm">
+            🔥 Nível de dificuldade aumentado! Questões mais desafiadoras selecionadas.
           </p>
         </div>
       )}

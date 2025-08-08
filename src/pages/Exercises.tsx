@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -29,18 +28,18 @@ const Exercises = () => {
   }, [searchParams]);
 
   const subjects = useMemo(() => [
-    { id: 'matematica', name: 'Matemática', description: 'Números, álgebra, geometria e cálculos', color: 'from-blue-500 to-blue-700', icon: '📐', difficulty: 'Médio', exercises: 45 },
-    { id: 'portugues', name: 'Português', description: 'Gramática, literatura e redação', color: 'from-green-500 to-green-700', icon: '📚', difficulty: 'Fácil', exercises: 52 },
-    { id: 'fisica', name: 'Física', description: 'Mecânica, eletricidade e termodinâmica', color: 'from-purple-500 to-purple-700', icon: '⚡', difficulty: 'Difícil', exercises: 38 },
-    { id: 'quimica', name: 'Química', description: 'Átomos, moléculas e reações químicas', color: 'from-orange-500 to-orange-700', icon: '🧪', difficulty: 'Médio', exercises: 41 },
-    { id: 'biologia', name: 'Biologia', description: 'Vida, células e evolução', color: 'from-teal-500 to-teal-700', icon: '🧬', difficulty: 'Médio', exercises: 47 },
-    { id: 'historia', name: 'História', description: 'Civilizações, eventos e culturas', color: 'from-amber-500 to-amber-700', icon: '🏛️', difficulty: 'Fácil', exercises: 36 },
-    { id: 'geografia', name: 'Geografia', description: 'Países, climas e relevos', color: 'from-emerald-500 to-emerald-700', icon: '🌍', difficulty: 'Fácil', exercises: 33 },
-    { id: 'filosofia', name: 'Filosofia', description: 'Pensamento crítico e reflexão', color: 'from-indigo-500 to-indigo-700', icon: '🤔', difficulty: 'Médio', exercises: 24 },
-    { id: 'sociologia', name: 'Sociologia', description: 'Sociedade e relações humanas', color: 'from-pink-500 to-pink-700', icon: '👥', difficulty: 'Fácil', exercises: 28 },
-    { id: 'ingles', name: 'Inglês', description: 'Gramática, vocabulário e conversação', color: 'from-blue-600 to-indigo-600', icon: '🇺🇸', difficulty: 'Médio', exercises: 15 },
-    { id: 'espanhol', name: 'Espanhol', description: 'Idioma, cultura e comunicação', color: 'from-red-500 to-red-700', icon: '🇪🇸', difficulty: 'Médio', exercises: 8 },
-    { id: 'literatura', name: 'Literatura', description: 'Obras clássicas e análise textual', color: 'from-violet-500 to-violet-700', icon: '📖', difficulty: 'Médio', exercises: 12 }
+    { id: 'matematica', name: 'Matemática', description: 'Números, álgebra, geometria e cálculos', color: 'from-blue-500 to-blue-700', icon: '📐', difficulty: 'Difícil', exercises: 65 },
+    { id: 'portugues', name: 'Português', description: 'Gramática, literatura e redação', color: 'from-green-500 to-green-700', icon: '📚', difficulty: 'Médio', exercises: 72 },
+    { id: 'fisica', name: 'Física', description: 'Mecânica, eletricidade e termodinâmica', color: 'from-purple-500 to-purple-700', icon: '⚡', difficulty: 'Difícil', exercises: 58 },
+    { id: 'quimica', name: 'Química', description: 'Átomos, moléculas e reações químicas', color: 'from-orange-500 to-orange-700', icon: '🧪', difficulty: 'Difícil', exercises: 61 },
+    { id: 'biologia', name: 'Biologia', description: 'Vida, células e evolução', color: 'from-teal-500 to-teal-700', icon: '🧬', difficulty: 'Médio', exercises: 67 },
+    { id: 'historia', name: 'História', description: 'Civilizações, eventos e culturas', color: 'from-amber-500 to-amber-700', icon: '🏛️', difficulty: 'Médio', exercises: 56 },
+    { id: 'geografia', name: 'Geografia', description: 'Países, climas e relevos', color: 'from-emerald-500 to-emerald-700', icon: '🌍', difficulty: 'Fácil', exercises: 53 },
+    { id: 'filosofia', name: 'Filosofia', description: 'Pensamento crítico e reflexão', color: 'from-indigo-500 to-indigo-700', icon: '🤔', difficulty: 'Difícil', exercises: 44 },
+    { id: 'sociologia', name: 'Sociologia', description: 'Sociedade e relações humanas', color: 'from-pink-500 to-pink-700', icon: '👥', difficulty: 'Médio', exercises: 48 },
+    { id: 'ingles', name: 'Inglês', description: 'Gramática, vocabulário e conversação', color: 'from-blue-600 to-indigo-600', icon: '🇺🇸', difficulty: 'Médio', exercises: 35 },
+    { id: 'espanhol', name: 'Espanhol', description: 'Idioma, cultura e comunicação', color: 'from-red-500 to-red-700', icon: '🇪🇸', difficulty: 'Médio', exercises: 28 },
+    { id: 'literatura', name: 'Literatura', description: 'Obras clássicas e análise textual', color: 'from-violet-500 to-violet-700', icon: '📖', difficulty: 'Médio', exercises: 32 }
   ], []);
 
   const activities = useMemo(() => [
@@ -73,7 +72,6 @@ const Exercises = () => {
 
   const currentSubject = subjects.find(s => s.name === selectedSubject);
 
-  // Tela de Boas-vindas do Mentor
   if (exerciseMode === 'mentor-welcome' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
@@ -148,13 +146,23 @@ const Exercises = () => {
             ))}
           </div>
 
+          {/* Enhanced difficulty notice */}
+          <div className="bg-red-500/20 backdrop-blur-md rounded-xl p-4 text-center shadow-lg border border-red-400/30">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <span className="text-2xl">🔥</span>
+              <h3 className="text-white font-bold">Nível Aumentado!</h3>
+            </div>
+            <p className="text-white/90 text-sm">
+              Questões mais desafiadoras foram adicionadas para melhorar seu aprendizado
+            </p>
+          </div>
+
           {/* Subjects Grid */}
           <div>
             <h2 className="text-white text-lg font-semibold mb-4">{t('select_subject')}</h2>
             <div className="grid grid-cols-1 gap-4">
               {subjects.map((subject) => {
                 const subjectProgress = getSubjectProgress(subject.name);
-                const hasLimitedContent = subject.exercises < 20;
                 
                 return (
                   <div
@@ -162,13 +170,16 @@ const Exercises = () => {
                     onClick={() => handleSubjectSelect(subject.name)}
                     className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10 relative"
                   >
-                    {hasLimitedContent && (
-                      <div className="absolute top-2 right-2">
-                        <div className="bg-yellow-500/80 text-yellow-900 text-xs px-2 py-1 rounded-full font-medium">
-                          Em desenvolvimento
-                        </div>
+                    {/* Enhanced difficulty indicator */}
+                    <div className="absolute top-2 right-2">
+                      <div className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        subject.difficulty === 'Difícil' ? 'bg-red-500/80 text-red-100' :
+                        subject.difficulty === 'Médio' ? 'bg-yellow-500/80 text-yellow-100' :
+                        'bg-green-500/80 text-green-100'
+                      }`}>
+                        {subject.difficulty}
                       </div>
-                    )}
+                    </div>
                     
                     <div className="flex items-center space-x-4">
                       <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
@@ -185,8 +196,8 @@ const Exercises = () => {
                             <span className="text-white/80">{subject.exercises} exercícios</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <Clock size={12} className="text-green-400" />
-                            <span className="text-white/80">{subject.difficulty}</span>
+                            <Trophy size={12} className="text-yellow-400" />
+                            <span className="text-white/80">Aprimorado</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Star size={12} className="text-yellow-400" />
