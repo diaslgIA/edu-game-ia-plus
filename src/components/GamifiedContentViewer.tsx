@@ -7,8 +7,10 @@ import { ArrowLeft, Play, BookOpen, Target, Star } from 'lucide-react';
 import ContentSlides from './ContentSlides';
 import InteractiveSection from './interactive/InteractiveSection';
 import ChallengeSection from './interactive/ChallengeSection';
+import SubjectQuiz from './SubjectQuiz';
 import { useSubjectContents } from '@/hooks/useSubjectContents';
-import { toast } from '@/components/ui/use-toast';
+import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
+import { toast } from '@/hooks/use-toast';
 import { getSubjectVariants } from '@/utils/subjectMapping';
 
 interface GamifiedContentViewerProps {
@@ -26,10 +28,11 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
 }) => {
   const subjectVariants = getSubjectVariants(subject);
   const { updateContentProgress } = useSubjectContents(subjectVariants);
+  const { getQuestionsByTopic } = useSubjectQuestions(subjectVariants);
   const [content, setContent] = useState<SubjectContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
-  const [sectionCompleted, setSectionCompleted] = useState([false, false, false, false]);
+  const [sectionCompleted, setSectionCompleted] = useState<boolean[]>([]);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -52,6 +55,10 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
         }
 
         setContent(data as SubjectContent);
+        
+        // Inicializar array de seções completadas baseado nas seções disponíveis
+        const availableSections = getAvailableSections(data as SubjectContent);
+        setSectionCompleted(new Array(availableSections.length).fill(false));
       } finally {
         setLoading(false);
       }
@@ -67,12 +74,16 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
   };
 
   const handleNext = async () => {
-    if (currentSection < 3) {
+    if (!content) return;
+    
+    const availableSections = getAvailableSections(content);
+    
+    if (currentSection < availableSections.length - 1) {
       const nextSection = currentSection + 1;
       setCurrentSection(nextSection);
 
       // Update progress when moving to the next section
-      const progressPercentage = ((nextSection) / 4) * 100;
+      const progressPercentage = ((nextSection) / availableSections.length) * 100;
       await updateContentProgress(contentId, { progress_percentage: progressPercentage });
     } else {
       // Mark as complete and go back
@@ -88,30 +99,30 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
   };
 
   // Determinar quantas seções existem baseado no conteúdo disponível
-  const getAvailableSections = () => {
+  const getAvailableSections = (contentData: SubjectContent) => {
     const sections = [];
     
     // Seção 1: Sempre existe (teoria)
-    sections.push('theory');
+    sections.push({ type: 'theory', name: 'Teoria' });
     
     // Seção 2: Atividades interativas (se existirem)
-    if (content?.interactive_activities && Object.keys(content.interactive_activities).length > 0) {
-      sections.push('interactive');
+    if (contentData?.interactive_activities && Object.keys(contentData.interactive_activities).length > 0) {
+      sections.push({ type: 'interactive', name: 'Interativo' });
     }
     
-    // Seção 3: Quiz (placeholder sempre presente)
-    sections.push('quiz');
+    // Seção 3: Quiz (se existirem questões para o tópico)
+    const topicQuestions = getQuestionsByTopic(contentData?.topic_name || contentData?.title || '');
+    if (topicQuestions.length > 0) {
+      sections.push({ type: 'quiz', name: 'Quiz' });
+    }
     
     // Seção 4: Desafio (se existir)
-    if (content?.challenge_question) {
-      sections.push('challenge');
+    if (contentData?.challenge_question) {
+      sections.push({ type: 'challenge', name: 'Desafio' });
     }
     
     return sections;
   };
-
-  const availableSections = content ? getAvailableSections() : [];
-  const totalSections = availableSections.length;
 
   if (loading) {
     return (
@@ -119,6 +130,35 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p>Carregando conteúdo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+        <div className="text-white text-center">
+          <h2 className="text-xl font-bold mb-4">Conteúdo não encontrado</h2>
+          <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600">
+            Voltar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const availableSections = getAvailableSections(content);
+  const currentSectionData = availableSections[currentSection];
+
+  if (!currentSectionData) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+        <div className="text-white text-center">
+          <h2 className="text-xl font-bold mb-4">Seção não encontrada</h2>
+          <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600">
+            Voltar
+          </Button>
         </div>
       </div>
     );
@@ -136,26 +176,26 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-lg font-semibold">{content?.title || 'Carregando...'}</h1>
+        <h1 className="text-lg font-semibold">{content.title}</h1>
         
         {/* Progress indicator */}
         <div className="ml-auto flex items-center space-x-2">
           <div className="text-xs bg-white/20 px-2 py-1 rounded-lg">
-            {currentSection + 1}/{totalSections}
+            {currentSection + 1}/{availableSections.length}
           </div>
         </div>
       </div>
 
       {/* Content sections */}
       <div className="flex-1 overflow-hidden">
-        {availableSections[currentSection] === 'theory' && content && (
+        {currentSectionData.type === 'theory' && (
           <ContentSlides 
             content={content} 
             onComplete={handleSectionComplete}
           />
         )}
         
-        {availableSections[currentSection] === 'interactive' && content?.interactive_activities && (
+        {currentSectionData.type === 'interactive' && content.interactive_activities && (
           <InteractiveSection
             contentId={contentId}
             subject={subject}
@@ -164,35 +204,18 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
           />
         )}
         
-        {availableSections[currentSection] === 'quiz' && content && (
-          <div className="p-6 h-full overflow-y-auto bg-gradient-to-br from-yellow-800 via-orange-900 to-red-900">
-            <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-8">
-                <Target className="mx-auto mb-4 text-yellow-400" size={64} />
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  Quiz de Verificação
-                </h2>
-                <p className="text-white/80 mb-6">
-                  Teste seus conhecimentos sobre {content.title}
-                </p>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center">
-                <p className="text-white/80 mb-6">
-                  Em breve: Quiz interativo personalizado para este conteúdo!
-                </p>
-                <Button 
-                  onClick={handleSectionComplete}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-semibold"
-                >
-                  Continuar Jornada de Aprendizado
-                </Button>
-              </div>
-            </div>
+        {currentSectionData.type === 'quiz' && (
+          <div className="h-full">
+            <SubjectQuiz
+              subject={subject}
+              topic={content.topic_name || content.title}
+              onComplete={handleSectionComplete}
+              onBack={() => {}} // Empty since we handle navigation here
+            />
           </div>
         )}
         
-        {availableSections[currentSection] === 'challenge' && content?.challenge_question && (
+        {currentSectionData.type === 'challenge' && content.challenge_question && (
           <ChallengeSection
             contentId={contentId}
             subject={subject}
@@ -215,7 +238,7 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
           </Button>
           
           <div className="flex space-x-2">
-            {availableSections.map((_, index) => (
+            {availableSections.map((section, index) => (
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all ${
@@ -227,10 +250,10 @@ const GamifiedContentViewer: React.FC<GamifiedContentViewerProps> = ({
           
           <Button
             onClick={handleNext}
-            disabled={currentSection >= totalSections - 1 || !sectionCompleted[currentSection]}
+            disabled={currentSection >= availableSections.length - 1 || !sectionCompleted[currentSection]}
             className="bg-yellow-400 hover:bg-yellow-500 text-gray-800"
           >
-            {currentSection === totalSections - 1 ? 'Finalizar' : 'Próximo'}
+            {currentSection === availableSections.length - 1 ? 'Finalizar' : 'Próximo'}
           </Button>
         </div>
       </div>
