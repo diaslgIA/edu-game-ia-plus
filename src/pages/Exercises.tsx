@@ -57,7 +57,7 @@ const Exercises = () => {
     setExerciseMode('quiz');
   };
 
-  const handleQuizComplete = async (score: number, timeSpent: number) => {
+  const handleQuizComplete = async (score?: number, timeSpent?: number) => {
     if (selectedSubject) {
       await updateProgress(selectedSubject, 1);
     }
