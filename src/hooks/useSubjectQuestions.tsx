@@ -122,7 +122,8 @@ export const useSubjectQuestions = (subjectVariants: string[]) => {
       } else {
         console.log('No questions found for subjects:', subjectVariants);
         // Usar questões de fallback se não houver dados
-        const relevantFallbackQuestions = fallbackQuestions.filter(q => 
+        const allFallbackQuestions = Object.values(fallbackQuestions).flat();
+        const relevantFallbackQuestions = allFallbackQuestions.filter(q => 
           subjectVariants.some(subject => 
             q.subject.toLowerCase().includes(subject.toLowerCase()) ||
             subject.toLowerCase().includes(q.subject.toLowerCase())
@@ -135,7 +136,8 @@ export const useSubjectQuestions = (subjectVariants: string[]) => {
       setError('Erro ao carregar questões');
       
       // Usar questões de fallback em caso de erro
-      const relevantFallbackQuestions = fallbackQuestions.filter(q => 
+      const allFallbackQuestions = Object.values(fallbackQuestions).flat();
+      const relevantFallbackQuestions = allFallbackQuestions.filter(q => 
         subjectVariants.some(subject => 
           q.subject.toLowerCase().includes(subject.toLowerCase()) ||
           subject.toLowerCase().includes(q.subject.toLowerCase())
