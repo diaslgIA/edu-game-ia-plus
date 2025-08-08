@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSound } from '@/contexts/SoundContext';
+import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 
 interface AvatarSelectorProps {
   currentAvatar: string;
@@ -18,9 +19,10 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
   onPhotoUpload
 }) => {
   const [showOptions, setShowOptions] = useState(false);
-  const { updateProfile } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { toast } = useToast();
   const { playSound } = useSound();
+  const { uploadAvatar, uploading } = useAvatarUpload();
 
   // Avatares emoji com melhor qualidade e variedade
   const emojiAvatars = [
@@ -34,46 +36,69 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        try {
-          playSound('click');
-          // Criar URL temporária para preview
-          const imageUrl = URL.createObjectURL(file);
-          onAvatarChange(imageUrl);
-          
-          // Salvar no perfil se updateProfile existir
-          if (updateProfile) {
-            await updateProfile({ profile_picture_url: imageUrl });
-          }
-          
-          if (onPhotoUpload) {
-            onPhotoUpload(file);
-          }
-          
-          setShowOptions(false);
-          playSound('success');
-          toast({
-            title: "Foto atualizada!",
-            description: "Sua foto de perfil foi salva com sucesso.",
-          });
-        } catch (error) {
-          playSound('error');
-          console.error('Erro ao processar imagem:', error);
-          toast({
-            title: "Erro ao salvar foto",
-            description: "Não foi possível processar sua foto.",
-            variant: "destructive"
-          });
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      playSound('error');
+      toast({
+        title: "Formato inválido",
+        description: "Por favor, selecione apenas arquivos de imagem.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      playSound('click');
+
+      // Pré-visualização imediata
+      const previewUrl = URL.createObjectURL(file);
+      onAvatarChange(previewUrl);
+
+      // Se o usuário não estiver autenticado (ex.: cadastro), apenas mantém o preview
+      if (!user?.id) {
+        console.log('[AvatarSelector] No user session. Showing preview only.');
+        if (onPhotoUpload) {
+          onPhotoUpload(file);
         }
-      } else {
-        playSound('error');
+        setShowOptions(false);
         toast({
-          title: "Formato inválido",
-          description: "Por favor, selecione apenas arquivos de imagem.",
-          variant: "destructive"
+          title: "Pré-visualização aplicada",
+          description: "Finalize o login para salvar sua foto de perfil.",
         });
+        return;
       }
+
+      // Upload para o Storage e salvar URL pública no perfil
+      const { publicUrl } = await uploadAvatar(user.id, file);
+      console.log('[AvatarSelector] Avatar uploaded. Public URL:', publicUrl);
+
+      // Atualiza o avatar exibido para a URL pública
+      onAvatarChange(publicUrl);
+
+      if (updateProfile) {
+        await updateProfile({ profile_picture_url: publicUrl });
+      }
+
+      // Callback opcional (se necessário em outros fluxos)
+      if (onPhotoUpload) {
+        onPhotoUpload(file);
+      }
+
+      setShowOptions(false);
+      playSound('success');
+      toast({
+        title: "Foto atualizada!",
+        description: "Sua foto de perfil foi salva com sucesso.",
+      });
+    } catch (error) {
+      playSound('error');
+      console.error('Erro ao processar imagem:', error);
+      toast({
+        title: "Erro ao salvar foto",
+        description: "Não foi possível processar sua foto.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -143,6 +168,7 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
             playSound('click');
           }}
           className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 p-0 shadow-lg border-2 border-white"
+          disabled={uploading}
         >
           <Palette size={12} />
         </Button>
@@ -152,7 +178,9 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
       {showOptions && (
         <div className="absolute z-50 top-24 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-2xl border border-gray-200 dark:border-gray-600 max-w-xs w-full max-h-80 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Personalizar Avatar</h3>
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+              {uploading ? 'Enviando...' : 'Personalizar Avatar'}
+            </h3>
             <Button
               type="button"
               variant="ghost"
@@ -162,6 +190,7 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
                 playSound('click');
               }}
               className="text-gray-500 hover:text-gray-700 p-1"
+              disabled={uploading}
             >
               ✕
             </Button>
@@ -172,7 +201,7 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
             <label htmlFor="photo-upload" className="cursor-pointer">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-3 text-center hover:from-blue-600 hover:to-purple-700 transition-colors shadow-lg">
                 <Upload size={16} className="mx-auto mb-1" />
-                <span className="text-xs font-medium">Carregar Foto</span>
+                <span className="text-xs font-medium">{uploading ? 'Enviando...' : 'Carregar Foto'}</span>
               </div>
             </label>
             <input
@@ -181,6 +210,7 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
               accept="image/*"
               onChange={handleFileChange}
               className="hidden"
+              disabled={uploading}
             />
           </div>
 
@@ -200,6 +230,7 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900' 
                       : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
                   }`}
+                  disabled={uploading}
                 >
                   {emoji}
                 </button>

@@ -112,25 +112,6 @@ const Profile = () => {
     setFormData({ ...formData, profile_picture_url: avatar });
   };
 
-  const handlePhotoUpload = async (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setFormData({ ...formData, profile_picture_url: imageUrl });
-    
-    try {
-      await updateProfile({ ...formData, profile_picture_url: imageUrl });
-      toast({
-        title: t('avatar_updated'),
-        description: t('avatar_updated_desc'),
-      });
-    } catch (error) {
-      toast({
-        title: t('avatar_error'),
-        description: t('avatar_error_desc'),
-        variant: "destructive"
-      });
-    }
-  };
-
   const toggleFavoriteLanguage = (langCode: string) => {
     const newFavorites = favoriteLanguages.includes(langCode)
       ? favoriteLanguages.filter(l => l !== langCode)
@@ -195,7 +176,6 @@ const Profile = () => {
                 <AvatarSelector
                   currentAvatar={formData.profile_picture_url}
                   onAvatarChange={handleAvatarChange}
-                  onPhotoUpload={handlePhotoUpload}
                 />
               </div>
 
