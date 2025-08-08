@@ -89,8 +89,8 @@ const Support = () => {
       answer: 'Alguns conteúdos podem ser baixados para estudo offline.'
     },
     {
-      question: 'Preciso pagar para usar o app?',
-      answer: 'Não. Você pode usar os conteúdos básicos gratuitamente.'
+      question: 'O app não está funcionando corretamente. O que fazer?',
+      answer: 'Tente atualizar para a versão mais recente ou reinstalar o app. Se o problema persistir, contate o suporte.'
     }
   ];
 

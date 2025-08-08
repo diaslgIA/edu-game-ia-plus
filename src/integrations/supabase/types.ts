@@ -85,6 +85,50 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_goals: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          current_value: number | null
+          date: string
+          goal_type: string
+          id: string
+          target_value: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_value?: number | null
+          date?: string
+          goal_type: string
+          id?: string
+          target_value: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_value?: number | null
+          date?: string
+          goal_type?: string
+          id?: string
+          target_value?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_modules: {
         Row: {
           content_data: Json | null
@@ -647,6 +691,7 @@ export type Database = {
           guild_code: string
           id: string
           is_public: boolean | null
+          max_members: number | null
           name: string
           owner_id: string
           total_points: number | null
@@ -657,6 +702,7 @@ export type Database = {
           guild_code: string
           id?: string
           is_public?: boolean | null
+          max_members?: number | null
           name: string
           owner_id: string
           total_points?: number | null
@@ -667,6 +713,7 @@ export type Database = {
           guild_code?: string
           id?: string
           is_public?: boolean | null
+          max_members?: number | null
           name?: string
           owner_id?: string
           total_points?: number | null
@@ -675,6 +722,115 @@ export type Database = {
           {
             foreignKeyName: "guilds_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_interactions: {
+        Row: {
+          correct_answer: Json | null
+          created_at: string | null
+          id: string
+          interaction_type: string
+          is_correct: boolean | null
+          lesson_id: string
+          question_data: Json | null
+          subject: string
+          time_taken: number | null
+          user_answer: Json | null
+          user_id: string
+        }
+        Insert: {
+          correct_answer?: Json | null
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          is_correct?: boolean | null
+          lesson_id: string
+          question_data?: Json | null
+          subject: string
+          time_taken?: number | null
+          user_answer?: Json | null
+          user_id: string
+        }
+        Update: {
+          correct_answer?: Json | null
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          is_correct?: boolean | null
+          lesson_id?: string
+          question_data?: Json | null
+          subject?: string
+          time_taken?: number | null
+          user_answer?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_interactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_progress: {
+        Row: {
+          attempts: number | null
+          completed: boolean | null
+          created_at: string | null
+          hearts_remaining: number | null
+          id: string
+          last_attempt_at: string | null
+          lesson_id: string
+          max_score: number | null
+          perfect_score: boolean | null
+          score: number | null
+          subject: string
+          time_spent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          completed?: boolean | null
+          created_at?: string | null
+          hearts_remaining?: number | null
+          id?: string
+          last_attempt_at?: string | null
+          lesson_id: string
+          max_score?: number | null
+          perfect_score?: boolean | null
+          score?: number | null
+          subject: string
+          time_spent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          completed?: boolean | null
+          created_at?: string | null
+          hearts_remaining?: number | null
+          id?: string
+          last_attempt_at?: string | null
+          lesson_id?: string
+          max_score?: number | null
+          perfect_score?: boolean | null
+          score?: number | null
+          subject?: string
+          time_spent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -720,9 +876,13 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          daily_goal_lessons: number | null
           email: string
           first_login: boolean | null
           full_name: string
+          gems: number | null
+          global_level: number | null
+          hearts: number | null
           id: string
           is_verified: boolean | null
           last_login: string | null
@@ -734,12 +894,17 @@ export type Database = {
           school_year: string
           subscription_type: string | null
           updated_at: string | null
+          xp_points: number | null
         }
         Insert: {
           created_at?: string | null
+          daily_goal_lessons?: number | null
           email: string
           first_login?: boolean | null
           full_name: string
+          gems?: number | null
+          global_level?: number | null
+          hearts?: number | null
           id: string
           is_verified?: boolean | null
           last_login?: string | null
@@ -751,12 +916,17 @@ export type Database = {
           school_year: string
           subscription_type?: string | null
           updated_at?: string | null
+          xp_points?: number | null
         }
         Update: {
           created_at?: string | null
+          daily_goal_lessons?: number | null
           email?: string
           first_login?: boolean | null
           full_name?: string
+          gems?: number | null
+          global_level?: number | null
+          hearts?: number | null
           id?: string
           is_verified?: boolean | null
           last_login?: string | null
@@ -768,8 +938,97 @@ export type Database = {
           school_year?: string
           subscription_type?: string | null
           updated_at?: string | null
+          xp_points?: number | null
         }
         Relationships: []
+      }
+      quiz_options: {
+        Row: {
+          created_at: string | null
+          feedback_image_url: string | null
+          id: string
+          is_correct: boolean | null
+          option_order: number | null
+          option_text: string
+          question_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_image_url?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_order?: number | null
+          option_text: string
+          question_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_image_url?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_order?: number | null
+          option_text?: string
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string | null
+          difficulty_level: string | null
+          explanation: string | null
+          id: string
+          image_url: string | null
+          order_index: number | null
+          question_text: string
+          question_type: string | null
+          subject_id: string | null
+          topic: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty_level?: string | null
+          explanation?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number | null
+          question_text: string
+          question_type?: string | null
+          subject_id?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty_level?: string | null
+          explanation?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number | null
+          question_text?: string
+          question_type?: string | null
+          subject_id?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_scores: {
         Row: {
@@ -1110,6 +1369,50 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_description: string | null
+          achievement_icon: string | null
+          achievement_id: string
+          achievement_name: string
+          earned_at: string | null
+          id: string
+          points_awarded: number | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_description?: string | null
+          achievement_icon?: string | null
+          achievement_id: string
+          achievement_name: string
+          earned_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_description?: string | null
+          achievement_icon?: string | null
+          achievement_id?: string
+          achievement_name?: string
+          earned_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activities: {
         Row: {
           activity_subtype: string | null
@@ -1287,6 +1590,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          freeze_count: number | null
+          id: string
+          last_study_date: string | null
+          longest_streak: number | null
+          streak_frozen: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          freeze_count?: number | null
+          id?: string
+          last_study_date?: string | null
+          longest_streak?: number | null
+          streak_frozen?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          freeze_count?: number | null
+          id?: string
+          last_study_date?: string | null
+          longest_streak?: number | null
+          streak_frozen?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_topic_progress: {
         Row: {
