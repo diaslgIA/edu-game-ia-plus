@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +11,7 @@ interface ContentProgress {
   last_accessed: string | null;
 }
 
-export const useSubjectContents = (subject: string) => {
+export const useSubjectContents = (subjectVariants: string[]) => {
   const [contents, setContents] = useState<SubjectContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
@@ -22,10 +21,12 @@ export const useSubjectContents = (subject: string) => {
     const fetchContents = async () => {
       setLoading(true);
       try {
+        console.log('Fetching contents for subject variants:', subjectVariants);
+        
         const { data, error } = await supabase
           .from('subject_contents')
           .select('*')
-          .eq('subject', subject)
+          .in('subject', subjectVariants)
           .order('order_index', { ascending: true });
 
         if (error) {
@@ -33,6 +34,7 @@ export const useSubjectContents = (subject: string) => {
         }
 
         if (data) {
+          console.log('Found contents:', data);
           setContents(data as SubjectContent[]);
         }
       } finally {
@@ -40,8 +42,10 @@ export const useSubjectContents = (subject: string) => {
       }
     };
 
-    fetchContents();
-  }, [subject]);
+    if (subjectVariants.length > 0) {
+      fetchContents();
+    }
+  }, [subjectVariants]);
 
   useEffect(() => {
     const fetchProgress = async () => {

@@ -8,11 +8,15 @@ import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import GamifiedContentViewer from '@/components/GamifiedContentViewer';
 import SubjectQuiz from '@/components/SubjectQuiz';
 import MobileContainer from '@/components/MobileContainer';
+import { getSubjectDisplayName, getSubjectVariants } from '@/utils/subjectMapping';
 
 const SubjectTopics: React.FC = () => {
-  const { subject } = useParams<{ subject: string }>();
-  const { contents, loading, getContentProgress } = useSubjectContents(subject || '');
-  const { getQuestionsByTopic } = useSubjectQuestions(subject || '');
+  const { subjectName } = useParams<{ subjectName: string }>();
+  const subjectVariants = getSubjectVariants(subjectName || '');
+  const displayName = getSubjectDisplayName(subjectName || '');
+  
+  const { contents, loading, getContentProgress } = useSubjectContents(subjectVariants);
+  const { getQuestionsByTopic } = useSubjectQuestions(subjectVariants);
   const [selectedContent, setSelectedContent] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>('');
@@ -53,7 +57,7 @@ const SubjectTopics: React.FC = () => {
     return (
       <MobileContainer>
         <GamifiedContentViewer
-          subject={subject || ''}
+          subject={displayName}
           contentId={selectedContent}
           onBack={() => setSelectedContent(null)}
           onComplete={() => setSelectedContent(null)}
@@ -66,7 +70,7 @@ const SubjectTopics: React.FC = () => {
     return (
       <MobileContainer>
         <SubjectQuiz
-          subject={subject || ''}
+          subject={displayName}
           topic={selectedTopic}
           onComplete={() => setShowQuiz(false)}
           onBack={() => setShowQuiz(false)}
@@ -90,7 +94,7 @@ const SubjectTopics: React.FC = () => {
           </Button>
           <h1 className="text-lg font-semibold flex items-center space-x-2">
             <BookOpen size={20} />
-            <span>{subject}</span>
+            <span>{displayName}</span>
           </h1>
         </div>
 

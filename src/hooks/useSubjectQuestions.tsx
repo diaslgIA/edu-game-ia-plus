@@ -13,25 +13,25 @@ interface SubjectQuestion {
   difficulty_level: string;
 }
 
-export const useSubjectQuestions = (subject: string) => {
+export const useSubjectQuestions = (subjectVariants: string[]) => {
   const [questions, setQuestions] = useState<SubjectQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (subject) {
+    if (subjectVariants.length > 0) {
       loadQuestions();
     }
-  }, [subject]);
+  }, [subjectVariants]);
 
   const loadQuestions = async () => {
     try {
       setLoading(true);
-      console.log('Loading questions for subject:', subject);
+      console.log('Loading questions for subject variants:', subjectVariants);
       
       const { data, error } = await supabase
         .from('subject_questions')
         .select('*')
-        .eq('subject', subject);
+        .in('subject', subjectVariants);
 
       if (error) {
         console.error('Error loading questions:', error);
