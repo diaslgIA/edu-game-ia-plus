@@ -30,7 +30,7 @@ interface SubjectQuizProps {
 }
 
 const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, onBack }) => {
-  const { questions, loading } = useSubjectQuestions(subject);
+  const { questions, loading, error } = useSubjectQuestions(subject);
   const { saveQuizScore, saving } = useQuizScore();
   const { recordQuizQuestion, recordQuizComplete } = useUserActivities();
   const { playSound } = useSound();
@@ -262,6 +262,33 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <h3 className="text-xl font-bold mb-4">
           Carregando questões de {subject}...
         </h3>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          Isso pode levar alguns segundos...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-red-300 dark:border-red-700 p-6 text-center rounded-lg">
+        <h3 className="text-xl font-bold mb-4 text-red-600">
+          ⚠️ Erro ao Carregar
+        </h3>
+        <p className="text-red-600 dark:text-red-400 mb-4">
+          {error}
+        </p>
+        <div className="space-y-3">
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Tentar Novamente
+          </Button>
+          <Button onClick={onBack} variant="outline">
+            Voltar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -291,6 +318,9 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <h3 className="text-xl font-bold mb-4">
           Preparando questões...
         </h3>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          Processando conteúdo...
+        </div>
       </div>
     );
   }
@@ -502,41 +532,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <div className="flex space-x-3">
           {!showResult ? (
             <Button 
-              onClick={() => {
-                setShowResult(true);
-                setShowMentorGuide(false);
-                
-                const isCorrect = selectedAnswer === question.correctAnswer;
-                const questionScore = isCorrect ? 10 : 0;
-                const timeSpentOnQuestion = Math.round((Date.now() - questionStartTime) / 1000);
-                
-                const newScore = score + questionScore;
-                setScore(newScore);
-                
-                recordQuizQuestion(
-                  subject,
-                  question.topic,
-                  question.id || `${subject}-${currentQuestion}`,
-                  selectedAnswer || -1,
-                  question.correctAnswer,
-                  timeSpentOnQuestion
-                ).catch(error => {
-                  console.error('Erro ao registrar atividade da questão:', error);
-                });
-                
-                if (isCorrect) {
-                  setExperience(prev => Math.min(prev + 10, 100));
-                } else {
-                  setExperience(prev => Math.min(prev + 3, 100));
-                }
-                
-                if (experience >= 100) {
-                  setAffinityLevel(prev => prev + 1);
-                  setExperience(0);
-                }
-                
-                setShowMentorFeedback(true);
-              }}
+              onClick={handleSubmitAnswer}
               disabled={selectedAnswer === null}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-blue-700 active:border-b-2 active:border-r-2 disabled:opacity-50"
             >
@@ -544,43 +540,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
             </Button>
           ) : (
             <Button 
-              onClick={() => {
-                setShowMentorFeedback(false);
-                
-                if (currentQuestion < quizQuestions.length - 1) {
-                  setCurrentQuestion(currentQuestion + 1);
-                  setSelectedAnswer(null);
-                  setShowResult(false);
-                  setTimeLeft(180);
-                  setQuestionStartTime(Date.now());
-                } else {
-                  const timeSpent = Math.round((Date.now() - startTime) / 1000);
-                  const calculatedFinalScore = score;
-                  
-                  setFinalScore(calculatedFinalScore);
-                  setGameCompleted(true);
-                  
-                  console.log('🎯 Finalizando quiz:', { subject, finalScore: calculatedFinalScore, timeSpent });
-                  
-                  saveQuizScore(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
-                    .then((success) => {
-                      if (success) {
-                        console.log('✅ Quiz salvo com sucesso!');
-                        if (playSound) playSound('success');
-                      }
-                    })
-                    .catch(error => {
-                      console.error('❌ Erro ao salvar quiz:', error);
-                    });
-                  
-                  recordQuizComplete(subject, calculatedFinalScore, quizQuestions.length, timeSpent)
-                    .catch(error => {
-                      console.error('Erro ao registrar conclusão do quiz:', error);
-                    });
-                  
-                  onComplete(calculatedFinalScore, timeSpent);
-                }
-              }}
+              onClick={handleNextQuestion}
               className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
             >
               {currentQuestion < quizQuestions.length - 1 ? 'Próxima' : 'Finalizar Quiz'}
