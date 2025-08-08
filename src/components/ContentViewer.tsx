@@ -21,9 +21,6 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ contentId, onBack, subjec
   const subjectVariants = getSubjectVariants(subject);
   const { updateContentProgress } = useSubjectContents(subjectVariants);
 
-  // Wrapper para evitar erro de tipos do ContentSlidesProps
-  const AnyContentSlides = ContentSlides as any;
-
   useEffect(() => {
     const loadContent = async () => {
       setLoading(true);
@@ -39,8 +36,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ contentId, onBack, subjec
           return;
         }
 
-        // Fazemos cast explícito para o tipo esperado internamente
-        setContent((data as unknown) as SubjectContent);
+        setContent(data as SubjectContent);
       } catch (error) {
         console.error('Error loading content:', error);
       } finally {
@@ -51,18 +47,31 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ contentId, onBack, subjec
     loadContent();
   }, [contentId]);
 
+  const handleComplete = async () => {
+    await updateContentProgress(contentId, { completed: true, progress_percentage: 100 });
+    onBack();
+  };
+
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-white">Carregando conteúdo...</div>
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Carregando conteúdo...</p>
+        </div>
       </div>
     );
   }
 
   if (!content) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-white">Conteúdo não encontrado</div>
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+        <div className="text-white text-center">
+          <h2 className="text-xl font-bold mb-4">Conteúdo não encontrado</h2>
+          <Button onClick={onBack} className="bg-blue-500 hover:bg-blue-600">
+            Voltar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -82,12 +91,9 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ contentId, onBack, subjec
       </div>
       
       <div className="flex-1">
-        {/* Usamos o wrapper para evitar erro do tipo ContentSlidesProps e garantimos retorno void */}
-        <AnyContentSlides 
+        <ContentSlides 
           content={content}
-          onComplete={() => {
-            void updateContentProgress(contentId, { completed: true, progress_percentage: 100 });
-          }}
+          onComplete={handleComplete}
         />
       </div>
     </div>

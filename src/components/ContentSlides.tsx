@@ -1,298 +1,87 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
 
-interface Slide {
-  id: number;
-  title: string;
-  content: string;
-  image?: string;
-  concepts: string[];
-}
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, BookOpen, Lightbulb, Target, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SubjectContent } from '@/types/subject-content';
 
 interface ContentSlidesProps {
-  subject: string;
+  content: SubjectContent;
   onComplete: () => void;
 }
 
-// Função para mapear nomes das matérias para os identificadores corretos
-const mapSubjectName = (subject: string): string => {
-  const subjectMap: { [key: string]: string } = {
-    'Matemática': 'Matemática',
-    'matematica': 'Matemática',
-    'Português': 'Português',
-    'portugues': 'Português',
-    'Física': 'Física',
-    'fisica': 'Física',
-    'Química': 'Química',
-    'quimica': 'Química',
-    'Biologia': 'Biologia',
-    'biologia': 'Biologia',
-    'História': 'História',
-    'historia': 'História',
-    'Geografia': 'Geografia',
-    'geografia': 'Geografia',
-    'Filosofia': 'Filosofia',
-    'filosofia': 'Filosofia',
-    'Sociologia': 'Sociologia',
-    'sociologia': 'Sociologia'
-  };
-  
-  return subjectMap[subject] || 'Matemática';
-};
-
-// Conteúdo específico por matéria para os slides introdutórios
-const getIntroductoryContent = (subject: string): Slide[] => {
-  const mappedSubject = mapSubjectName(subject);
-  
-  const contentMap: { [key: string]: Slide[] } = {
-    'Matemática': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `Bem-vindos ao estudo de Matemática! Nesta aula, vamos explorar conceitos fundamentais que são essenciais para o ENEM, incluindo funções, geometria e estatística.`,
-        concepts: ['Funções e equações', 'Geometria plana e espacial', 'Estatística e probabilidade']
-      },
-      {
-        id: 2,
-        title: 'Álgebra e Funções',
-        content: `A álgebra é a base da matemática moderna. Vamos dominar equações, sistemas e funções que aparecem frequentemente no ENEM.`,
-        concepts: ['Equações do 1º e 2º grau', 'Sistemas lineares', 'Funções quadráticas e exponenciais']
-      },
-      {
-        id: 3,
-        title: 'Geometria Aplicada',
-        content: `A geometria nos ajuda a compreender o mundo ao nosso redor. Estudaremos áreas, volumes e relações espaciais.`,
-        concepts: ['Áreas de figuras planas', 'Volumes de sólidos', 'Teorema de Pitágoras']
-      },
-      {
-        id: 4,
-        title: 'Estatística e Probabilidade',
-        content: `Em um mundo de dados, saber interpretar gráficos e calcular probabilidades é essencial para o ENEM e para a vida.`,
-        concepts: ['Medidas de tendência central', 'Gráficos e tabelas', 'Cálculo de probabilidades']
-      }
-    ],
-    'Português': [
-      {
-        id: 1,
-        title: `Introdução ao ${mappedSubject}`,
-        content: `Bem-vindos ao estudo de Português! Vamos explorar interpretação textual, gramática e literatura brasileira para dominar o ENEM.`,
-        concepts: ['Interpretação de texto', 'Gramática normativa', 'Literatura brasileira']
-      },
-      {
-        id: 2,
-        title: 'Interpretação de Texto',
-        content: `A interpretação textual é fundamental no ENEM. Vamos desenvolver estratégias de leitura e análise crítica.`,
-        concepts: ['Ideia principal e secundária', 'Inferências e pressupostos', 'Gêneros textuais']
-      },
-      {
-        id: 3,
-        title: 'Gramática e Norma Culta',
-        content: `O domínio da gramática é essencial para uma comunicação eficaz e para a redação do ENEM.`,
-        concepts: ['Concordância verbal e nominal', 'Regência e crase', 'Pontuação e sintaxe']
-      },
-      {
-        id: 4,
-        title: 'Literatura Brasileira',
-        content: `A literatura reflete nossa cultura e história. Estudaremos os principais movimentos literários brasileiros.`,
-        concepts: ['Barroco e Arcadismo', 'Romantismo e Realismo', 'Modernismo']
-      }
-    ],
-    'Física': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Física explica os fenômenos naturais através de leis e princípios. Vamos estudar mecânica, termodinâmica e eletromagnetismo.`,
-        concepts: ['Mecânica clássica', 'Termodinâmica', 'Eletromagnetismo']
-      },
-      {
-        id: 2,
-        title: 'Mecânica e Movimento',
-        content: `O estudo do movimento é fundamental na Física. Analisaremos velocidade, aceleração e as leis de Newton.`,
-        concepts: ['Cinemática', 'Dinâmica', 'Energia e trabalho']
-      },
-      {
-        id: 3,
-        title: 'Ondas e Óptica',
-        content: `As ondas estão presentes no som, na luz e nas comunicações. Vamos entender suas propriedades e comportamentos.`,
-        concepts: ['Ondas mecânicas', 'Ondas eletromagnéticas', 'Reflexão e refração']
-      },
-      {
-        id: 4,
-        title: 'Eletricidade e Magnetismo',
-        content: `A eletricidade e o magnetismo são fundamentais na tecnologia moderna. Estudaremos circuitos e campos.`,
-        concepts: ['Circuitos elétricos', 'Campo elétrico e magnético', 'Indução eletromagnética']
-      }
-    ],
-    'Química': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Química estuda a matéria e suas transformações. Vamos explorar átomos, moléculas e reações químicas.`,
-        concepts: ['Estrutura atômica', 'Ligações químicas', 'Reações químicas']
-      },
-      {
-        id: 2,
-        title: 'Estrutura da Matéria',
-        content: `Compreender a estrutura dos átomos e moléculas é essencial para entender as propriedades da matéria.`,
-        concepts: ['Modelo atômico atual', 'Tabela periódica', 'Propriedades periódicas']
-      },
-      {
-        id: 3,
-        title: 'Reações e Estequiometria',
-        content: `As reações químicas seguem leis de conservação. Vamos aprender a balancear equações e calcular quantidades.`,
-        concepts: ['Balanceamento de equações', 'Cálculos estequiométricos', 'Rendimento de reação']
-      },
-      {
-        id: 4,
-        title: 'Química Orgânica',
-        content: `A química orgânica estuda os compostos de carbono, base da vida e de muitos materiais importantes.`,
-        concepts: ['Hidrocarbonetos', 'Funções orgânicas', 'Reações orgânicas']
-      }
-    ],
-    'Biologia': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Biologia é a ciência da vida. Vamos estudar desde células até ecossistemas, passando por genética e evolução.`,
-        concepts: ['Citologia', 'Genética', 'Ecologia']
-      },
-      {
-        id: 2,
-        title: 'Citologia e Histologia',
-        content: `A célula é a unidade básica da vida. Estudaremos sua estrutura e funcionamento em organismos unicelulares e multicelulares.`,
-        concepts: ['Organelas celulares', 'Metabolismo celular', 'Divisão celular']
-      },
-      {
-        id: 3,
-        title: 'Genética e Hereditariedade',
-        content: `A genética explica como as características são transmitidas. Vamos estudar DNA, genes e hereditariedade.`,
-        concepts: ['Leis de Mendel', 'DNA e RNA', 'Mutações genéticas']
-      },
-      {
-        id: 4,
-        title: 'Ecologia e Meio Ambiente',
-        content: `A ecologia estuda as relações entre os seres vivos e o ambiente. Um tema muito importante no ENEM.`,
-        concepts: ['Cadeias alimentares', 'Ciclos biogeoquímicos', 'Problemas ambientais']
-      }
-    ],
-    'História': [
-      {
-        id: 1,
-        title: 'Introdução à História',
-        content: `A História é o estudo do passado para compreender o presente e construir o futuro.\n\nPor meio da análise de documentos, monumentos, objetos e relatos, conseguimos entender as transformações da sociedade ao longo do tempo.\n\nEstudaremos os principais acontecimentos do Brasil e do mundo, analisando suas causas, consequências e conexões.`,
-        concepts: ['Estudo do passado', 'Análise de fontes históricas', 'Transformações sociais', 'Conexões históricas']
-      },
-      {
-        id: 2,
-        title: 'História do Brasil',
-        content: `Vamos estudar desde o período pré-colonial até os dias atuais.\n\nTemas como a colonização, escravidão, independência, república, ditadura e democracia serão abordados de forma contextualizada.\n\nA ideia é compreender como se formou a identidade brasileira e como as desigualdades sociais e raciais foram sendo construídas e mantidas.`,
-        concepts: ['Período pré-colonial', 'Colonização e escravidão', 'Independência e república', 'Formação da identidade brasileira']
-      },
-      {
-        id: 3,
-        title: 'História Mundial',
-        content: `Essa parte aborda os grandes marcos da história global: Antiguidade, feudalismo, revoluções, guerras mundiais e movimentos sociais.\n\nVamos entender como diferentes civilizações influenciaram o mundo e como os conflitos e transformações moldaram a sociedade atual.`,
-        concepts: ['Antiguidade e feudalismo', 'Revoluções históricas', 'Guerras mundiais', 'Civilizações e influências globais']
-      },
-      {
-        id: 4,
-        title: 'Análise de Fontes Históricas',
-        content: `A fonte histórica é tudo aquilo que nos ajuda a entender o passado: cartas, jornais, pinturas, vídeos, entrevistas, ruínas...\n\nAprenderemos a identificar e interpretar essas fontes para construir argumentos históricos bem fundamentados — uma habilidade muito cobrada no ENEM.`,
-        concepts: ['Tipos de fontes históricas', 'Identificação e interpretação', 'Construção de argumentos', 'Preparação para o ENEM']
-      }
-    ],
-    'Geografia': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Geografia estuda o espaço e as relações entre sociedade e natureza. Vamos explorar aspectos físicos e humanos.`,
-        concepts: ['Geografia física', 'Geografia humana', 'Cartografia']
-      },
-      {
-        id: 2,
-        title: 'Geografia Física do Brasil',
-        content: `O Brasil possui grande diversidade natural: relevo, clima, hidrografia e vegetação únicos.`,
-        concepts: ['Relevo brasileiro', 'Climas do Brasil', 'Biomas brasileiros']
-      },
-      {
-        id: 3,
-        title: 'Demografia e Urbanização',
-        content: `O crescimento populacional e a urbanização são fenômenos importantes da geografia humana brasileira.`,
-        concepts: ['Demografia brasileira', 'Processo de urbanização', 'Problemas urbanos']
-      },
-      {
-        id: 4,
-        title: 'Geopolítica e Globalização',
-        content: `As relações de poder no espaço geográfico e os processos de globalização transformam o mundo atual.`,
-        concepts: ['Blocos econômicos', 'Conflitos territoriais', 'Globalização']
-      }
-    ],
-    'Filosofia': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Filosofia é o amor à sabedoria. Vamos explorar questões fundamentais sobre existência, conhecimento e ética.`,
-        concepts: ['História da filosofia', 'Principais filósofos', 'Questões fundamentais']
-      },
-      {
-        id: 2,
-        title: 'Filosofia Antiga',
-        content: `Os filósofos gregos estabeleceram as bases do pensamento ocidental com questões sobre realidade e conhecimento.`,
-        concepts: ['Sócrates, Platão e Aristóteles', 'Escolas helenísticas', 'Pensamento grego']
-      },
-      {
-        id: 3,
-        title: 'Filosofia Moderna',
-        content: `A filosofia moderna trouxe novas perspectivas sobre razão, empirismo e o método científico.`,
-        concepts: ['Racionalismo', 'Empirismo', 'Iluminismo']
-      },
-      {
-        id: 4,
-        title: 'Ética e Filosofia Política',
-        content: `A ética e a filosofia política abordam questões sobre moral, justiça e organização social.`,
-        concepts: ['Teorias éticas', 'Filosofia política', 'Direitos humanos']
-      }
-    ],
-    'Sociologia': [
-      {
-        id: 1,
-        title: `Introdução à ${mappedSubject}`,
-        content: `A Sociologia estuda a sociedade e as relações sociais. Vamos analisar estruturas sociais e mudanças históricas.`,
-        concepts: ['Teoria sociológica', 'Métodos de pesquisa', 'Sociedade e cultura']
-      },
-      {
-        id: 2,
-        title: 'Clássicos da Sociologia',
-        content: `Os fundadores da sociologia - Durkheim, Weber e Marx - criaram teorias fundamentais sobre a sociedade.`,
-        concepts: ['Émile Durkheim', 'Max Weber', 'Karl Marx']
-      },
-      {
-        id: 3,
-        title: 'Estratificação Social',
-        content: `A sociedade se organiza em classes, estamentos e castas. Vamos estudar desigualdade e mobilidade social.`,
-        concepts: ['Classes sociais', 'Desigualdade social', 'Mobilidade social']
-      },
-      {
-        id: 4,
-        title: 'Sociologia Contemporânea',
-        content: `Os desafios sociais atuais incluem globalização, tecnologia e novos movimentos sociais.`,
-        concepts: ['Globalização', 'Movimentos sociais', 'Sociedade digital']
-      }
-    ]
-  };
-
-  return contentMap[mappedSubject] || contentMap['Matemática'];
-};
-
-const ContentSlides: React.FC<ContentSlidesProps> = ({ subject, onComplete }) => {
+const ContentSlides: React.FC<ContentSlidesProps> = ({ content, onComplete }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const slides = getIntroductoryContent(subject);
+  // Gerar slides dinamicamente baseado no conteúdo
+  const generateSlides = () => {
+    const slides = [];
+
+    // Slide de introdução
+    slides.push({
+      type: 'intro',
+      title: content.title,
+      content: content.description || 'Vamos explorar este tópico importante!',
+      icon: <BookOpen size={48} className="text-blue-400" />
+    });
+
+    // Slide de explicação detalhada (se existir)
+    if (content.detailed_explanation) {
+      slides.push({
+        type: 'explanation',
+        title: 'Entendendo o Conceito',
+        content: content.detailed_explanation,
+        icon: <Lightbulb size={48} className="text-yellow-400" />
+      });
+    }
+
+    // Slide de conceitos-chave (se existirem)
+    if (content.key_concepts && Array.isArray(content.key_concepts) && content.key_concepts.length > 0) {
+      slides.push({
+        type: 'concepts',
+        title: 'Conceitos Importantes',
+        content: content.key_concepts,
+        icon: <Target size={48} className="text-green-400" />
+      });
+    }
+
+    // Slide de exemplos (se existirem)
+    if (content.examples) {
+      slides.push({
+        type: 'examples',
+        title: 'Exemplos Práticos',
+        content: content.examples,
+        icon: <Zap size={48} className="text-purple-400" />
+      });
+    }
+
+    // Slide de aplicações práticas (se existirem)
+    if (content.practical_applications) {
+      slides.push({
+        type: 'applications',
+        title: 'Aplicações Práticas',
+        content: content.practical_applications,
+        icon: <Target size={48} className="text-orange-400" />
+      });
+    }
+
+    // Slide de dicas de estudo (se existirem)
+    if (content.study_tips) {
+      slides.push({
+        type: 'tips',
+        title: 'Dicas de Estudo',
+        content: content.study_tips,
+        icon: <Lightbulb size={48} className="text-cyan-400" />
+      });
+    }
+
+    return slides;
+  };
+
+  const slides = generateSlides();
 
   const nextSlide = () => {
     if (currentSlide < slides.length - 1) {
-      setCurrentSlide(prev => prev + 1);
+      setCurrentSlide(currentSlide + 1);
     } else {
       onComplete();
     }
@@ -300,98 +89,104 @@ const ContentSlides: React.FC<ContentSlidesProps> = ({ subject, onComplete }) =>
 
   const prevSlide = () => {
     if (currentSlide > 0) {
-      setCurrentSlide(prev => prev - 1);
+      setCurrentSlide(currentSlide - 1);
     }
   };
 
-  const currentSlideData = slides[currentSlide];
+  const renderSlideContent = (slide: any) => {
+    switch (slide.type) {
+      case 'concepts':
+        return (
+          <div className="space-y-4">
+            {Array.isArray(slide.content) ? (
+              <ul className="space-y-3">
+                {slide.content.map((concept: any, index: number) => (
+                  <li key={index} className="flex items-start space-x-3 bg-white/10 p-3 rounded-lg">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
+                      {index + 1}
+                    </div>
+                    <span className="text-white/90 leading-relaxed">
+                      {typeof concept === 'string' ? concept : concept.name || concept.title || JSON.stringify(concept)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-white/90 text-lg leading-relaxed">{slide.content}</p>
+            )}
+          </div>
+        );
+      
+      default:
+        return (
+          <p className="text-white/90 text-lg leading-relaxed whitespace-pre-line">
+            {slide.content}
+          </p>
+        );
+    }
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-colors duration-300">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <BookOpen size={20} />
-            <h3 className="font-bold">{mapSubjectName(subject)}</h3>
-          </div>
-          <div className="text-sm bg-white/20 px-2 py-1 rounded-full">
-            {currentSlide + 1} / {slides.length}
-          </div>
-        </div>
+    <div className="h-full flex flex-col bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+      {/* Progress bar */}
+      <div className="w-full bg-black/20 h-1">
+        <div 
+          className="h-1 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300"
+          style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+        />
       </div>
 
-      {/* Slide Content */}
-      <div className="p-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 transition-colors duration-300">
-            {currentSlideData.title}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-300">
-            {currentSlideData.content}
-          </p>
-        </div>
-
-        {/* Concepts */}
-        <div className="bg-blue-50 dark:bg-gray-700 rounded-lg p-4 mb-6 transition-colors duration-300">
-          <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 transition-colors duration-300">
-            Pontos Principais:
-          </h4>
-          <div className="space-y-2">
-            {currentSlideData.concepts.map((concept, index) => (
-              <div key={index} className="flex items-center text-blue-700 dark:text-blue-300 transition-colors duration-300">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                <span>{concept}</span>
+      {/* Content area */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+          {slides[currentSlide] && (
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                {slides[currentSlide].icon}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex justify-between text-sm text-gray-500 mb-2">
-            <span>Progresso</span>
-            <span>{Math.round(((currentSlide + 1) / slides.length) * 100)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 transition-colors duration-300">
-            <div 
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-            ></div>
-          </div>
+              <h2 className="text-3xl font-bold text-white mb-6">
+                {slides[currentSlide].title}
+              </h2>
+              <div className="text-left">
+                {renderSlideContent(slides[currentSlide])}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-700 flex items-center justify-between transition-colors duration-300">
-        <Button
-          onClick={prevSlide}
-          disabled={currentSlide === 0}
-          variant="outline"
-          className="flex items-center space-x-2"
-        >
-          <ChevronLeft size={16} />
-          <span>Anterior</span>
-        </Button>
+      <div className="p-6 bg-black/20">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <Button
+            onClick={prevSlide}
+            disabled={currentSlide === 0}
+            variant="outline"
+            className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+          >
+            <ChevronLeft size={20} className="mr-2" />
+            Anterior
+          </Button>
 
-        <div className="flex space-x-2">
-          {slides.map((_, index) => (
-            <div
-              key={index}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentSlide ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-500'
-              }`}
-            />
-          ))}
+          <div className="flex space-x-2">
+            {slides.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentSlide ? 'bg-white' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+
+          <Button
+            onClick={nextSlide}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+          >
+            {currentSlide === slides.length - 1 ? 'Finalizar' : 'Próximo'}
+            <ChevronRight size={20} className="ml-2" />
+          </Button>
         </div>
-
-        <Button
-          onClick={nextSlide}
-          className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600"
-        >
-          <span>{currentSlide === slides.length - 1 ? 'Começar Atividade' : 'Próximo'}</span>
-          {currentSlide === slides.length - 1 ? <Play size={16} /> : <ChevronRight size={16} />}
-        </Button>
       </div>
     </div>
   );
