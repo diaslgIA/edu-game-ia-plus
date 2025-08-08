@@ -90,7 +90,7 @@ const Support = () => {
     },
     {
       question: 'Preciso pagar para usar o app?',
-      answer: 'Não. Você pode usar os conteúdos básicos gratuitamente. Futuramente, teremos planos premium com mais funcionalidades, mas a base do estudo sempre será acessível.'
+      answer: 'Não. Você pode usar os conteúdos básicos gratuitamente.'
     }
   ];
 
