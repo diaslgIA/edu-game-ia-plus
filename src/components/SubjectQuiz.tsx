@@ -20,6 +20,7 @@ import { QuizRuiBarbosaFeedback } from './quiz/QuizRuiBarbosaFeedback';
 import { QuizZumbiFeedback } from './quiz/QuizZumbiFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
 import ZumbiProfile from './ZumbiProfile';
+import QuizShakespeareFeedback from './quiz/QuizShakespeareFeedback';
 
 interface SubjectQuizProps {
   subject: string;
@@ -358,6 +359,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     } else if (subjectLower === 'química' || subjectLower === 'quimica') {
       return (
         <QuizMarieCurieFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'inglês' || subjectLower === 'ingles') {
+      return (
+        <QuizShakespeareFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
           xpGained={xpGained}
