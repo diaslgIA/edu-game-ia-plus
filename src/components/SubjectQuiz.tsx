@@ -22,6 +22,7 @@ import { QuizZumbiFeedback } from './quiz/QuizZumbiFeedback';
 import QuizMentorHint from './quiz/QuizMentorHint';
 import ZumbiProfile from './ZumbiProfile';
 import QuizShakespeareFeedback from './quiz/QuizShakespeareFeedback';
+import QuizMachadoFeedback from './quiz/QuizMachadoFeedback';
 
 interface SubjectQuizProps {
   subject: string;
@@ -369,6 +370,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     } else if (subjectLower === 'filosofia') {
       return (
         <QuizSocratesFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'literatura') {
+      return (
+        <QuizMachadoFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
           xpGained={xpGained}
