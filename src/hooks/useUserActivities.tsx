@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { createTimeoutController } from '@/utils/withTimeout';
 
 export const useUserActivities = () => {
   const [recording, setRecording] = useState(false);
@@ -108,22 +107,19 @@ export const useUserActivities = () => {
   const getUserActivities = async (subject?: string, limit: number = 50) => {
     if (!user) return [];
 
-    const { controller, cancel } = createTimeoutController(10000);
     try {
       let query = supabase
         .from('user_activities')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(limit)
-        .abortSignal(controller.signal);
+        .limit(limit);
 
       if (subject) {
         query = query.eq('subject', subject);
       }
 
       const { data, error } = await query;
-      cancel();
 
       if (error) {
         console.error('Erro ao buscar atividades:', error);
@@ -131,8 +127,7 @@ export const useUserActivities = () => {
       }
 
       return data || [];
-    } catch (error: any) {
-      cancel();
+    } catch (error) {
       console.error('Erro inesperado ao buscar atividades:', error);
       return [];
     }
@@ -141,21 +136,18 @@ export const useUserActivities = () => {
   const getUserStats = async (subject?: string) => {
     if (!user) return null;
 
-    const { controller, cancel } = createTimeoutController(10000);
     try {
       let query = supabase
         .from('user_activities')
         .select('*')
         .eq('user_id', user.id)
-        .eq('activity_type', 'quiz_question')
-        .abortSignal(controller.signal);
+        .eq('activity_type', 'quiz_question');
 
       if (subject) {
         query = query.eq('subject', subject);
       }
 
       const { data, error } = await query;
-      cancel();
 
       if (error) {
         console.error('Erro ao buscar estatísticas:', error);
@@ -166,9 +158,7 @@ export const useUserActivities = () => {
       const totalQuestions = activities.length;
       const correctAnswers = activities.filter(a => a.is_correct).length;
       const totalPoints = activities.reduce((sum, a) => sum + (a.points_earned || 0), 0);
-      const avgTimePerQuestion = totalQuestions > 0
-        ? activities.reduce((sum, a) => sum + (a.time_spent || 0), 0) / totalQuestions
-        : 0;
+      const avgTimePerQuestion = activities.reduce((sum, a) => sum + (a.time_spent || 0), 0) / totalQuestions;
 
       return {
         totalQuestions,
@@ -177,8 +167,7 @@ export const useUserActivities = () => {
         totalPoints,
         avgTimePerQuestion: Math.round(avgTimePerQuestion) || 0
       };
-    } catch (error: any) {
-      cancel();
+    } catch (error) {
       console.error('Erro inesperado ao buscar estatísticas:', error);
       return null;
     }

@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { createTimeoutController } from '@/utils/withTimeout';
 
 export interface RankingUser {
   id: string;
@@ -21,40 +20,27 @@ export const useRankings = () => {
   const { toast } = useToast();
 
   const fetchRankings = async () => {
-    const { controller, cancel } = createTimeoutController(10000);
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('user_rankings')
         .select('*')
         .order('position', { ascending: true })
-        .limit(50)
-        .abortSignal(controller.signal);
-
-      cancel();
+        .limit(50);
 
       if (error) {
         console.error('Erro ao buscar rankings:', error);
         toast({
           title: "Erro ao carregar ranking",
-          description: "Não foi possível carregar o ranking agora.",
+          description: "Não foi possível carregar o ranking.",
           variant: "destructive"
         });
-        setRankings([]);
         return;
       }
 
       setRankings(data || []);
-    } catch (error: any) {
-      cancel();
+    } catch (error) {
       console.error('Erro ao buscar rankings:', error);
-      const isAbort = error?.name === 'AbortError';
-      toast({
-        title: isAbort ? "Tempo esgotado" : "Erro ao carregar ranking",
-        description: isAbort ? "A requisição demorou demais. Tente novamente." : "Ocorreu um erro inesperado.",
-        variant: "destructive"
-      });
-      setRankings([]);
     } finally {
       setLoading(false);
     }
@@ -63,7 +49,7 @@ export const useRankings = () => {
   useEffect(() => {
     fetchRankings();
 
-    // Escuta em tempo real (ranking)
+    // Configurar escuta em tempo real
     const channel = supabase
       .channel('user_rankings_changes')
       .on(

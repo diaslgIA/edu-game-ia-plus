@@ -3,11 +3,10 @@ import React from 'react';
 import { useRankings } from '@/hooks/useRankings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
-import { Trophy, TrendingUp, Medal, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Trophy, TrendingUp, Medal } from 'lucide-react';
 
 const UserRankingCard = () => {
-  const { rankings, loading, fetchRankings } = useRankings();
+  const { rankings, loading } = useRankings();
   const { user } = useAuth();
 
   if (loading || !user) {
@@ -15,16 +14,7 @@ const UserRankingCard = () => {
       <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <Button 
-            onClick={fetchRankings}
-            variant="outline" 
-            size="sm"
-            className="mt-2"
-          >
-            <RefreshCw size={12} className="mr-1" />
-            Atualizar
-          </Button>
+          <div className="h-6 bg-gray-200 rounded w-3/4"></div>
         </div>
       </Card>
     );
@@ -36,22 +26,13 @@ const UserRankingCard = () => {
   if (!userRanking) {
     return (
       <Card className="p-4 bg-gradient-to-r from-gray-50 to-blue-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Medal className="text-gray-400" size={24} />
-            <div>
-              <p className="text-sm text-gray-600">Sua Posição no Ranking</p>
-              <p className="font-semibold text-gray-700">Ainda não classificado</p>
-              <p className="text-xs text-gray-500">Complete um quiz para entrar no ranking!</p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Medal className="text-gray-400" size={24} />
+          <div>
+            <p className="text-sm text-gray-600">Sua Posição no Ranking</p>
+            <p className="font-semibold text-gray-700">Ainda não classificado</p>
+            <p className="text-xs text-gray-500">Complete um quiz para entrar no ranking!</p>
           </div>
-          <Button 
-            onClick={fetchRankings}
-            variant="outline" 
-            size="sm"
-          >
-            <RefreshCw size={12} />
-          </Button>
         </div>
       </Card>
     );

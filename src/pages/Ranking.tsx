@@ -6,12 +6,12 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { useSound } from '@/contexts/SoundContext';
 import { useRankings } from '@/hooks/useRankings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Crown, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Trophy, Crown, Loader2 } from 'lucide-react';
 
 const Ranking = () => {
   const navigate = useNavigate();
   const { playSound } = useSound();
-  const { rankings, loading, fetchRankings } = useRankings();
+  const { rankings, loading } = useRankings();
 
   const handleBack = () => {
     playSound('click');
@@ -23,25 +23,12 @@ const Ranking = () => {
     navigate(-1);
   };
 
-  const handleRetry = () => {
-    playSound('click');
-    fetchRankings();
-  };
-
   if (loading) {
     return (
       <MobileContainer background="light">
         <div className="flex flex-col h-full pb-20 items-center justify-center">
           <Loader2 className="animate-spin text-blue-500 mb-4" size={48} />
-          <p className="text-gray-600 mb-4">Carregando ranking...</p>
-          <Button 
-            onClick={handleRetry}
-            variant="outline"
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw size={16} />
-            <span>Tentar novamente</span>
-          </Button>
+          <p className="text-gray-600">Carregando ranking...</p>
         </div>
         <BottomNavigation />
       </MobileContainer>
@@ -75,16 +62,8 @@ const Ranking = () => {
           {rankings.length === 0 ? (
             <div className="text-center py-8">
               <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
-              <p className="text-gray-600 mb-2">Nenhum jogador no ranking ainda.</p>
-              <p className="text-gray-500 text-sm mb-4">Seja o primeiro a pontuar!</p>
-              <Button 
-                onClick={handleRetry}
-                variant="outline"
-                className="flex items-center space-x-2"
-              >
-                <RefreshCw size={16} />
-                <span>Atualizar</span>
-              </Button>
+              <p className="text-gray-600">Nenhum jogador no ranking ainda.</p>
+              <p className="text-gray-500 text-sm mt-2">Seja o primeiro a pontuar!</p>
             </div>
           ) : (
             <>

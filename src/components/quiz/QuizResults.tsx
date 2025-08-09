@@ -32,10 +32,6 @@ const QuizResults: React.FC<QuizResultsProps> = ({
 
   const performance = getPerformanceMessage();
 
-  const handleBackClick = () => {
-    onBack();
-  };
-
   return (
     <div className="font-pixel bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-4 border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center min-h-full flex flex-col">
       {/* Header */}
@@ -107,7 +103,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       {/* Action Buttons */}
       <div className="mt-auto pt-4">
         <Button 
-          onClick={handleBackClick}
+          onClick={onBack}
           className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 border-2 border-b-4 border-r-4 border-green-700 active:border-b-2 active:border-r-2"
         >
           Voltar aos Exercícios

@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Users, Compass, LogIn } from 'lucide-react';
+import { Plus, Search, Users, Compass } from 'lucide-react';
 import GuildCard from '@/components/guild/GuildCard';
 import GuildCreateModal from '@/components/guild/GuildCreateModal';
 import GuildDiscoveryTab from '@/components/guild/GuildDiscoveryTab';
@@ -43,33 +43,17 @@ const Guilds = () => {
   });
 
   const fetchGuilds = async () => {
-    if (!user) {
-      console.log('User not authenticated, skipping guild fetch');
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
       console.log('Buscando guildas...');
 
-      // Timeout de 8 segundos
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
       // Buscar guildas onde o usuário é membro
-      const { data: memberGuilds, error: memberError } = await supabase
+      const { data: memberGuilds } = await supabase
         .from('guild_members')
         .select('guild_id')
-        .eq('profile_id', user.id)
-        .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
-
-      if (memberError) {
-        console.error('Erro ao buscar membros:', memberError);
-        throw memberError;
-      }
+        .eq('profile_id', user.id);
 
       const memberGuildIds = memberGuilds?.map(g => g.guild_id) || [];
 
@@ -97,7 +81,7 @@ const Guilds = () => {
         throw guildsError;
       }
 
-      console.log('Guildas encontradas:', guildsData?.length || 0);
+      console.log('Guildas encontradas:', guildsData);
 
       // Contar membros de cada guilda
       const guildsWithMemberCount = await Promise.all(
@@ -122,24 +106,13 @@ const Guilds = () => {
       );
 
       setGuilds(guildsWithMemberCount);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao buscar guildas:', error);
-      
-      if (error.name === 'AbortError') {
-        toast({
-          title: "Timeout",
-          description: "A busca por guildas demorou muito. Tente novamente.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro ao carregar",
-          description: "Não foi possível carregar a lista de guildas.",
-          variant: "destructive"
-        });
-      }
-      
-      setGuilds([]);
+      toast({
+        title: "Erro ao carregar",
+        description: "Não foi possível carregar a lista de guildas.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -232,37 +205,12 @@ const Guilds = () => {
     }
   }, [searchQuery, activeTab, user]);
 
-  // Mostrar tela de login se usuário não autenticado
-  if (!user) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="flex flex-col h-full items-center justify-center p-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 text-center text-white max-w-md">
-            <LogIn size={48} className="mx-auto mb-4 opacity-70" />
-            <h2 className="text-xl font-semibold mb-4">Entre na sua conta</h2>
-            <p className="text-white/80 mb-6">
-              Você precisa fazer login para acessar suas guildas e participar da comunidade.
-            </p>
-            <Button 
-              onClick={() => navigate('/login')}
-              className="bg-green-500 hover:bg-green-600 text-white w-full"
-            >
-              Fazer Login
-            </Button>
-          </div>
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
-    );
-  }
-
   if (loading && activeTab === 'minhas') {
     return (
       <MobileContainer background="gradient">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white">Carregando guildas...</div>
+          <div className="text-white">Carregando...</div>
         </div>
-        <BottomNavigation />
       </MobileContainer>
     );
   }

@@ -8,7 +8,7 @@ import MentorWelcome from '@/components/MentorWelcome';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle } from 'lucide-react';
 
 type ExerciseMode = 'selection' | 'quiz' | 'mentor-welcome';
 
@@ -20,21 +20,12 @@ const Exercises = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
   const [showMentorWelcome, setShowMentorWelcome] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const subjectFromUrl = searchParams.get('subject');
     if (subjectFromUrl) {
       setSelectedSubject(subjectFromUrl);
     }
-    
-    // Simular carregamento inicial
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
   }, [searchParams]);
 
   const subjects = useMemo(() => [
@@ -80,55 +71,7 @@ const Exercises = () => {
     setSelectedSubject(null);
   };
 
-  const handleRetry = () => {
-    setError(null);
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  };
-
   const currentSubject = subjects.find(s => s.name === selectedSubject);
-
-  if (loading) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20 items-center justify-center">
-          <div className="animate-spin text-white mb-4" style={{ fontSize: '48px' }}>📚</div>
-          <p className="text-white mb-4">Carregando exercícios...</p>
-          <Button 
-            onClick={handleRetry}
-            variant="outline"
-            className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-          >
-            <RefreshCw size={16} className="mr-2" />
-            Tentar novamente
-          </Button>
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
-    );
-  }
-
-  if (error) {
-    return (
-      <MobileContainer background="gradient">
-        <div className="flex flex-col h-full pb-20 items-center justify-center">
-          <div className="text-red-300 mb-4" style={{ fontSize: '48px' }}>⚠️</div>
-          <p className="text-white mb-2">Erro ao carregar exercícios</p>
-          <p className="text-white/80 text-sm mb-4">{error}</p>
-          <Button 
-            onClick={handleRetry}
-            className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-          >
-            <RefreshCw size={16} className="mr-2" />
-            Tentar novamente
-          </Button>
-        </div>
-        <BottomNavigation />
-      </MobileContainer>
-    );
-  }
 
   // Tela de Boas-vindas do Mentor
   if (exerciseMode === 'mentor-welcome' && selectedSubject && currentSubject) {
