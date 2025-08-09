@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Award, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { createTimeoutController } from '@/utils/withTimeout';
 
 interface MemberXP {
   user_id: string;
@@ -24,34 +25,40 @@ const GuildMemberXP: React.FC<GuildMemberXPProps> = ({ guildId }) => {
   const [userXP, setUserXP] = useState<MemberXP | null>(null);
 
   const fetchMemberXP = async () => {
+    const { controller, cancel } = createTimeoutController(10000);
     try {
+      // Evitar join com profiles por conta de RLS; buscar só XP
       const { data, error } = await supabase
         .from('guild_member_xp')
-        .select(`
-          *,
-          profiles!guild_member_xp_user_id_fkey(full_name)
-        `)
+        .select('*')
         .eq('guild_id', guildId)
-        .order('xp_points', { ascending: false });
+        .order('xp_points', { ascending: false })
+        .abortSignal(controller.signal);
+
+      cancel();
 
       if (error) throw error;
 
-      const processedData = (data || []).map((item, index) => ({
+      const processedData = (data || []).map((item: any, index: number) => ({
         user_id: item.user_id,
         xp_points: item.xp_points,
         level: item.level,
         badges: Array.isArray(item.badges) ? item.badges.filter((badge): badge is string => typeof badge === 'string') : [],
-        full_name: item.profiles?.full_name || 'Usuário',
+        // Nome seguro (RLS pode impedir leitura de perfis de outros usuários)
+        full_name: item.user_id === user?.id ? 'Você' : 'Membro',
         position: index + 1
       }));
 
       setMemberXP(processedData);
       
       // Encontrar XP do usuário atual
-      const currentUserXP = processedData.find(item => item.user_id === user?.id);
-      setUserXP(currentUserXP || null);
+      const currentUserXP = processedData.find(item => item.user_id === user?.id) || null;
+      setUserXP(currentUserXP);
     } catch (error) {
+      cancel();
       console.error('Erro ao buscar XP dos membros:', error);
+      setMemberXP([]);
+      setUserXP(null);
     } finally {
       setLoading(false);
     }

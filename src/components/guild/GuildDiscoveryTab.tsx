@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Users, Lock, Unlock, Plus } from 'lucide-react';
+import { Search, Users, Unlock, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { createTimeoutController } from '@/utils/withTimeout';
 
 interface Guild {
   id: string;
@@ -30,6 +31,7 @@ const GuildDiscoveryTab: React.FC = () => {
   const fetchPublicGuilds = async () => {
     if (!user) return;
 
+    const { controller, cancel } = createTimeoutController(10000);
     try {
       setLoading(true);
       
@@ -38,13 +40,15 @@ const GuildDiscoveryTab: React.FC = () => {
         .from('guilds')
         .select('*')
         .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(controller.signal);
 
       if (searchQuery) {
         query = query.ilike('name', `%${searchQuery}%`);
       }
 
       const { data: guilds, error } = await query;
+      cancel();
 
       if (error) throw error;
 
@@ -53,7 +57,7 @@ const GuildDiscoveryTab: React.FC = () => {
         return;
       }
 
-      // Buscar guildas onde o usuário é membro
+      // Buscar guildas onde o usuário é membro (pode ler suas próprias linhas)
       const { data: userGuilds } = await supabase
         .from('guild_members')
         .select('guild_id')
@@ -64,7 +68,7 @@ const GuildDiscoveryTab: React.FC = () => {
       // Filtrar guildas onde o usuário não é membro
       const availableGuilds = guilds.filter(guild => !userGuildIds.has(guild.id));
 
-      // Contar membros de cada guilda
+      // Contar membros de cada guilda (pode falhar por RLS quando usuário não é membro)
       const guildsWithCount = await Promise.all(
         availableGuilds.map(async (guild) => {
           try {
@@ -82,13 +86,17 @@ const GuildDiscoveryTab: React.FC = () => {
       );
 
       setPublicGuilds(guildsWithCount);
-    } catch (error) {
+    } catch (error: any) {
+      cancel();
       console.error('Erro ao buscar guildas públicas:', error);
       toast({
-        title: "Erro ao carregar guildas",
-        description: "Não foi possível carregar as guildas públicas.",
+        title: error?.name === 'AbortError' ? "Tempo esgotado" : "Erro ao carregar guildas",
+        description: error?.name === 'AbortError'
+          ? "A requisição demorou demais. Tente novamente."
+          : "Não foi possível carregar as guildas públicas.",
         variant: "destructive"
       });
+      setPublicGuilds([]);
     } finally {
       setLoading(false);
     }
@@ -109,7 +117,7 @@ const GuildDiscoveryTab: React.FC = () => {
         });
 
       if (error) {
-        if (error.code === '23505') {
+        if ((error as any).code === '23505') {
           toast({
             title: "Solicitação já enviada",
             description: "Você já enviou uma solicitação para esta guilda.",
@@ -210,7 +218,7 @@ const GuildDiscoveryTab: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
                     <Users size={12} />
-                    <span>{guild.member_count}/20 membros</span>
+                    <span>{guild.member_count ?? 0}/20 membros</span>
                   </div>
                   <span>{guild.total_points} pontos</span>
                 </div>

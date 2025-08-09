@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubjectContent } from '@/types/subject-content';
+import { useToast } from '@/hooks/use-toast';
+import { createTimeoutController } from '@/utils/withTimeout';
 
 interface ContentProgress {
   content_id: string;
@@ -17,50 +19,73 @@ export const useSubjectContents = (subject: string) => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<ContentProgress[]>([]);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchContents = async () => {
       setLoading(true);
+      const { controller, cancel } = createTimeoutController(10000);
       try {
         const { data, error } = await supabase
           .from('subject_contents')
           .select('*')
           .eq('subject', subject)
-          .order('order_index', { ascending: true });
+          .order('order_index', { ascending: true })
+          .abortSignal(controller.signal);
+
+        cancel();
 
         if (error) {
           console.error('Erro ao buscar conteúdos:', error);
+          toast({
+            title: "Erro ao carregar conteúdos",
+            description: "Não foi possível carregar os conteúdos desta matéria.",
+            variant: "destructive"
+          });
+          setContents([]);
+          return;
         }
 
-        if (data) {
-          setContents(data as SubjectContent[]);
-        }
+        setContents((data || []) as SubjectContent[]);
+      } catch (error: any) {
+        cancel();
+        console.error('Erro ao buscar conteúdos:', error);
+        toast({
+          title: error?.name === 'AbortError' ? "Tempo esgotado" : "Erro ao carregar conteúdos",
+          description: error?.name === 'AbortError' ? "A requisição demorou demais. Tente novamente." : "Tente novamente em alguns instantes.",
+          variant: "destructive"
+        });
+        setContents([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContents();
-  }, [subject]);
+    if (subject) fetchContents();
+  }, [subject, toast]);
 
   useEffect(() => {
     const fetchProgress = async () => {
       if (!user) return;
 
+      const { controller, cancel } = createTimeoutController(10000);
       try {
         const { data, error } = await supabase
           .from('content_progress')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .abortSignal(controller.signal);
+
+        cancel();
 
         if (error) {
           console.error('Erro ao buscar progresso:', error);
+          return;
         }
 
-        if (data) {
-          setProgress(data as ContentProgress[]);
-        }
+        setProgress((data || []) as ContentProgress[]);
       } catch (error) {
+        cancel();
         console.error('Erro ao buscar progresso:', error);
       }
     };
@@ -86,7 +111,7 @@ export const useSubjectContents = (subject: string) => {
           },
           { onConflict: 'user_id, content_id' }
         )
-        .select()
+        .select();
 
       if (error) {
         console.error('Erro ao atualizar progresso:', error);
