@@ -162,13 +162,13 @@ const Exercises = () => {
                     onClick={() => handleSubjectSelect(subject.name)}
                     className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10 relative"
                   >
-                    /*{hasLimitedContent && (
+                    {hasLimitedContent && (
                       <div className="absolute top-2 right-2">
                         <div className="bg-yellow-500/80 text-yellow-900 text-xs px-2 py-1 rounded-full font-medium">
                           Em desenvolvimento
                         </div>
                       </div>
-                    )}*/ 
+                    )}
                     
                     <div className="flex items-center space-x-4">
                       <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
