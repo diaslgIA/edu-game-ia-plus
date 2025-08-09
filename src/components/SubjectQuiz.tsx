@@ -14,6 +14,7 @@ import QuizMentorFeedback from './quiz/QuizMentorFeedback';
 import QuizPythagorasFeedback from './quiz/QuizPythagorasFeedback';
 import QuizEinsteinFeedback from './quiz/QuizEinsteinFeedback';
 import QuizMarieCurieFeedback from './quiz/QuizMarieCurieFeedback';
+import QuizSocratesFeedback from './quiz/QuizSocratesFeedback';
 import { QuizDarwinFeedback } from './quiz/QuizDarwinFeedback';
 import { QuizFlorestenFeedback } from './quiz/QuizFlorestenFeedback';
 import { QuizRuiBarbosaFeedback } from './quiz/QuizRuiBarbosaFeedback';
@@ -359,6 +360,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     } else if (subjectLower === 'química' || subjectLower === 'quimica') {
       return (
         <QuizMarieCurieFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'filosofia') {
+      return (
+        <QuizSocratesFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
           xpGained={xpGained}
