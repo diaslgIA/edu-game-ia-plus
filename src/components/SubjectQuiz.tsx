@@ -23,6 +23,7 @@ import QuizMentorHint from './quiz/QuizMentorHint';
 import ZumbiProfile from './ZumbiProfile';
 import QuizShakespeareFeedback from './quiz/QuizShakespeareFeedback';
 import QuizMachadoFeedback from './quiz/QuizMachadoFeedback';
+import QuizDaliFeedback from './quiz/QuizDaliFeedback';
 
 interface SubjectQuizProps {
   subject: string;
@@ -379,6 +380,15 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
     } else if (subjectLower === 'literatura') {
       return (
         <QuizMachadoFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          xpGained={xpGained}
+          isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'espanhol' || subjectLower === 'español') {
+      return (
+        <QuizDaliFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
           xpGained={xpGained}
