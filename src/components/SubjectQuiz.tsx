@@ -11,6 +11,10 @@ import QuizIntro from './quiz/QuizIntro';
 import QuizResults from './quiz/QuizResults';
 import QuizMentorGuide from './quiz/QuizMentorGuide';
 import QuizMentorFeedback from './quiz/QuizMentorFeedback';
+import QuizMentorHint from './quiz/QuizMentorHint';
+import ZumbiProfile from './ZumbiProfile';
+
+// Import all mentor feedback components
 import QuizPythagorasFeedback from './quiz/QuizPythagorasFeedback';
 import QuizEinsteinFeedback from './quiz/QuizEinsteinFeedback';
 import QuizMarieCurieFeedback from './quiz/QuizMarieCurieFeedback';
@@ -19,11 +23,10 @@ import { QuizDarwinFeedback } from './quiz/QuizDarwinFeedback';
 import { QuizFlorestenFeedback } from './quiz/QuizFlorestenFeedback';
 import { QuizRuiBarbosaFeedback } from './quiz/QuizRuiBarbosaFeedback';
 import { QuizZumbiFeedback } from './quiz/QuizZumbiFeedback';
-import QuizMentorHint from './quiz/QuizMentorHint';
-import ZumbiProfile from './ZumbiProfile';
 import QuizShakespeareFeedback from './quiz/QuizShakespeareFeedback';
 import QuizMachadoFeedback from './quiz/QuizMachadoFeedback';
 import QuizDaliFeedback from './quiz/QuizDaliFeedback';
+import QuizPedroTeixeiraFeedback from './quiz/QuizPedroTeixeiraFeedback';
 
 interface SubjectQuizProps {
   subject: string;
@@ -402,6 +405,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
           explanation={question.explanation}
           xpGained={xpGained}
           isVisible={showMentorFeedback}
+        />
+      );
+    } else if (subjectLower === 'geografia') {
+      return (
+        <QuizPedroTeixeiraFeedback
+          isCorrect={isCorrect}
+          explanation={question.explanation}
+          points={xpGained}
+          affinityLevel={1}
+          affinityProgress={35}
         />
       );
     } else if (subjectLower === 'biologia') {
