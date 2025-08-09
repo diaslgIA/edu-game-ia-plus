@@ -11,12 +11,13 @@ import { AlertCircle, RefreshCw, Loader2, ArrowLeft } from 'lucide-react';
 
 interface SubjectQuizProps {
   subject: string;
+  topic?: string; // Added optional topic property
   onComplete: (score: number, timeSpent: number) => void;
   onBack: () => void;
 }
 
-const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }) => {
-  const { questions, loading, error, refreshQuestions } = useSubjectQuestions(subject);
+const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, onBack }) => {
+  const { questions, loading, error, refreshQuestions, getQuestionsByTopic } = useSubjectQuestions(subject);
   const { recordQuizQuestion, recordQuizComplete } = useUserActivities();
   const { playSound } = useSound();
   
@@ -26,14 +27,17 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
   const [startTime] = useState(Date.now());
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
+  // Filter questions by topic if provided
+  const filteredQuestions = topic ? getQuestionsByTopic(topic) : questions;
+
   useEffect(() => {
-    if (questions.length > 0) {
+    if (filteredQuestions.length > 0) {
       setQuestionStartTime(Date.now());
     }
-  }, [currentQuestionIndex, questions.length]);
+  }, [currentQuestionIndex, filteredQuestions.length]);
 
   const handleAnswerSelect = async (answerIndex: number) => {
-    const currentQuestion = questions[currentQuestionIndex];
+    const currentQuestion = filteredQuestions[currentQuestionIndex];
     if (!currentQuestion) return;
 
     playSound('click');
@@ -53,7 +57,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       timeSpent
     );
 
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < filteredQuestions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }, 1500);
@@ -62,12 +66,12 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       setTimeout(async () => {
         const totalTimeSpent = Math.floor((Date.now() - startTime) / 1000);
         const correctAnswers = newAnswers.reduce((count, answer, index) => {
-          return count + (answer === questions[index].correct_answer ? 1 : 0);
+          return count + (answer === filteredQuestions[index].correct_answer ? 1 : 0);
         }, 0);
         
         const finalScore = correctAnswers * 10;
 
-        await recordQuizComplete(subject, finalScore, questions.length, totalTimeSpent);
+        await recordQuizComplete(subject, finalScore, filteredQuestions.length, totalTimeSpent);
         setQuizCompleted(true);
       }, 1500);
     }
@@ -75,7 +79,7 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
 
   const calculateScore = () => {
     return answers.reduce((score, answer, index) => {
-      return score + (answer === questions[index].correct_answer ? 10 : 0);
+      return score + (answer === filteredQuestions[index].correct_answer ? 10 : 0);
     }, 0);
   };
 
@@ -134,13 +138,13 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     );
   }
 
-  if (questions.length === 0) {
+  if (filteredQuestions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-4">
         <div className="text-white" style={{ fontSize: '48px' }}>📚</div>
         <p className="text-white text-lg">Nenhuma questão encontrada</p>
         <p className="text-white/80 text-sm text-center">
-          Não há questões disponíveis para a matéria "{subject}" no momento.
+          Não há questões disponíveis para {topic ? `o tópico "${topic}"` : `a matéria "${subject}"`} no momento.
         </p>
         <div className="flex space-x-3">
           <Button
@@ -167,11 +171,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
     return (
       <QuizResults
         score={calculateScore()}
-        totalQuestions={questions.length}
+        totalQuestions={filteredQuestions.length}
         subject={subject}
-        onComplete={handleQuizComplete}
-        answers={answers}
-        questions={questions}
+        saving={false}
+        onBack={handleQuizComplete}
       />
     );
   }
@@ -182,16 +185,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       <div className="bg-white/15 backdrop-blur-md rounded-xl p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-white text-sm">
-            Questão {currentQuestionIndex + 1} de {questions.length}
+            Questão {currentQuestionIndex + 1} de {filteredQuestions.length}
           </span>
           <span className="text-white text-sm">
-            {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%
+            {Math.round(((currentQuestionIndex + 1) / filteredQuestions.length) * 100)}%
           </span>
         </div>
         <div className="w-full bg-white/20 rounded-full h-2">
           <div 
             className="bg-green-400 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            style={{ width: `${((currentQuestionIndex + 1) / filteredQuestions.length) * 100}%` }}
           />
         </div>
       </div>
@@ -199,11 +202,16 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, onComplete, onBack }
       {/* Question */}
       <div className="flex-1">
         <QuizQuestion
-          question={questions[currentQuestionIndex]}
-          onAnswer={handleAnswerSelect}
-          questionNumber={currentQuestionIndex + 1}
-          totalQuestions={questions.length}
-          showFeedback={true}
+          question={{
+            question: filteredQuestions[currentQuestionIndex].question,
+            options: filteredQuestions[currentQuestionIndex].options,
+            correctAnswer: filteredQuestions[currentQuestionIndex].correct_answer,
+            difficulty: filteredQuestions[currentQuestionIndex].difficulty_level === 'easy' ? 'Fácil' : 
+                        filteredQuestions[currentQuestionIndex].difficulty_level === 'medium' ? 'Médio' : 'Difícil'
+          }}
+          selectedAnswer={null}
+          showResult={false}
+          onAnswerSelect={handleAnswerSelect}
         />
       </div>
     </div>
