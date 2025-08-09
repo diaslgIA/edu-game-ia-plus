@@ -165,7 +165,7 @@ const Exercises = () => {
                     {hasLimitedContent && (
                       <div className="absolute top-2 right-2">
                         <div className="bg-yellow-500/80 text-yellow-900 text-xs px-2 py-1 rounded-full font-medium">
-                          Em desenvolvimento
+                          //Em desenvolvimento
                         </div>
                       </div>
                     )}
