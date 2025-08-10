@@ -56,7 +56,7 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
           ) : (
             <div className="w-full h-full bg-blue-100 dark:bg-blue-900/30 rounded-lg border-2 border-blue-300 dark:border-blue-600 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-4xl mb-1">🏛️</div>
+                <div className="text-4xl mb-1"></div>
                 <div className="text-xs font-bold text-blue-700 dark:text-blue-300">Sócrates</div>
               </div>
             </div>
