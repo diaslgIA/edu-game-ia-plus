@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Progress } from "@/components/ui/progress";
 
 interface QuizFlorestenFeedbackProps {
@@ -16,6 +17,12 @@ export const QuizFlorestenFeedback = ({
   affinityLevel,
   affinityProgress 
 }: QuizFlorestenFeedbackProps) => {
+  const [imageError, setImageError] = useState(false);
+  
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <div className="w-full bg-secondary/30 rounded-lg p-4 space-y-4 animate-fade-in">
       {/* Cabeçalho de Resultado */}
@@ -29,11 +36,21 @@ export const QuizFlorestenFeedback = ({
       <div className="flex items-start gap-4">
         {/* Personagem Florestan */}
         <div className="w-28 h-28 flex-shrink-0">
-          <img 
-            src={isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png"}
-            alt={`Florestan ${isCorrect ? 'confiante' : 'reflexivo'}`}
-            className="w-full h-full object-cover rounded-lg"
-          />
+          {!imageError ? (
+            <img 
+              src={isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png"}
+              alt={`Florestan ${isCorrect ? 'confiante' : 'reflexivo'}`}
+              className="w-full h-full object-contain rounded-lg"
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="w-full h-full bg-red-100 dark:bg-red-900/30 rounded-lg border-2 border-red-300 dark:border-red-600 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-4xl mb-1">{isCorrect ? "📚" : "🤔"}</div>
+                <div className="text-xs font-bold text-red-700 dark:text-red-300">Florestan</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Balão de Fala */}

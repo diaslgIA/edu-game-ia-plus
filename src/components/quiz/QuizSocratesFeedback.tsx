@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface QuizSocratesFeedbackProps {
   isCorrect: boolean;
@@ -14,6 +14,8 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
   xpGained,
   isVisible
 }) => {
+  const [imageError, setImageError] = useState(false);
+  
   if (!isVisible) return null;
 
   const resultHeader = isCorrect ? "Muito bem!" : "Quase lá!";
@@ -24,6 +26,10 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
 
   const headerColor = isCorrect ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400";
   const headerIcon = isCorrect ? "✓" : "⚠";
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   return (
     <div className="font-pixel bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 space-y-4">
@@ -37,14 +43,24 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
 
       {/* 2. Linha com Personagem + Balão de Fala */}
       <div className="flex items-center gap-3">
-        {/* Imagem do Sócrates */}
+        {/* Imagem do Sócrates ou Avatar Emoji */}
         <div className="w-32 h-32 flex-shrink-0 p-1">
-          <img 
-            src={socratesImage} 
-            alt="Sócrates" 
-            className="w-full h-full object-cover pixel-art"
-            style={{ imageRendering: 'pixelated' }}
-          />
+          {!imageError ? (
+            <img 
+              src={socratesImage} 
+              alt="Sócrates" 
+              className="w-full h-full object-cover pixel-art"
+              style={{ imageRendering: 'pixelated' }}
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="w-full h-full bg-blue-100 dark:bg-blue-900/30 rounded-lg border-2 border-blue-300 dark:border-blue-600 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-4xl mb-1">🏛️</div>
+                <div className="text-xs font-bold text-blue-700 dark:text-blue-300">Sócrates</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Balão de Fala */}

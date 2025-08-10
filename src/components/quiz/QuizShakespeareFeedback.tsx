@@ -19,7 +19,7 @@ const QuizShakespeareFeedback: React.FC<QuizShakespeareFeedbackProps> = ({
   if (!isVisible) return null;
 
   const resultHeader = isCorrect ? "Very well!" : "Alas, not quite.";
-  const shakespeareImage = isCorrect ? "/lovable-uploads/shakespeare_acerto.png" : "/lovable-uploads/shakespeare_erro.png";
+  const shakespeareImage = isCorrect ? "/lovable-uploads/bdf8162d-0653-42c3-a808-3e6cb4155a6b.png" : "/lovable-uploads/8311e60f-3adf-4fe0-9b4f-1ba8427bd570.png";
   const speechText = isCorrect 
     ? "Well said! A speech worthy of the Globe Theatre itself!"
     : "To err is human, my dear learner. But let us try again, with more passion and precision.";
