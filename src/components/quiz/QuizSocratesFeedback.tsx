@@ -19,7 +19,7 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
   if (!isVisible) return null;
 
   const resultHeader = isCorrect ? "Muito bem!" : "Quase lá!";
-  const socratesImage = isCorrect ? "/lovable-uploads/02c04813-5216-4329-8348-a221cf04a6be.png" : "/lovable-uploads/7e09bac1-4151-4eec-9ec8-4a6844132937.png";
+  const socratesImage = isCorrect ? "/lovable-uploads/socrates_acerto.png" : "/lovable-uploads/socrates_erro.png";
   const speechText = isCorrect 
     ? "Veja só! Ao questionar, você mesmo encontrou um caminho. Talvez a jornada seja mais importante que o destino."
     : "Será que errar não seria o primeiro passo para a sabedoria? Vamos refletir juntos mais uma vez.";
