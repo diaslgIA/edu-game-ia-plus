@@ -43,14 +43,7 @@ export const QuizZumbiFeedback = ({
               className="w-full h-full object-contain rounded-lg"
               onError={handleImageError}
             />
-          ) : (
-            <div className="w-full h-full bg-amber-100 dark:bg-amber-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-4xl mb-1">{isCorrect ? "⚔️" : "🛡️"}</div>
-                <div className="text-xs font-bold text-amber-700 dark:text-amber-300">Zumbi</div>
-              </div>
-            </div>
-          )}
+  
         </div>
 
         {/* Balão de Fala */}
