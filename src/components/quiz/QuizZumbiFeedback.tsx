@@ -38,7 +38,7 @@ export const QuizZumbiFeedback = ({
         <div className="w-28 h-28 flex-shrink-0">
           {!imageError ? (
             <img 
-              src={isCorrect ? "/lovable-uploads/zumbi_acerto.png" : "/lovable-uploads/zumbi_erro.png"}
+              src={isCorrect ? "/lovable-uploads/bf46f980-0803-4c6a-a406-faa570681f43.png" : "/lovable-uploads/08c4e057-eacc-4787-896e-5e3401f913ec.png"}
               alt={`Zumbi dos Palmares ${isCorrect ? 'comemorando' : 'reflexivo'}`}
               className="w-full h-full object-contain rounded-lg"
               onError={handleImageError}

@@ -38,7 +38,7 @@ export const QuizFlorestenFeedback = ({
         <div className="w-28 h-28 flex-shrink-0">
           {!imageError ? (
             <img 
-              src={isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png"}
+              src={isCorrect ? "/lovable-uploads/b7fc398a-3bcb-4512-88b8-42a070f65887.png" : "/lovable-uploads/53ce7703-a901-400f-97c9-9c2693faac6f.png"}
               alt={`Florestan ${isCorrect ? 'confiante' : 'reflexivo'}`}
               className="w-full h-full object-contain rounded-lg"
               onError={handleImageError}
