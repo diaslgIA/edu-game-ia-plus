@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
@@ -8,8 +7,10 @@ import MentorWelcome from '@/components/MentorWelcome';
 import SimulatedExam from '@/components/SimulatedExam';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
+import { useAllSubjectQuestions } from '@/hooks/useAllSubjectQuestions';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle, Timer } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle, Timer, BookOpen } from 'lucide-react';
 
 type ExerciseMode = 'selection' | 'quiz' | 'mentor-welcome' | 'simulado-setup' | 'simulado';
 
@@ -23,6 +24,11 @@ const Exercises = () => {
   const [showMentorWelcome, setShowMentorWelcome] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState<number>(10);
+  const [isEnemSimulado, setIsEnemSimulado] = useState(false);
+
+  // Hooks para questões
+  const { questions: subjectQuestions, loading: subjectLoading } = useSubjectQuestions(selectedSubject || '');
+  const { questions: allQuestions, loading: allLoading, getAvailableCount } = useAllSubjectQuestions();
 
   useEffect(() => {
     const subjectFromUrl = searchParams.get('subject');
@@ -54,6 +60,7 @@ const Exercises = () => {
   const handleActivitySelect = (activityId: string, subjectName: string) => {
     setSelectedSubject(subjectName);
     setSelectedActivity(activityId);
+    setIsEnemSimulado(false);
     
     if (activityId === 'quiz') {
       setShowMentorWelcome(true);
@@ -61,6 +68,13 @@ const Exercises = () => {
     } else if (activityId === 'simulado') {
       setExerciseMode('simulado-setup');
     }
+  };
+
+  const handleEnemSimuladoSelect = () => {
+    setSelectedSubject('ENEM');
+    setSelectedActivity('simulado');
+    setIsEnemSimulado(true);
+    setExerciseMode('simulado-setup');
   };
 
   const handleMentorWelcomeClose = () => {
@@ -78,18 +92,20 @@ const Exercises = () => {
   };
 
   const handleSimuladoComplete = async (score: number, timeSpent: number) => {
-    if (selectedSubject) {
+    if (selectedSubject && !isEnemSimulado) {
       await updateProgress(selectedSubject, 1);
     }
     setExerciseMode('selection');
     setSelectedSubject(null);
     setSelectedActivity(null);
+    setIsEnemSimulado(false);
   };
 
   const handleBackToSelection = () => {
     setExerciseMode('selection');
     setSelectedSubject(null);
     setSelectedActivity(null);
+    setIsEnemSimulado(false);
   };
 
   const handleStartSimulado = () => {
@@ -97,9 +113,25 @@ const Exercises = () => {
   };
 
   const currentSubject = subjects.find(s => s.name === selectedSubject);
+  
+  // Determinar quantas questões estão disponíveis
+  const getAvailableQuestions = () => {
+    if (isEnemSimulado) {
+      return getAvailableCount();
+    }
+    return subjectQuestions.length;
+  };
+
+  const getMaxQuestionCount = () => {
+    const available = getAvailableQuestions();
+    return Math.min(questionCount, available);
+  };
 
   // Tela de Setup do Simulado
-  if (exerciseMode === 'simulado-setup' && selectedSubject && currentSubject) {
+  if (exerciseMode === 'simulado-setup' && selectedSubject) {
+    const availableQuestions = getAvailableQuestions();
+    const isLoading = isEnemSimulado ? allLoading : subjectLoading;
+    
     return (
       <MobileContainer background="gradient">
         <div className="flex flex-col h-full pb-20">
@@ -112,64 +144,91 @@ const Exercises = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Simulado - {currentSubject.name}</h1>
+            <h1 className="text-lg font-semibold">
+              {isEnemSimulado ? 'Simulado ENEM' : `Simulado - ${currentSubject?.name}`}
+            </h1>
           </div>
           
           <div className="p-6 flex-1 flex items-center justify-center">
-            <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 w-full max-w-md text-center">
-              <Timer className="mx-auto mb-4 text-red-400" size={48} />
-              <h3 className="text-xl font-bold text-white mb-4">
-                Configurar Simulado
-              </h3>
-              
-              <div className="mb-6">
-                <p className="text-white/80 mb-4">Escolha o número de questões:</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {[10, 20, 30].map((count) => (
-                    <button
-                      key={count}
-                      onClick={() => setQuestionCount(count)}
-                      className={`p-3 rounded-xl border-2 transition-colors ${
-                        questionCount === count
-                          ? 'border-red-400 bg-red-400/20 text-white'
-                          : 'border-white/30 bg-white/10 text-white/80 hover:border-red-300'
-                      }`}
-                    >
-                      <div className="font-bold text-lg">{count}</div>
-                      <div className="text-xs">questões</div>
-                    </button>
-                  ))}
+            {isLoading ? (
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 w-full max-w-md text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-400 mx-auto mb-4"></div>
+                <p className="text-white/80">Carregando questões...</p>
+              </div>
+            ) : (
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 w-full max-w-md text-center">
+                <Timer className="mx-auto mb-4 text-red-400" size={48} />
+                <h3 className="text-xl font-bold text-white mb-4">
+                  Configurar Simulado
+                </h3>
+                
+                <div className="mb-6">
+                  <p className="text-white/80 mb-4">Escolha o número de questões:</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[10, 20, 30].map((count) => {
+                      const isAvailable = count <= availableQuestions;
+                      const actualCount = Math.min(count, availableQuestions);
+                      
+                      return (
+                        <button
+                          key={count}
+                          onClick={() => setQuestionCount(count)}
+                          disabled={!isAvailable}
+                          className={`p-3 rounded-xl border-2 transition-colors ${
+                            questionCount === count
+                              ? 'border-red-400 bg-red-400/20 text-white'
+                              : isAvailable
+                              ? 'border-white/30 bg-white/10 text-white/80 hover:border-red-300'
+                              : 'border-white/10 bg-white/5 text-white/40 cursor-not-allowed'
+                          }`}
+                        >
+                          <div className="font-bold text-lg">{actualCount}</div>
+                          <div className="text-xs">questões</div>
+                          {!isAvailable && (
+                            <div className="text-xs text-red-300 mt-1">Indisponível</div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {availableQuestions < 30 && (
+                    <p className="text-yellow-300 text-xs mt-3">
+                      Disponível: {availableQuestions} questões
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-red-50/20 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-red-200 mb-2">Informações:</h4>
+                  <ul className="text-sm text-red-100 space-y-1 text-left">
+                    <li>• Tempo total: 5 minutos</li>
+                    <li>• {getMaxQuestionCount()} questões {isEnemSimulado ? 'multidisciplinares' : `de ${currentSubject?.name}`}</li>
+                    <li>• 10 pontos por resposta correta</li>
+                    <li>• Não é possível voltar às questões</li>
+                    <li>• Resultado salvo automaticamente</li>
+                  </ul>
+                </div>
+
+                <div className="flex space-x-3">
+                  <Button 
+                    onClick={handleBackToSelection}
+                    variant="outline"
+                    className="flex-1 border-white/30 text-white hover:bg-white/10"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleStartSimulado}
+                    disabled={availableQuestions === 0}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                  >
+                    <Play className="mr-2" size={16} />
+                    Iniciar
+                  </Button>
                 </div>
               </div>
-
-              <div className="bg-red-50/20 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-red-200 mb-2">Informações:</h4>
-                <ul className="text-sm text-red-100 space-y-1 text-left">
-                  <li>• Tempo total: 5 minutos</li>
-                  <li>• {questionCount} questões de {currentSubject.name}</li>
-                  <li>• 10 pontos por resposta correta</li>
-                  <li>• Não é possível voltar às questões</li>
-                  <li>• Resultado salvo automaticamente</li>
-                </ul>
-              </div>
-
-              <div className="flex space-x-3">
-                <Button 
-                  onClick={handleBackToSelection}
-                  variant="outline"
-                  className="flex-1 border-white/30 text-white hover:bg-white/10"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleStartSimulado}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white"
-                >
-                  <Play className="mr-2" size={16} />
-                  Iniciar
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
         <BottomNavigation />
@@ -193,7 +252,7 @@ const Exercises = () => {
   }
 
   // Tela do Simulado
-  if (exerciseMode === 'simulado' && selectedSubject && currentSubject) {
+  if (exerciseMode === 'simulado' && selectedSubject) {
     return (
       <MobileContainer background="gradient">
         <div className="flex flex-col h-full pb-20">
@@ -206,15 +265,18 @@ const Exercises = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-lg font-semibold">Simulado - {currentSubject.name}</h1>
+            <h1 className="text-lg font-semibold">
+              {isEnemSimulado ? 'Simulado ENEM' : `Simulado - ${currentSubject?.name}`}
+            </h1>
           </div>
           
-          <div className="p-6 flex-1 min-h-0">
+          <div className="p-4 flex-1 min-h-0">
             <SimulatedExam 
               subject={selectedSubject}
               duration={5}
-              questionCount={questionCount}
+              questionCount={getMaxQuestionCount()}
               onComplete={handleSimuladoComplete}
+              isEnemMode={isEnemSimulado}
             />
           </div>
         </div>
@@ -273,6 +335,43 @@ const Exercises = () => {
         </div>
 
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {/* Simulado ENEM Card */}
+          <div className="bg-gradient-to-r from-red-500 to-pink-600 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/10">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center text-2xl shadow-lg">
+                🎯
+              </div>
+              
+              <div className="flex-1">
+                <h3 className="font-bold text-white text-lg mb-1">Simulado ENEM</h3>
+                <p className="text-white/90 text-sm mb-2">Teste completo com questões de todas as matérias</p>
+                
+                <div className="flex items-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <BookOpen size={12} className="text-white" />
+                    <span className="text-white/90">Multidisciplinar</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Timer size={12} className="text-white" />
+                    <span className="text-white/90">5 minutos</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Target size={12} className="text-white" />
+                    <span className="text-white/90">{getAvailableCount()} questões</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleEnemSimuladoSelect}
+              className="w-full py-3 px-4 rounded-lg bg-white/20 hover:bg-white/30 text-white font-medium transition-colors backdrop-blur-sm border border-white/20"
+            >
+              <Timer className="w-4 h-4 mx-auto mb-1" />
+              Iniciar Simulado ENEM
+            </button>
+          </div>
+
           {/* Info Cards */}
           <div className="grid grid-cols-2 gap-3">
             {activities.map((activity) => (
