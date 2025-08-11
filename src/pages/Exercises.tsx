@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label"
 import { CheckCircle, Clock, BookOpen, Trophy } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
-import { useRouter } from 'next/navigation';
-import { MobileContainer } from '@/components/MobileContainer';
+import { useNavigate } from 'react-router-dom';
+import MobileContainer from '@/components/MobileContainer';
 import SimulatedExam from '@/components/SimulatedExam';
 
 const subjects = [
@@ -31,7 +31,7 @@ const Exercises = () => {
   const [showExam, setShowExam] = useState<boolean>(false);
   const [examScore, setExamScore] = useState<number>(0);
   const [examTimeSpent, setExamTimeSpent] = useState<number>(0);
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {

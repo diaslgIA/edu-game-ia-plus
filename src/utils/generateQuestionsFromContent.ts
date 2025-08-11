@@ -46,8 +46,19 @@ export const generateQuestionsFromContent = async (subject: string, count: numbe
   }
 };
 
-const generateQuestionFromContent = (content: SubjectContent, index: number): GeneratedQuestion | null => {
+const generateQuestionFromContent = (content: any, index: number): GeneratedQuestion | null => {
   if (!content.title || !content.description) return null;
+
+  // Convert key_concepts safely
+  let keyConcepts: any[] = [];
+  if (content.key_concepts) {
+    try {
+      keyConcepts = Array.isArray(content.key_concepts) ? content.key_concepts : 
+                   typeof content.key_concepts === 'string' ? JSON.parse(content.key_concepts) : [];
+    } catch {
+      keyConcepts = [];
+    }
+  }
 
   const questionTemplates = [
     {
