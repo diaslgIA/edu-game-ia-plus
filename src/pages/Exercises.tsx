@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
@@ -91,24 +92,24 @@ const Exercises = () => {
   };
 
   return (
-    <MobileContainer>
-      <div className="p-6 space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-3">📚 Exercícios & Simulados</h1>
-          <p className="text-gray-600">Pratique com exercícios específicos ou faça simulados completos</p>
+    <MobileContainer background="gradient">
+      <div className="p-4 space-y-6 pb-20">
+        <div className="text-center pt-4">
+          <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">📚 Exercícios & Simulados</h1>
+          <p className="text-white/90 text-sm drop-shadow">Pratique com exercícios específicos ou faça simulados completos</p>
         </div>
 
         {/* ENEM Simulation Section */}
-        <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 shadow-lg">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-3 text-2xl text-green-800">
-              <Trophy className="text-green-600" size={28} />
+        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="flex items-center justify-center gap-2 text-xl text-green-800">
+              <Trophy className="text-green-600" size={24} />
               🎯 Simulado ENEM
             </CardTitle>
-            <p className="text-green-700 text-lg">Questões de todas as matérias para preparação completa</p>
+            <p className="text-green-700 text-sm">Questões de todas as matérias para preparação completa</p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
               {getQuestionCountForEnem().map((count) => (
                 <Button
                   key={count}
@@ -117,51 +118,51 @@ const Exercises = () => {
                     setShowSimulationModal(true);
                     setSelectedSubject('todas');
                   }}
-                  className="h-16 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
-                  size="lg"
+                  className="h-14 text-sm font-semibold bg-green-600 hover:bg-green-700 text-white"
+                  size="sm"
                 >
                   {count} questões
                 </Button>
               ))}
             </div>
             <div className="text-center">
-              <p className="text-green-600 text-sm font-medium">
-                ⏱️ Tempo: 3 minutos por questão • 🎯 Multidisciplinar
+              <p className="text-green-600 text-xs font-medium">
+                ⏱️ Tempo: 3 min/questão • 🎯 Multidisciplinar
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Subject-specific exercises */}
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {subjects.map((subject) => {
             const questionCounts = getAvailableQuestionCounts(subject.name);
             
             return (
-              <Card key={subject.name} className="hover:shadow-lg transition-all duration-200 border-gray-200">
-                <CardHeader className="flex flex-row items-center space-y-0 pb-4">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="text-4xl">{subject.icon}</div>
+              <Card key={subject.name} className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader className="flex flex-row items-center space-y-0 pb-3">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="text-2xl">{subject.icon}</div>
                     <div>
-                      <CardTitle className="text-xl text-gray-800">{subject.displayName}</CardTitle>
-                      <p className="text-gray-600 text-sm">Exercícios específicos da matéria</p>
+                      <CardTitle className="text-lg text-gray-800">{subject.displayName}</CardTitle>
+                      <p className="text-gray-600 text-xs">Exercícios específicos da matéria</p>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-3">
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
                     {questionCounts.map((count) => (
                       <Button
                         key={count}
                         onClick={() => handleStartQuiz(subject.name, count)}
                         variant="outline"
-                        className="flex-1 h-12 text-base font-medium hover:bg-blue-50 hover:border-blue-300"
+                        className="flex-1 h-10 text-sm font-medium hover:bg-blue-50 hover:border-blue-300"
                       >
                         {count} questões
                       </Button>
                     ))}
                   </div>
-                  <div className="flex justify-between text-sm text-gray-500">
+                  <div className="flex justify-between text-xs text-gray-500">
                     <span>📊 Questões por matéria</span>
                     <span>⏱️ 2 min/questão</span>
                   </div>
@@ -173,12 +174,12 @@ const Exercises = () => {
 
         {/* Simulation Modal */}
         <Dialog open={showSimulationModal} onOpenChange={setShowSimulationModal}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-[95%] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl text-center">
+              <DialogTitle className="text-lg text-center">
                 {selectedSubject === 'todas' ? '🎯 Simulado ENEM' : `📚 Simulado - ${subjects.find(s => s.name === selectedSubject)?.displayName}`}
               </DialogTitle>
-              <DialogDescription className="text-center text-lg">
+              <DialogDescription className="text-center text-sm">
                 {selectedSubject === 'todas' 
                   ? `${selectedQuestionCount} questões multidisciplinares` 
                   : `${selectedQuestionCount} questões de ${subjects.find(s => s.name === selectedSubject)?.displayName}`
@@ -186,19 +187,19 @@ const Exercises = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-6 py-6">
-              <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-4 text-lg">⏱️ Duração do Simulado</h4>
-                <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-4 py-4">
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-3 text-sm">⏱️ Duração do Simulado</h4>
+                <div className="grid grid-cols-1 gap-3">
                   {selectedSubject === 'todas' ? (
                     [
                       { questions: 10, duration: 30 },
                       { questions: 20, duration: 60 },
                       { questions: 30, duration: 90 }
                     ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300">
-                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-sm">{option.questions} questões</div>
+                      <div key={option.duration} className="text-center bg-white p-3 rounded-lg border border-blue-300">
+                        <div className="text-xl font-bold text-blue-600">{option.duration} min</div>
+                        <div className="text-blue-700 text-xs">{option.questions} questões</div>
                       </div>
                     ))
                   ) : (
@@ -207,47 +208,47 @@ const Exercises = () => {
                       { questions: 20, duration: 40 },
                       { questions: 30, duration: 60 }
                     ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300">
-                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-sm">{option.questions} questões</div>
+                      <div key={option.duration} className="text-center bg-white p-3 rounded-lg border border-blue-300">
+                        <div className="text-xl font-bold text-blue-600">{option.duration} min</div>
+                        <div className="text-blue-700 text-xs">{option.questions} questões</div>
                       </div>
                     ))
                   )}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-800 text-lg">📋 Informações do Simulado</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-800 text-sm">📋 Informações do Simulado</h4>
+                <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="flex items-center gap-2">
-                    <BookOpen size={16} className="text-blue-600" />
+                    <BookOpen size={14} className="text-blue-600" />
                     <span>{selectedQuestionCount} questões</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Trophy size={16} className="text-green-600" />
+                    <Trophy size={14} className="text-green-600" />
                     <span>10 pontos por acerto</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-orange-600" />
+                    <Clock size={14} className="text-orange-600" />
                     <span>Tempo limitado</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-purple-600" />
+                    <CheckCircle size={14} className="text-purple-600" />
                     <span>Resultado imediato</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="flex gap-4">
-              <Button variant="outline" onClick={() => setShowSimulationModal(false)} className="flex-1">
+            <DialogFooter className="flex gap-3">
+              <Button variant="outline" onClick={() => setShowSimulationModal(false)} className="flex-1 h-10 text-sm">
                 Cancelar
               </Button>
               <Button 
                 onClick={startSimulation} 
-                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="flex-1 h-10 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                <Clock className="mr-2" size={18} />
+                <Clock className="mr-1" size={16} />
                 Iniciar Simulado
               </Button>
             </DialogFooter>
@@ -257,7 +258,7 @@ const Exercises = () => {
         {/* SimulatedExam Component */}
         {showExam && (
           <div className="fixed inset-0 bg-white z-50 overflow-auto">
-            <div className="min-h-screen py-8">
+            <div className="min-h-screen py-4 px-2">
               <SimulatedExam
                 subject={selectedSubject}
                 duration={getSimulationDuration()}
