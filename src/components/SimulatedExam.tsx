@@ -7,8 +7,8 @@ import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { getAllSubjectsQuestions, generateQuestionsFromContent } from '@/utils/generateQuestionsFromContent';
-import { getSubjectLogo, getSubjectMentorAvatar, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
-import QuizExplanation from '@/components/quiz/QuizExplanation';
+import { getSubjectLogo, getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
+import QuizMentorFeedback from '@/components/quiz/QuizMentorFeedback';
 
 interface SimulatedExamProps {
   subject: string;
@@ -35,6 +35,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string>('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
   const { saveQuizScore } = useQuizScore();
   const { playSound } = useSound();
   
@@ -196,12 +197,17 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answerIndex;
     setAnswers(newAnswers);
-    setShowExplanation(true);
     playSound('click');
+  };
+
+  const confirmAnswer = () => {
+    setHasConfirmed(true);
+    setShowExplanation(true);
   };
 
   const nextQuestion = () => {
     setShowExplanation(false);
+    setHasConfirmed(false);
     if (currentQuestion < selectedQuestions.length - 1) {
       setCurrentQuestion(current => current + 1);
     } else {
@@ -435,7 +441,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   const currentQ = selectedQuestions[currentQuestion];
   const currentSubject = isEnemMode ? currentQ.subject : subject;
   const logoUrl = getSubjectLogo(currentSubject);
-  const mentorAvatar = getSubjectMentorAvatar(currentSubject);
+  const emoji = getSubjectEmoji(currentSubject);
   const subjectStyle = getSubjectStyle(currentSubject);
   const isCorrect = answers[currentQuestion] === currentQ.correctAnswer;
 
@@ -485,9 +491,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                           className="w-6 h-6 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="text-sm" style={{ color: subjectStyle.color }}>
-                          {mentorAvatar}
-                        </span>
+                        <span className="text-sm">{emoji}</span>
                       )}
                     </div>
                     <div className="text-sm font-semibold">
@@ -511,11 +515,12 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   <button
                     key={index}
                     onClick={() => selectAnswer(index)}
+                    disabled={hasConfirmed}
                     className={`w-full p-6 text-left border-2 rounded-xl transition-all duration-200 ${
                       answers[currentQuestion] === index
                         ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-200'
                         : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
-                    }`}
+                    } ${hasConfirmed ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
                     <div className="flex items-center">
                       <span className={`font-bold text-lg mr-4 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -531,12 +536,15 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                 ))}
               </div>
 
-              {/* Answer Explanation */}
+              {/* Mentor Feedback with Explanation */}
               {showExplanation && answers[currentQuestion] !== undefined && (
                 <div className="mt-6">
-                  <QuizExplanation
-                    explanation={currentQ.explanation || "Explicação não disponível no momento."}
+                  <QuizMentorFeedback
+                    subject={currentSubject}
                     isCorrect={isCorrect}
+                    explanation={currentQ.explanation || "Explicação não disponível no momento."}
+                    xpGained={isCorrect ? 10 : 5}
+                    isVisible={showExplanation}
                   />
                 </div>
               )}
@@ -544,10 +552,17 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
               <div className="flex justify-between items-center pt-6 border-t-2 border-gray-200">
                 <div className="text-sm">
                   {answers[currentQuestion] !== undefined ? (
-                    <span className="text-green-600 font-semibold flex items-center gap-2">
-                      <CheckCircle size={16} />
-                      Resposta selecionada
-                    </span>
+                    hasConfirmed ? (
+                      <span className="text-green-600 font-semibold flex items-center gap-2">
+                        <CheckCircle size={16} />
+                        Resposta confirmada
+                      </span>
+                    ) : (
+                      <span className="text-orange-600 font-semibold flex items-center gap-2">
+                        <AlertTriangle size={16} />
+                        Confirme sua resposta
+                      </span>
+                    )
                   ) : (
                     <span className="text-gray-500 flex items-center gap-2">
                       <AlertTriangle size={16} />
@@ -555,14 +570,25 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                     </span>
                   )}
                 </div>
-                <Button 
-                  onClick={nextQuestion} 
-                  disabled={answers[currentQuestion] === undefined}
-                  size="lg"
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-base font-semibold"
-                >
-                  {currentQuestion === selectedQuestions.length - 1 ? '🏁 Finalizar' : 'Próxima →'}
-                </Button>
+                
+                {!hasConfirmed ? (
+                  <Button 
+                    onClick={confirmAnswer} 
+                    disabled={answers[currentQuestion] === undefined}
+                    size="lg"
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-base font-semibold"
+                  >
+                    ✓ Confirmar Resposta
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={nextQuestion} 
+                    size="lg"
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-base font-semibold"
+                  >
+                    {currentQuestion === selectedQuestions.length - 1 ? '🏁 Finalizar' : 'Próxima →'}
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>

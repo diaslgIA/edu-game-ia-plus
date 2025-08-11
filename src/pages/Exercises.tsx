@@ -1,273 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { CheckCircle, Clock, BookOpen, Trophy } from 'lucide-react';
-import { Progress } from "@/components/ui/progress"
-import { useToast } from "@/components/ui/use-toast"
-import { useNavigate } from 'react-router-dom';
-import MobileContainer from '@/components/MobileContainer';
-import SimulatedExam from '@/components/SimulatedExam';
-import { getSubjectLogo, getSubjectMentorAvatar, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
 
-const subjects = [
-  { name: 'portugues', displayName: 'Português', icon: '🇵🇹' },
-  { name: 'matematica', displayName: 'Matemática', icon: '➕' },
-  { name: 'historia', displayName: 'História', icon: '🏛️' },
-  { name: 'geografia', displayName: 'Geografia', icon: '🌍' },
-  { name: 'fisica', displayName: 'Física', icon: '⚛️' },
-  { name: 'quimica', displayName: 'Química', icon: '🧪' },
-  { name: 'biologia', displayName: 'Biologia', icon: '🧬' },
-  { name: 'filosofia', displayName: 'Filosofia', icon: '🤔' },
-  { name: 'sociologia', displayName: 'Sociologia', icon: '🧑‍🤝‍🧑' },
-  { name: 'ingles', displayName: 'Inglês', icon: '🇬🇧' },
-];
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Clock, Play, Trophy, Brain, Target } from 'lucide-react';
+import SimulatedExam from '@/components/SimulatedExam';
+import MobileContainer from '@/components/MobileContainer';
+import { getSubjectLogo, getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
 
 const Exercises = () => {
-  const [selectedSubject, setSelectedSubject] = useState<string>('');
-  const [selectedQuestionCount, setSelectedQuestionCount] = useState<number>(10);
-  const [showSimulationModal, setShowSimulationModal] = useState<boolean>(false);
-  const [showExam, setShowExam] = useState<boolean>(false);
-  const [examScore, setExamScore] = useState<number>(0);
-  const [examTimeSpent, setExamTimeSpent] = useState<number>(0);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [selectedExam, setSelectedExam] = useState<{
+    subject: string;
+    duration: number;
+    questionCount: number;
+    isEnemMode: boolean;
+  } | null>(null);
 
-  useEffect(() => {
-    if (examScore > 0) {
-      toast({
-        title: "Simulado Concluído!",
-        description: `Você obteve ${examScore} pontos em ${examTimeSpent} segundos.`,
-      })
-    }
-  }, [examScore, examTimeSpent, toast]);
+  const subjects = [
+    'matematica',
+    'portugues', 
+    'historia',
+    'geografia',
+    'fisica',
+    'quimica',
+    'biologia',
+    'filosofia',
+    'sociologia',
+    'ingles',
+    'espanhol',
+    'literatura'
+  ];
 
-  const getAvailableQuestionCounts = (subject: string) => {
-    // Subject exercises are always limited to 10 questions
-    return [10];
-  };
-
-  const getQuestionCountForEnem = () => {
-    // ENEM simulation can have multiple options
-    return [10, 20, 30];
-  };
-
-  const handleStartQuiz = (subject: string, count: number) => {
-    setSelectedSubject(subject);
-    setSelectedQuestionCount(count);
-    setShowSimulationModal(true);
-  };
-
-  const startSimulation = () => {
-    setShowSimulationModal(false);
-    setShowExam(true);
-  };
-
-  const getSimulationDuration = () => {
-    if (selectedSubject === 'todas') {
-      // ENEM simulation
-      switch (selectedQuestionCount) {
-        case 10: return 30; // 30 minutes
-        case 20: return 60; // 60 minutes
-        case 30: return 90; // 90 minutes
-        default: return 30;
-      }
-    } else {
-      // Subject-specific simulation - always 10 questions, 20 minutes
-      return 20;
-    }
+  const startExam = (subject: string, duration: number, questionCount: number = 10, isEnemMode: boolean = false) => {
+    setSelectedExam({ subject, duration, questionCount, isEnemMode });
   };
 
   const handleExamComplete = (score: number, timeSpent: number) => {
-    setExamScore(score);
-    setExamTimeSpent(timeSpent);
-    setShowExam(false);
+    setSelectedExam(null);
   };
 
+  if (selectedExam) {
+    return (
+      <SimulatedExam
+        subject={selectedExam.subject}
+        duration={selectedExam.duration}
+        questionCount={selectedExam.questionCount}
+        isEnemMode={selectedExam.isEnemMode}
+        onComplete={handleExamComplete}
+      />
+    );
+  }
+
   return (
-    <MobileContainer background="gradient">
-      <div className="p-4 space-y-6 pb-20">
-        <div className="text-center pt-6">
-          <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">📚 Exercícios & Simulados</h1>
-          <p className="text-white/90 text-base drop-shadow leading-relaxed">Pratique com exercícios específicos ou faça simulados completos</p>
-        </div>
-
-        {/* ENEM Simulation Section */}
-        <Card className="bg-white/98 backdrop-blur-sm border-0 shadow-2xl">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="flex items-center justify-center gap-3 text-2xl text-green-800 font-bold">
-              <Trophy className="text-green-600" size={28} />
-              🎯 Simulado ENEM
-            </CardTitle>
-            <p className="text-green-700 text-base font-medium mt-2">Questões de todas as matérias para preparação completa</p>
-          </CardHeader>
-          <CardContent className="space-y-6 px-6 pb-6">
-            <div className="grid grid-cols-3 gap-4">
-              {getQuestionCountForEnem().map((count) => (
-                <Button
-                  key={count}
-                  onClick={() => {
-                    setSelectedQuestionCount(count);
-                    setShowSimulationModal(true);
-                    setSelectedSubject('todas');
-                  }}
-                  className="h-16 text-base font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  size="lg"
-                >
-                  {count} questões
-                </Button>
-              ))}
-            </div>
-            <div className="text-center bg-green-50 p-4 rounded-xl border border-green-200">
-              <p className="text-green-700 text-sm font-semibold">
-                ⏱️ Tempo: 3 min/questão • 🎯 Multidisciplinar • 🏆 Formato ENEM
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Subject-specific exercises */}
-        <div className="grid gap-6">
-          {subjects.map((subject) => {
-            const questionCounts = getAvailableQuestionCounts(subject.name);
-            const logoUrl = getSubjectLogo(subject.name);
-            const mentorAvatar = getSubjectMentorAvatar(subject.name);
-            const subjectStyle = getSubjectStyle(subject.name);
-            const displayName = getSubjectDisplayName(subject.name);
-            
-            return (
-              <Card key={subject.name} className="bg-white/98 backdrop-blur-sm border-0 shadow-xl">
-                <CardHeader className="flex flex-row items-center space-y-0 pb-4">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center shadow-lg" 
-                         style={{ backgroundColor: subjectStyle.backgroundColor }}>
-                      {logoUrl ? (
-                        <img 
-                          src={logoUrl} 
-                          alt={`${displayName} mentor`}
-                          className="w-14 h-14 rounded-full object-cover border-2"
-                          style={{ borderColor: subjectStyle.color }}
-                        />
-                      ) : (
-                        <span className="text-2xl" style={{ color: subjectStyle.color }}>
-                          {mentorAvatar}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl font-bold mb-1" style={{ color: subjectStyle.color }}>
-                        {displayName}
-                      </CardTitle>
-                      <p className="text-gray-600 text-sm font-medium">10 questões específicas da matéria</p>
-                      <p className="text-xs text-gray-500 mt-1">Simulado focado • ⏱️ 20 minutos</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 px-6 pb-6">
-                  <div className="flex gap-3">
-                    {questionCounts.map((count) => (
-                      <Button
-                        key={count}
-                        onClick={() => handleStartQuiz(subject.name, count)}
-                        className="flex-1 h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-md"
-                        style={{ 
-                          backgroundColor: subjectStyle.color,
-                          '--hover-bg': `hsl(from ${subjectStyle.color} h s calc(l - 10%))` 
-                        } as React.CSSProperties}
-                      >
-                        <BookOpen className="mr-2" size={18} />
-                        {count} questões
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Simulation Modal */}
-        <Dialog open={showSimulationModal} onOpenChange={setShowSimulationModal}>
-          <DialogContent className="w-[95%] max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl text-center font-bold">
-                {selectedSubject === 'todas' ? '🎯 Simulado ENEM' : `📚 Simulado - ${getSubjectDisplayName(selectedSubject)}`}
-              </DialogTitle>
-              <DialogDescription className="text-center text-base font-medium">
-                {selectedSubject === 'todas' 
-                  ? `${selectedQuestionCount} questões multidisciplinares` 
-                  : `10 questões de ${getSubjectDisplayName(selectedSubject)}`
-                }
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-6">
-              <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                <h4 className="font-bold text-blue-800 mb-4 text-base">⏱️ Duração do Simulado</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
-                    <div className="text-2xl font-bold text-blue-600">{getSimulationDuration()} min</div>
-                    <div className="text-blue-700 text-sm font-medium">
-                      {selectedSubject === 'todas' ? `${selectedQuestionCount} questões` : '10 questões'}
-                    </div>
-                  </div>
-                </div>
+    <MobileContainer>
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-4xl mx-auto space-y-8">
+          
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
+                <Target className="text-white" size={32} />
               </div>
-
-              <div className="space-y-4">
-                <h4 className="font-bold text-gray-800 text-base">📋 Informações do Simulado</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                    <BookOpen size={16} className="text-blue-600" />
-                    <span className="font-medium">
-                      {selectedSubject === 'todas' ? `${selectedQuestionCount} questões` : '10 questões'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                    <Trophy size={16} className="text-green-600" />
-                    <span className="font-medium">10 pontos por acerto</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                    <Clock size={16} className="text-orange-600" />
-                    <span className="font-medium">Tempo limitado</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                    <CheckCircle size={16} className="text-purple-600" />
-                    <span className="font-medium">Resultado imediato</span>
-                  </div>
-                </div>
-              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Exercícios & Simulados
+              </h1>
             </div>
-
-            <DialogFooter className="flex gap-4">
-              <Button variant="outline" onClick={() => setShowSimulationModal(false)} className="flex-1 h-12 text-base font-medium">
-                Cancelar
-              </Button>
-              <Button 
-                onClick={startSimulation} 
-                className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <Clock className="mr-2" size={18} />
-                Iniciar Simulado
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* SimulatedExam Component */}
-        {showExam && (
-          <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 z-50 overflow-auto">
-            <SimulatedExam
-              subject={selectedSubject}
-              duration={getSimulationDuration()}
-              questionCount={selectedSubject === 'todas' ? selectedQuestionCount : 10}
-              isEnemMode={selectedSubject === 'todas'}
-              onComplete={handleExamComplete}
-            />
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Teste seus conhecimentos com simulados específicos por matéria ou desafie-se com o ENEM completo!
+            </p>
           </div>
-        )}
+
+          {/* ENEM Section */}
+          <Card className="border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 shadow-xl">
+            <CardHeader className="text-center bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-t-lg">
+              <CardTitle className="flex items-center justify-center gap-3 text-2xl">
+                <Trophy className="text-yellow-200" size={32} />
+                🏆 Simulado ENEM
+              </CardTitle>
+              <p className="text-yellow-100">Teste completo multidisciplinar</p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="text-center space-y-6">
+                <p className="text-gray-700 text-lg font-medium">
+                  Prepare-se para o ENEM com questões de todas as matérias!
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { count: 10, duration: 30, label: 'Rápido' },
+                    { count: 20, duration: 60, label: 'Médio' },
+                    { count: 30, duration: 90, label: 'Completo' }
+                  ].map((option) => (
+                    <Button
+                      key={option.count}
+                      onClick={() => startExam('enem', option.duration, option.count, true)}
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white p-6 h-auto flex flex-col gap-2 shadow-lg"
+                    >
+                      <div className="text-lg font-bold">{option.count} questões</div>
+                      <div className="text-sm flex items-center gap-1">
+                        <Clock size={14} />
+                        {option.duration} min • {option.label}
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subject Specific Exams */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Simulados por Matéria</h2>
+              <p className="text-gray-600">Foque em uma disciplina específica com 10 questões</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {subjects.map((subject) => {
+                const logoUrl = getSubjectLogo(subject);
+                const emoji = getSubjectEmoji(subject);
+                const style = getSubjectStyle(subject);
+                const displayName = getSubjectDisplayName(subject);
+
+                return (
+                  <Card key={subject} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 bg-white">
+                    <CardHeader className="text-center pb-4">
+                      <div className="flex flex-col items-center gap-3">
+                        <div 
+                          className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
+                          style={{ backgroundColor: style.backgroundColor }}
+                        >
+                          {logoUrl ? (
+                            <img 
+                              src={logoUrl} 
+                              alt={`${displayName} mentor`}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-2xl">{emoji}</span>
+                          )}
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl font-bold text-gray-800">{displayName}</CardTitle>
+                          <p className="text-sm text-gray-500 mt-1">10 questões específicas</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                          <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Brain size={14} />
+                              Questões
+                            </span>
+                            <span className="font-semibold">10</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Clock size={14} />
+                              Duração
+                            </span>
+                            <span className="font-semibold">25 min</span>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          onClick={() => startExam(subject, 25, 10)}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                        >
+                          <Play className="mr-2" size={16} />
+                          Iniciar Simulado
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </MobileContainer>
   );
