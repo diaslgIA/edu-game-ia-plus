@@ -34,6 +34,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [score, setScore] = useState(0);
+  const [finalTimeSpent, setFinalTimeSpent] = useState(0);
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string>('');
@@ -230,11 +231,15 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
     
     setScore(finalScore);
     const timeSpent = (duration * 60) - timeLeft;
+    setFinalTimeSpent(timeSpent);
     
     const examName = isEnemMode ? 'Simulado ENEM' : `Simulado ${getSubjectDisplayName(subject)}`;
     await saveQuizScore(examName, finalScore, selectedQuestions.length, timeSpent);
-    onComplete(finalScore, timeSpent);
     playSound('success');
+  };
+
+  const handleBackToExercises = () => {
+    onComplete(score, finalTimeSpent);
   };
 
   const formatTime = (seconds: number) => {
@@ -344,11 +349,11 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white py-8">
             <div className="flex items-center justify-between mb-4">
               <Button
-                onClick={() => navigate(-1)}
+                onClick={() => onComplete(0, 0)}
                 variant="ghost"
                 size="sm"
                 className="text-white/80 hover:text-white hover:bg-white/10"
-                aria-label="Voltar"
+                aria-label="Voltar aos exercícios"
               >
                 <ArrowLeft size={16} />
               </Button>
@@ -425,7 +430,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                 <div className="text-5xl font-bold text-green-600 mb-3">{score} pontos</div>
                 <div className="text-3xl text-blue-600 mb-6">{percentage}% de aproveitamento</div>
                 <div className="text-gray-700 mb-4">
-                  ⏱️ Tempo utilizado: <strong>{formatTime((duration * 60) - timeLeft)}</strong>
+                  ⏱️ Tempo utilizado: <strong>{formatTime(finalTimeSpent)}</strong>
                 </div>
                 <div className="text-sm text-gray-600">
                   {isEnemMode ? 'Simulado ENEM Multidisciplinar' : `Simulado de ${getSubjectDisplayName(subject)}`}
@@ -446,6 +451,15 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   <div className="text-sm text-red-700 font-medium">Erros</div>
                 </div>
               </div>
+
+              <Button 
+                onClick={handleBackToExercises}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 h-14 text-lg font-semibold"
+                size="lg"
+              >
+                <ArrowLeft className="mr-2" size={20} />
+                Voltar aos Exercícios
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -467,11 +481,11 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <Button
-                  onClick={() => navigate(-1)}
+                  onClick={() => onComplete(0, 0)}
                   variant="ghost"
                   size="sm"
                   className="text-white/80 hover:text-white hover:bg-white/10"
-                  aria-label="Voltar"
+                  aria-label="Voltar aos exercícios"
                 >
                   <ArrowLeft size={16} />
                 </Button>

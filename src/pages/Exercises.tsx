@@ -61,11 +61,11 @@ const Exercises = () => {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-between mb-4">
               <Button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/dashboard')}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2 bg-white/80 hover:bg-white border-blue-200 text-blue-700 hover:text-blue-800"
-                aria-label="Voltar à página anterior"
+                aria-label="Voltar à página principal"
               >
                 <ArrowLeft size={16} />
                 Voltar
