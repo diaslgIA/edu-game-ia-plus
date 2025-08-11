@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +38,24 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   // Only load subject questions when NOT in ENEM mode
   const { questions: subjectQuestions, loading: subjectLoading } = useSubjectQuestions(isEnemMode ? '' : subject);
 
+  // Helper function to format options properly
+  const formatOptions = (options: any): string[] => {
+    if (Array.isArray(options)) {
+      return options.filter(opt => opt && opt.length > 0);
+    }
+    
+    if (options && typeof options === 'object') {
+      return [
+        options.a || '',
+        options.b || '',
+        options.c || '',
+        options.d || ''
+      ].filter(opt => opt.length > 0);
+    }
+    
+    return [];
+  };
+
   // Stable function to load questions
   const loadQuestions = useCallback(async () => {
     if (selectedQuestions.length > 0) return; // Prevent reloading if already loaded
@@ -59,12 +76,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
         
         const formattedQuestions = questions.map(q => ({
           question: q.question,
-          options: Array.isArray(q.options) ? q.options : [
-            q.options?.a || '',
-            q.options?.b || '',
-            q.options?.c || '',
-            q.options?.d || ''
-          ].filter(opt => opt.length > 0),
+          options: formatOptions(q.options),
           correctAnswer: q.correct_answer,
           subject: q.subject || 'Multidisciplinar',
           explanation: q.explanation || '',
@@ -83,12 +95,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
           
           const formattedQuestions = selected.map(q => ({
             question: q.question,
-            options: Array.isArray(q.options) ? q.options : [
-              q.options?.a || '',
-              q.options?.b || '',
-              q.options?.c || '',
-              q.options?.d || ''
-            ].filter(opt => opt.length > 0),
+            options: formatOptions(q.options),
             correctAnswer: q.correct_answer,
             subject: q.subject || subject,
             explanation: q.explanation || '',
@@ -108,12 +115,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
           
           const formattedQuestions = generatedQuestions.map(q => ({
             question: q.question,
-            options: Array.isArray(q.options) ? q.options : [
-              q.options?.a || '',
-              q.options?.b || '',
-              q.options?.c || '',
-              q.options?.d || ''
-            ].filter(opt => opt.length > 0),
+            options: formatOptions(q.options),
             correctAnswer: q.correct_answer,
             subject: q.subject || subject,
             explanation: q.explanation || '',
@@ -202,7 +204,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="text-center space-y-6">
@@ -229,7 +231,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   // Error state
   if (loadingError) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="text-center space-y-6">
@@ -260,7 +262,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   // Empty questions state
   if (selectedQuestions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-8">
             <div className="text-center space-y-6">
@@ -294,7 +296,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
 
   if (!isStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white py-8">
             <CardTitle className="flex items-center justify-center gap-3 text-2xl font-bold">
@@ -354,7 +356,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
     const wrongAnswers = selectedQuestions.length - correctAnswers;
     
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-r from-green-500 to-blue-600 text-white py-8">
             <CardTitle className="flex items-center justify-center gap-3 text-2xl font-bold">
@@ -399,8 +401,8 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   const currentQ = selectedQuestions[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 to-purple-900 p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 z-50 overflow-y-auto">
+      <div className="max-w-2xl mx-auto min-h-full flex flex-col justify-center py-4">
         <Card className="shadow-2xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-6">
             <div className="flex justify-between items-center mb-6">
