@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getAllSubjectsQuestions } from '@/utils/generateQuestionsFromContent';
 
 interface SubjectQuestion {
   id: string;
@@ -26,17 +26,10 @@ export const useAllSubjectQuestions = () => {
       setLoading(true);
       console.log('Loading questions from all subjects...');
       
-      const { data, error } = await supabase
-        .from('subject_questions')
-        .select('*');
-
-      if (error) {
-        console.error('Error loading all questions:', error);
-        return;
-      }
-
-      console.log('Loaded questions from all subjects:', data?.length);
-      setQuestions(data || []);
+      // Use the new utility that can generate questions when needed
+      const allQuestions = await getAllSubjectsQuestions(100); // Load a good pool
+      setQuestions(allQuestions);
+      console.log('Loaded/generated questions from all subjects:', allQuestions.length);
     } catch (error) {
       console.error('Error loading all questions:', error);
     } finally {
@@ -45,6 +38,7 @@ export const useAllSubjectQuestions = () => {
   };
 
   const getRandomQuestions = (count: number = 10) => {
+    if (questions.length === 0) return [];
     const shuffled = [...questions].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(count, questions.length));
   };
