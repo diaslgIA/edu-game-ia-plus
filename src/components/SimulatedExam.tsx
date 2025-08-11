@@ -6,14 +6,21 @@ import { Progress } from '@/components/ui/progress';
 import { Clock, AlertTriangle, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
+import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 
 interface SimulatedExamProps {
   subject: string;
   duration: number; // duração em minutos
+  questionCount?: number; // número de questões (padrão: 10)
   onComplete: (score: number, timeSpent: number) => void;
 }
 
-const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComplete }) => {
+const SimulatedExam: React.FC<SimulatedExamProps> = ({ 
+  subject, 
+  duration, 
+  questionCount = 10, 
+  onComplete 
+}) => {
   const [timeLeft, setTimeLeft] = useState(duration * 60); // converter para segundos
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -22,33 +29,34 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
   const [score, setScore] = useState(0);
   const { saveQuizScore } = useQuizScore();
   const { playSound } = useSound();
+  const { questions: allQuestions, loading } = useSubjectQuestions(subject);
+  
+  // Selecionar questões aleatórias do banco de dados
+  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
 
-  // Simulando questões do ENEM
-  const questions = [
-    {
-      question: "O que é fotossíntese?",
-      options: [
-        "Processo de respiração das plantas",
-        "Processo de produção de energia usando luz solar",
-        "Processo de reprodução vegetal",
-        "Processo de crescimento das plantas"
-      ],
-      correctAnswer: 1,
-      subject: "Biologia"
-    },
-    {
-      question: "Qual é a fórmula da água?",
-      options: ["H2O", "H2O2", "CO2", "NaCl"],
-      correctAnswer: 0,
-      subject: "Química"
-    },
-    {
-      question: "Quem proclamou a independência do Brasil?",
-      options: ["Tiradentes", "Dom Pedro I", "Getúlio Vargas", "Juscelino Kubitschek"],
-      correctAnswer: 1,
-      subject: "História"
+  useEffect(() => {
+    if (allQuestions.length > 0 && selectedQuestions.length === 0) {
+      // Embaralhar e selecionar o número desejado de questões
+      const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, questionCount);
+      
+      // Formatar as questões para o formato esperado
+      const formattedQuestions = selected.map(q => ({
+        question: q.question,
+        options: Array.isArray(q.options) ? q.options : [
+          q.options?.a || '',
+          q.options?.b || '',
+          q.options?.c || '',
+          q.options?.d || ''
+        ].filter(opt => opt.length > 0),
+        correctAnswer: q.correct_answer,
+        subject: q.subject || subject,
+        explanation: q.explanation || ''
+      }));
+      
+      setSelectedQuestions(formattedQuestions);
     }
-  ];
+  }, [allQuestions, questionCount, subject, selectedQuestions.length]);
 
   useEffect(() => {
     if (isStarted && timeLeft > 0 && !isFinished) {
@@ -78,7 +86,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
   };
 
   const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < selectedQuestions.length - 1) {
       setCurrentQuestion(current => current + 1);
     } else {
       finishExam();
@@ -90,7 +98,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
     
     // Calcular pontuação
     let finalScore = 0;
-    questions.forEach((question, index) => {
+    selectedQuestions.forEach((question, index) => {
       if (answers[index] === question.correctAnswer) {
         finalScore += 10;
       }
@@ -99,7 +107,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
     setScore(finalScore);
     const timeSpent = (duration * 60) - timeLeft;
     
-    await saveQuizScore(`Simulado ${subject}`, finalScore, questions.length, timeSpent);
+    await saveQuizScore(`Simulado ${subject}`, finalScore, selectedQuestions.length, timeSpent);
     onComplete(finalScore, timeSpent);
     playSound('success');
   };
@@ -111,7 +119,21 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  // Loading state
+  if (loading || selectedQuestions.length === 0) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando questões do simulado...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const progress = ((currentQuestion + 1) / selectedQuestions.length) * 100;
   const timeProgress = ((duration * 60 - timeLeft) / (duration * 60)) * 100;
 
   if (!isStarted) {
@@ -129,7 +151,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
               <h3 className="font-semibold text-blue-800 mb-2">Instruções do Simulado</h3>
               <ul className="text-sm text-blue-700 space-y-1 text-left">
                 <li>• Duração: {duration} minutos</li>
-                <li>• {questions.length} questões</li>
+                <li>• {questionCount} questões de {subject}</li>
                 <li>• Cada questão vale 10 pontos</li>
                 <li>• Não é possível voltar às questões anteriores</li>
                 <li>• O simulado será finalizado automaticamente</li>
@@ -146,7 +168,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
   }
 
   if (isFinished) {
-    const percentage = Math.round((score / (questions.length * 10)) * 100);
+    const percentage = Math.round((score / (selectedQuestions.length * 10)) * 100);
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader className="text-center">
@@ -167,11 +189,15 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
             
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{answers.filter((answer, index) => answer === questions[index].correctAnswer).length}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {answers.filter((answer, index) => answer === selectedQuestions[index]?.correctAnswer).length}
+                </div>
                 <div className="text-sm text-gray-600">Acertos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{questions.length - answers.filter((answer, index) => answer === questions[index].correctAnswer).length}</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {selectedQuestions.length - answers.filter((answer, index) => answer === selectedQuestions[index]?.correctAnswer).length}
+                </div>
                 <div className="text-sm text-gray-600">Erros</div>
               </div>
             </div>
@@ -181,18 +207,18 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
     );
   }
 
-  const currentQ = questions[currentQuestion];
+  const currentQ = selectedQuestions[currentQuestion];
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Questão {currentQuestion + 1} de {questions.length}</span>
+            <span className="text-sm text-gray-600">Questão {currentQuestion + 1} de {selectedQuestions.length}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className={`${timeLeft < 300 ? 'text-red-500' : 'text-blue-500'}`} size={16} />
-            <span className={`font-mono ${timeLeft < 300 ? 'text-red-500' : 'text-blue-500'}`}>
+            <Clock className={`${timeLeft < 60 ? 'text-red-500' : 'text-blue-500'}`} size={16} />
+            <span className={`font-mono ${timeLeft < 60 ? 'text-red-500' : 'text-blue-500'}`}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -210,7 +236,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
         </div>
 
         <div className="space-y-3">
-          {currentQ.options.map((option, index) => (
+          {currentQ.options.map((option: string, index: number) => (
             <button
               key={index}
               onClick={() => selectAnswer(index)}
@@ -237,7 +263,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({ subject, duration, onComp
             disabled={answers[currentQuestion] === undefined}
             className="ml-auto"
           >
-            {currentQuestion === questions.length - 1 ? 'Finalizar' : 'Próxima'}
+            {currentQuestion === selectedQuestions.length - 1 ? 'Finalizar' : 'Próxima'}
           </Button>
         </div>
       </CardContent>

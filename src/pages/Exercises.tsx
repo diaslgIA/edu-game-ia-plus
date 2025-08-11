@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import SubjectQuiz from '@/components/SubjectQuiz';
 import MentorWelcome from '@/components/MentorWelcome';
+import SimulatedExam from '@/components/SimulatedExam';
 import { useUserProgress } from '@/hooks/useUserProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Clock, Play, Star, CheckCircle, Timer } from 'lucide-react';
 
-type ExerciseMode = 'selection' | 'quiz' | 'mentor-welcome';
+type ExerciseMode = 'selection' | 'quiz' | 'mentor-welcome' | 'simulado-setup' | 'simulado';
 
 const Exercises = () => {
   const navigate = useNavigate();
@@ -19,6 +21,8 @@ const Exercises = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [exerciseMode, setExerciseMode] = useState<ExerciseMode>('selection');
   const [showMentorWelcome, setShowMentorWelcome] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState<number>(10);
 
   useEffect(() => {
     const subjectFromUrl = searchParams.get('subject');
@@ -43,13 +47,20 @@ const Exercises = () => {
   ], []);
 
   const activities = useMemo(() => [
-    { id: 'quiz', name: t('activity_quiz_name'), icon: Trophy, color: 'bg-yellow-500', description: t('activity_quiz_desc') }
+    { id: 'quiz', name: t('activity_quiz_name'), icon: Trophy, color: 'bg-yellow-500', description: t('activity_quiz_desc') },
+    { id: 'simulado', name: 'Simulado', icon: Timer, color: 'bg-red-500', description: 'Teste cronometrado com questões da matéria' }
   ], [t]);
 
-  const handleSubjectSelect = (subjectName: string) => {
+  const handleActivitySelect = (activityId: string, subjectName: string) => {
     setSelectedSubject(subjectName);
-    setShowMentorWelcome(true);
-    setExerciseMode('mentor-welcome');
+    setSelectedActivity(activityId);
+    
+    if (activityId === 'quiz') {
+      setShowMentorWelcome(true);
+      setExerciseMode('mentor-welcome');
+    } else if (activityId === 'simulado') {
+      setExerciseMode('simulado-setup');
+    }
   };
 
   const handleMentorWelcomeClose = () => {
@@ -63,14 +74,108 @@ const Exercises = () => {
     }
     setExerciseMode('selection');
     setSelectedSubject(null);
+    setSelectedActivity(null);
+  };
+
+  const handleSimuladoComplete = async (score: number, timeSpent: number) => {
+    if (selectedSubject) {
+      await updateProgress(selectedSubject, 1);
+    }
+    setExerciseMode('selection');
+    setSelectedSubject(null);
+    setSelectedActivity(null);
   };
 
   const handleBackToSelection = () => {
     setExerciseMode('selection');
     setSelectedSubject(null);
+    setSelectedActivity(null);
+  };
+
+  const handleStartSimulado = () => {
+    setExerciseMode('simulado');
   };
 
   const currentSubject = subjects.find(s => s.name === selectedSubject);
+
+  // Tela de Setup do Simulado
+  if (exerciseMode === 'simulado-setup' && selectedSubject && currentSubject) {
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSelection}
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Simulado - {currentSubject.name}</h1>
+          </div>
+          
+          <div className="p-6 flex-1 flex items-center justify-center">
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 w-full max-w-md text-center">
+              <Timer className="mx-auto mb-4 text-red-400" size={48} />
+              <h3 className="text-xl font-bold text-white mb-4">
+                Configurar Simulado
+              </h3>
+              
+              <div className="mb-6">
+                <p className="text-white/80 mb-4">Escolha o número de questões:</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[10, 20, 30].map((count) => (
+                    <button
+                      key={count}
+                      onClick={() => setQuestionCount(count)}
+                      className={`p-3 rounded-xl border-2 transition-colors ${
+                        questionCount === count
+                          ? 'border-red-400 bg-red-400/20 text-white'
+                          : 'border-white/30 bg-white/10 text-white/80 hover:border-red-300'
+                      }`}
+                    >
+                      <div className="font-bold text-lg">{count}</div>
+                      <div className="text-xs">questões</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-red-50/20 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-red-200 mb-2">Informações:</h4>
+                <ul className="text-sm text-red-100 space-y-1 text-left">
+                  <li>• Tempo total: 5 minutos</li>
+                  <li>• {questionCount} questões de {currentSubject.name}</li>
+                  <li>• 10 pontos por resposta correta</li>
+                  <li>• Não é possível voltar às questões</li>
+                  <li>• Resultado salvo automaticamente</li>
+                </ul>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={handleBackToSelection}
+                  variant="outline"
+                  className="flex-1 border-white/30 text-white hover:bg-white/10"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleStartSimulado}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                >
+                  <Play className="mr-2" size={16} />
+                  Iniciar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
 
   // Tela de Boas-vindas do Mentor
   if (exerciseMode === 'mentor-welcome' && selectedSubject && currentSubject) {
@@ -87,6 +192,38 @@ const Exercises = () => {
     );
   }
 
+  // Tela do Simulado
+  if (exerciseMode === 'simulado' && selectedSubject && currentSubject) {
+    return (
+      <MobileContainer background="gradient">
+        <div className="flex flex-col h-full pb-20">
+          <div className="bg-white/15 backdrop-blur-md text-white p-4 flex items-center space-x-3 rounded-b-3xl shadow-xl">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackToSelection}
+              className="text-white p-2 hover:bg-white/20 rounded-xl"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-lg font-semibold">Simulado - {currentSubject.name}</h1>
+          </div>
+          
+          <div className="p-6 flex-1 min-h-0">
+            <SimulatedExam 
+              subject={selectedSubject}
+              duration={5}
+              questionCount={questionCount}
+              onComplete={handleSimuladoComplete}
+            />
+          </div>
+        </div>
+        <BottomNavigation />
+      </MobileContainer>
+    );
+  }
+
+  // Tela do Quiz
   if (exerciseMode === 'quiz' && selectedSubject && currentSubject) {
     return (
       <MobileContainer background="gradient">
@@ -137,7 +274,7 @@ const Exercises = () => {
 
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
           {/* Info Cards */}
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {activities.map((activity) => (
               <div key={activity.id} className="bg-white/15 backdrop-blur-md rounded-xl p-3 text-center shadow-lg">
                 <activity.icon className="w-6 h-6 text-white mx-auto mb-1" />
@@ -153,16 +290,13 @@ const Exercises = () => {
             <div className="grid grid-cols-1 gap-4">
               {subjects.map((subject) => {
                 const subjectProgress = getSubjectProgress(subject.name);
-                const hasLimitedContent = subject.exercises < 20;
                 
                 return (
                   <div
                     key={subject.id}
-                    onClick={() => handleSubjectSelect(subject.name)}
-                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105 shadow-lg border border-white/10 relative"
+                    className="bg-white/15 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/10"
                   >
-                                        
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 mb-4">
                       <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center text-2xl shadow-lg`}>
                         {subject.icon}
                       </div>
@@ -186,10 +320,24 @@ const Exercises = () => {
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="text-white/60 text-2xl">
-                        →
-                      </div>
+                    </div>
+                    
+                    {/* Atividades */}
+                    <div className="flex space-x-2">
+                      {activities.map((activity) => (
+                        <button
+                          key={activity.id}
+                          onClick={() => handleActivitySelect(activity.id, subject.name)}
+                          className={`flex-1 py-2 px-3 rounded-lg text-white text-sm font-medium transition-colors ${
+                            activity.id === 'quiz' 
+                              ? 'bg-yellow-500 hover:bg-yellow-600' 
+                              : 'bg-red-500 hover:bg-red-600'
+                          }`}
+                        >
+                          <activity.icon className="w-4 h-4 mx-auto mb-1" />
+                          {activity.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 );
