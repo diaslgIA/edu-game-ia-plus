@@ -22,7 +22,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   }, [isAuthenticated, navigate]);
 
@@ -32,7 +32,7 @@ const Login = () => {
     const success = await signIn(email, password);
     if (success) {
       playSound('success');
-      navigate('/dashboard');
+      navigate('/welcome');
     } else {
       playSound('error');
     }

@@ -7,16 +7,25 @@ import WelcomeMessage from '@/components/WelcomeMessage';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { profile, isAuthenticated } = useAuth();
+  const { profile, isAuthenticated, markFirstLoginComplete } = useAuth();
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && profile) {
+      // Se não é o primeiro login, redireciona direto para o dashboard
+      if (!profile.first_login) {
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Se é o primeiro login, mostra a tela de boas-vindas
       setShowWelcome(true);
     }
-  }, [isAuthenticated, profile]);
+  }, [isAuthenticated, profile, navigate]);
 
-  const handleWelcomeComplete = () => {
+  const handleWelcomeComplete = async () => {
+    // Marca o primeiro login como completo
+    await markFirstLoginComplete();
     setShowWelcome(false);
     navigate('/dashboard');
   };
