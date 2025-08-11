@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Clock, AlertTriangle, CheckCircle, XCircle, Trophy, BookOpen } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, XCircle, Trophy, BookOpen, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { getAllSubjectsQuestions, generateQuestionsFromContent } from '@/utils/generateQuestionsFromContent';
-import { getSubjectLogo, getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
+import { getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
 import QuizMentorFeedback from '@/components/quiz/QuizMentorFeedback';
 
 interface SimulatedExamProps {
@@ -25,6 +27,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   onComplete,
   isEnemMode = false
 }) => {
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(duration * 60);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -339,6 +342,18 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
       <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 flex items-center justify-center z-50">
         <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white py-8">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="ghost"
+                size="sm"
+                className="text-white/80 hover:text-white hover:bg-white/10"
+                aria-label="Voltar"
+              >
+                <ArrowLeft size={16} />
+              </Button>
+              <div className="flex-1" />
+            </div>
             <CardTitle className="flex items-center justify-center gap-3 text-2xl font-bold">
               <Clock className="text-white" size={32} />
               {isEnemMode ? 'Simulado ENEM' : `Simulado ${getSubjectDisplayName(subject)}`}
@@ -440,7 +455,6 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
 
   const currentQ = selectedQuestions[currentQuestion];
   const currentSubject = isEnemMode ? currentQ.subject : subject;
-  const logoUrl = getSubjectLogo(currentSubject);
   const emoji = getSubjectEmoji(currentSubject);
   const subjectStyle = getSubjectStyle(currentSubject);
   const isCorrect = answers[currentQuestion] === currentQ.correctAnswer;
@@ -452,6 +466,15 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
           <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-6">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => navigate(-1)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  aria-label="Voltar"
+                >
+                  <ArrowLeft size={16} />
+                </Button>
                 <span className="bg-white/20 px-4 py-2 rounded-full text-sm font-semibold">
                   📊 Questão {currentQuestion + 1} de {selectedQuestions.length}
                 </span>
@@ -484,15 +507,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   <div className="flex items-center gap-3 bg-blue-50 text-blue-800 px-4 py-3 rounded-full border border-blue-200">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center" 
                          style={{ backgroundColor: subjectStyle.backgroundColor }}>
-                      {logoUrl ? (
-                        <img 
-                          src={logoUrl} 
-                          alt={`${getSubjectDisplayName(currentSubject)} mentor`}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-sm">{emoji}</span>
-                      )}
+                      <span className="text-lg">{emoji}</span>
                     </div>
                     <div className="text-sm font-semibold">
                       <span>{getSubjectDisplayName(currentSubject)}</span>

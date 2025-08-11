@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Play, Trophy, Brain, Target } from 'lucide-react';
+import { Clock, Play, Trophy, Brain, Target, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import SimulatedExam from '@/components/SimulatedExam';
 import MobileContainer from '@/components/MobileContainer';
-import { getSubjectLogo, getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
+import { getSubjectEmoji, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
 
 const Exercises = () => {
+  const navigate = useNavigate();
   const [selectedExam, setSelectedExam] = useState<{
     subject: string;
     duration: number;
@@ -55,8 +57,22 @@ const Exercises = () => {
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
         <div className="max-w-4xl mx-auto space-y-8">
           
-          {/* Header */}
+          {/* Header with Back Button */}
           <div className="text-center space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 bg-white/80 hover:bg-white border-blue-200 text-blue-700 hover:text-blue-800"
+                aria-label="Voltar à página anterior"
+              >
+                <ArrowLeft size={16} />
+                Voltar
+              </Button>
+              <div className="flex-1" />
+            </div>
+            
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
                 <Target className="text-white" size={32} />
@@ -116,28 +132,19 @@ const Exercises = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {subjects.map((subject) => {
-                const logoUrl = getSubjectLogo(subject);
                 const emoji = getSubjectEmoji(subject);
                 const style = getSubjectStyle(subject);
                 const displayName = getSubjectDisplayName(subject);
 
                 return (
-                  <Card key={subject} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 bg-white">
+                  <Card key={subject} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 bg-white h-full">
                     <CardHeader className="text-center pb-4">
                       <div className="flex flex-col items-center gap-3">
                         <div 
                           className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
                           style={{ backgroundColor: style.backgroundColor }}
                         >
-                          {logoUrl ? (
-                            <img 
-                              src={logoUrl} 
-                              alt={`${displayName} mentor`}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-2xl">{emoji}</span>
-                          )}
+                          <span className="text-3xl">{emoji}</span>
                         </div>
                         <div>
                           <CardTitle className="text-xl font-bold text-gray-800">{displayName}</CardTitle>
@@ -145,8 +152,8 @@ const Exercises = () => {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-4">
+                    <CardContent className="pt-0 flex-1 flex flex-col">
+                      <div className="space-y-4 flex-1">
                         <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                           <div className="flex items-center justify-between text-sm text-gray-600">
                             <span className="flex items-center gap-1">
@@ -164,13 +171,15 @@ const Exercises = () => {
                           </div>
                         </div>
                         
-                        <Button 
-                          onClick={() => startExam(subject, 25, 10)}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
-                        >
-                          <Play className="mr-2" size={16} />
-                          Iniciar Simulado
-                        </Button>
+                        <div className="mt-auto">
+                          <Button 
+                            onClick={() => startExam(subject, 25, 10)}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                          >
+                            <Play className="mr-2" size={16} />
+                            Iniciar Simulado
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

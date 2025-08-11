@@ -20,48 +20,36 @@ const subjectLogos: Record<string, SubjectLogoData> = {
     emoji: '🧪',
   },
   biologia: {
-    imageUrl: '/lovable-uploads/darwin_acerto.png',
     emoji: '🧬',
   },
   geografia: {
     emoji: '🌍',
   },
   sociologia: {
-    imageUrl: '/lovable-uploads/florestan_acerto.png',
     emoji: '👥',
   },
   portugues: {
-    imageUrl: '/lovable-uploads/rui_barbosa_acerto.png',
     emoji: '📝',
   },
   literatura: {
     emoji: '📚',
   },
   ingles: {
-    imageUrl: '/lovable-uploads/shakespeare_acerto.png',
     emoji: '🇬🇧',
   },
   espanhol: {
     emoji: '🇪🇸',
   },
   filosofia: {
-    imageUrl: '/lovable-uploads/socrates_acerto.png',
     emoji: '🤔',
   },
   historia: {
-    imageUrl: '/lovable-uploads/zumbi_acerto.png',
     emoji: '📜',
   },
 };
 
 export const getSubjectLogo = (subject: string): string | null => {
-  const subjectKey = subject.toLowerCase();
-  const logoData = subjectLogos[subjectKey];
-  
-  if (logoData?.imageUrl) {
-    return logoData.imageUrl;
-  }
-  
+  // Return null to force using only emojis
   return null;
 };
 
@@ -69,6 +57,50 @@ export const getSubjectEmoji = (subject: string): string => {
   const subjectKey = subject.toLowerCase();
   const logoData = subjectLogos[subjectKey];
   return logoData?.emoji || '📚';
+};
+
+export const getSubjectFeedbackImage = (subject: string, isCorrect: boolean): string | null => {
+  const subjectKey = subject.toLowerCase();
+  const imageMap: Record<string, { correct: string; incorrect: string }> = {
+    biologia: {
+      correct: '/lovable-uploads/darwin_acerto.png',
+      incorrect: '/lovable-uploads/darwin_erro.png'
+    },
+    sociologia: {
+      correct: '/lovable-uploads/florestan_acerto.png',
+      incorrect: '/lovable-uploads/florestan_erro.png'
+    },
+    portugues: {
+      correct: '/lovable-uploads/rui_barbosa_acerto.png',
+      incorrect: '/lovable-uploads/rui_barbosa_erro.png'
+    },
+    ingles: {
+      correct: '/lovable-uploads/shakespeare_acerto.png',
+      incorrect: '/lovable-uploads/shakespeare_erro.png'
+    },
+    filosofia: {
+      correct: '/lovable-uploads/socrates_acerto.png',
+      incorrect: '/lovable-uploads/socrates_erro.png'
+    },
+    historia: {
+      correct: '/lovable-uploads/zumbi_acerto.png',
+      incorrect: '/lovable-uploads/zumbi_erro.png'
+    },
+    matematica: {
+      correct: '/lovable-uploads/16c5ab46-fefb-4500-b014-61ad1a76ecdb.png',
+      incorrect: '/lovable-uploads/aa8608bd-977f-4477-bc38-567090ca4dd5.png'
+    },
+    geografia: {
+      correct: '/lovable-uploads/4a6ab076-c5a3-4e8d-88e1-247c45c5c7b8.png',
+      incorrect: '/lovable-uploads/839f35ec-89e3-4693-ba7d-ad97d81aa349.png'
+    }
+  };
+
+  const images = imageMap[subjectKey];
+  if (images) {
+    return isCorrect ? images.correct : images.incorrect;
+  }
+  return null;
 };
 
 export const getSubjectMentorAvatar = (subject: string): string => {

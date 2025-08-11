@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 import { getMentorBySubject } from '@/data/subjectMentors';
+import { getSubjectFeedbackImage, getSubjectEmoji } from '@/data/subjectLogos';
 import { useMentorAffinity } from '@/hooks/useMentorAffinity';
 import { useSound } from '@/contexts/SoundContext';
 
@@ -24,6 +25,7 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
   const { getMentorAffinity, updateAffinity } = useMentorAffinity();
   const { playSound } = useSound();
   const [showAnimation, setShowAnimation] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (mentor && isVisible) {
@@ -39,6 +41,9 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
   const reactionMessage = isCorrect 
     ? mentor.encouragementMessages[Math.floor(Math.random() * mentor.encouragementMessages.length)]
     : "Não desanime! Cada erro é uma oportunidade de aprendizado. Vamos revisar juntos.";
+
+  const feedbackImage = getSubjectFeedbackImage(subject, isCorrect);
+  const subjectEmoji = getSubjectEmoji(subject);
 
   return (
     <div className={`bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-500 ${
@@ -62,9 +67,19 @@ const QuizMentorFeedback: React.FC<QuizMentorFeedbackProps> = ({
 
       {/* Mentor Reaction */}
       <div className="flex items-start space-x-3 mb-4">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 border-white"
+        <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 border-white overflow-hidden"
              style={{ backgroundColor: mentor.color, color: 'white' }}>
-          {mentor.avatar}
+          {feedbackImage && !imageError ? (
+            <img 
+              src={feedbackImage}
+              alt={`${mentor.name} ${isCorrect ? 'satisfeito' : 'pensativo'}`}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+            />
+          ) : (
+            <span className="text-lg">{mentor.avatar}</span>
+          )}
         </div>
         <div className="flex-1">
           <div className="bg-white/70 rounded-xl p-3 border-l-4" style={{ borderColor: mentor.color }}>
