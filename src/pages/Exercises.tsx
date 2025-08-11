@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useNavigate } from 'react-router-dom';
 import MobileContainer from '@/components/MobileContainer';
 import SimulatedExam from '@/components/SimulatedExam';
+import { getSubjectLogo, getSubjectMentorAvatar, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
 
 const subjects = [
   { name: 'portugues', displayName: 'Português', icon: '🇵🇹' },
@@ -131,15 +132,36 @@ const Exercises = () => {
         <div className="grid gap-6">
           {subjects.map((subject) => {
             const questionCounts = getAvailableQuestionCounts(subject.name);
+            const logoUrl = getSubjectLogo(subject.name);
+            const mentorAvatar = getSubjectMentorAvatar(subject.name);
+            const subjectStyle = getSubjectStyle(subject.name);
+            const displayName = getSubjectDisplayName(subject.name);
             
             return (
               <Card key={subject.name} className="bg-white/98 backdrop-blur-sm border-0 shadow-xl">
                 <CardHeader className="flex flex-row items-center space-y-0 pb-4">
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className="text-3xl">{subject.icon}</div>
-                    <div>
-                      <CardTitle className="text-xl text-gray-800 font-bold">{subject.displayName}</CardTitle>
+                    <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center shadow-lg" 
+                         style={{ backgroundColor: subjectStyle.backgroundColor }}>
+                      {logoUrl ? (
+                        <img 
+                          src={logoUrl} 
+                          alt={`${displayName} mentor`}
+                          className="w-14 h-14 rounded-full object-cover border-2"
+                          style={{ borderColor: subjectStyle.color }}
+                        />
+                      ) : (
+                        <span className="text-2xl" style={{ color: subjectStyle.color }}>
+                          {mentorAvatar}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl font-bold mb-1" style={{ color: subjectStyle.color }}>
+                        {displayName}
+                      </CardTitle>
                       <p className="text-gray-600 text-sm font-medium">10 questões específicas da matéria</p>
+                      <p className="text-xs text-gray-500 mt-1">Simulado focado • ⏱️ 20 minutos</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -149,15 +171,16 @@ const Exercises = () => {
                       <Button
                         key={count}
                         onClick={() => handleStartQuiz(subject.name, count)}
-                        className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-md"
+                        className="flex-1 h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          backgroundColor: subjectStyle.color,
+                          '--hover-bg': `hsl(from ${subjectStyle.color} h s calc(l - 10%))` 
+                        } as React.CSSProperties}
                       >
+                        <BookOpen className="mr-2" size={18} />
                         {count} questões
                       </Button>
                     ))}
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <span className="font-medium">📊 Simulado focado</span>
-                    <span className="font-medium">⏱️ 20 minutos</span>
                   </div>
                 </CardContent>
               </Card>
@@ -170,12 +193,12 @@ const Exercises = () => {
           <DialogContent className="w-[95%] max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl text-center font-bold">
-                {selectedSubject === 'todas' ? '🎯 Simulado ENEM' : `📚 Simulado - ${subjects.find(s => s.name === selectedSubject)?.displayName}`}
+                {selectedSubject === 'todas' ? '🎯 Simulado ENEM' : `📚 Simulado - ${getSubjectDisplayName(selectedSubject)}`}
               </DialogTitle>
               <DialogDescription className="text-center text-base font-medium">
                 {selectedSubject === 'todas' 
                   ? `${selectedQuestionCount} questões multidisciplinares` 
-                  : `10 questões de ${subjects.find(s => s.name === selectedSubject)?.displayName}`
+                  : `10 questões de ${getSubjectDisplayName(selectedSubject)}`
                 }
               </DialogDescription>
             </DialogHeader>

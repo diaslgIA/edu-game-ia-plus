@@ -7,6 +7,8 @@ import { useQuizScore } from '@/hooks/useQuizScore';
 import { useSound } from '@/contexts/SoundContext';
 import { useSubjectQuestions } from '@/hooks/useSubjectQuestions';
 import { getAllSubjectsQuestions, generateQuestionsFromContent } from '@/utils/generateQuestionsFromContent';
+import { getSubjectLogo, getSubjectMentorAvatar, getSubjectStyle, getSubjectDisplayName } from '@/data/subjectLogos';
+import QuizExplanation from '@/components/quiz/QuizExplanation';
 
 interface SimulatedExamProps {
   subject: string;
@@ -32,6 +34,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string>('');
+  const [showExplanation, setShowExplanation] = useState(false);
   const { saveQuizScore } = useQuizScore();
   const { playSound } = useSound();
   
@@ -193,10 +196,12 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answerIndex;
     setAnswers(newAnswers);
+    setShowExplanation(true);
     playSound('click');
   };
 
   const nextQuestion = () => {
+    setShowExplanation(false);
     if (currentQuestion < selectedQuestions.length - 1) {
       setCurrentQuestion(current => current + 1);
     } else {
@@ -217,7 +222,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
     setScore(finalScore);
     const timeSpent = (duration * 60) - timeLeft;
     
-    const examName = isEnemMode ? 'Simulado ENEM' : `Simulado ${subject}`;
+    const examName = isEnemMode ? 'Simulado ENEM' : `Simulado ${getSubjectDisplayName(subject)}`;
     await saveQuizScore(examName, finalScore, selectedQuestions.length, timeSpent);
     onComplete(finalScore, timeSpent);
     playSound('success');
@@ -243,7 +248,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                 <p className="text-gray-600">
                   {isEnemMode 
                     ? `Selecionando ${questionCount} questões multidisciplinares` 
-                    : `Carregando 10 questões de ${subject}`
+                    : `Carregando 10 questões de ${getSubjectDisplayName(subject)}`
                   }
                 </p>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -303,7 +308,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                 <p className="text-gray-600 text-sm leading-relaxed">
                   {isEnemMode 
                     ? 'Não conseguimos encontrar questões multidisciplinares no momento.'
-                    : `Não há questões disponíveis para ${subject} no momento.`
+                    : `Não há questões disponíveis para ${getSubjectDisplayName(subject)} no momento.`
                   }
                 </p>
                 <Button 
@@ -330,7 +335,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
           <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white py-8">
             <CardTitle className="flex items-center justify-center gap-3 text-2xl font-bold">
               <Clock className="text-white" size={32} />
-              {isEnemMode ? 'Simulado ENEM' : `Simulado ${subject}`}
+              {isEnemMode ? 'Simulado ENEM' : `Simulado ${getSubjectDisplayName(subject)}`}
             </CardTitle>
             <p className="text-blue-100 mt-2">
               {selectedQuestions.length} questões • {duration} minutos
@@ -347,7 +352,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   </div>
                   <div className="flex items-center gap-3 text-blue-800">
                     <BookOpen size={18} className="text-blue-600 flex-shrink-0" />
-                    <span><strong>{selectedQuestions.length} questões</strong> {isEnemMode ? 'multidisciplinares' : `de ${subject}`}</span>
+                    <span><strong>{selectedQuestions.length} questões</strong> {isEnemMode ? 'multidisciplinares' : `de ${getSubjectDisplayName(subject)}`}</span>
                   </div>
                   <div className="flex items-center gap-3 text-blue-800">
                     <Trophy size={18} className="text-blue-600 flex-shrink-0" />
@@ -402,7 +407,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   ⏱️ Tempo utilizado: <strong>{formatTime((duration * 60) - timeLeft)}</strong>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {isEnemMode ? 'Simulado ENEM Multidisciplinar' : `Simulado de ${subject}`}
+                  {isEnemMode ? 'Simulado ENEM Multidisciplinar' : `Simulado de ${getSubjectDisplayName(subject)}`}
                 </div>
               </div>
               
@@ -428,6 +433,11 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
   }
 
   const currentQ = selectedQuestions[currentQuestion];
+  const currentSubject = isEnemMode ? currentQ.subject : subject;
+  const logoUrl = getSubjectLogo(currentSubject);
+  const mentorAvatar = getSubjectMentorAvatar(currentSubject);
+  const subjectStyle = getSubjectStyle(currentSubject);
+  const isCorrect = answers[currentQuestion] === currentQ.correctAnswer;
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 p-4 z-50 overflow-y-auto">
@@ -465,16 +475,31 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
             <div className="space-y-8">
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-                    <BookOpen size={16} />
-                    {currentQ.subject}
-                    {currentQ.topic && (
-                      <>
-                        <span className="text-blue-600">•</span>
-                        <span className="text-blue-600">{currentQ.topic}</span>
-                      </>
-                    )}
-                  </span>
+                  <div className="flex items-center gap-3 bg-blue-50 text-blue-800 px-4 py-3 rounded-full border border-blue-200">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                         style={{ backgroundColor: subjectStyle.backgroundColor }}>
+                      {logoUrl ? (
+                        <img 
+                          src={logoUrl} 
+                          alt={`${getSubjectDisplayName(currentSubject)} mentor`}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm" style={{ color: subjectStyle.color }}>
+                          {mentorAvatar}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold">
+                      <span>{getSubjectDisplayName(currentSubject)}</span>
+                      {currentQ.topic && (
+                        <>
+                          <span className="text-blue-600 mx-1">•</span>
+                          <span className="text-blue-600">{currentQ.topic}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <h3 className="text-lg font-semibold mb-8 leading-relaxed text-gray-800 bg-gray-50 p-6 rounded-xl border border-gray-200">
                   {currentQ.question}
@@ -505,6 +530,16 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                   </button>
                 ))}
               </div>
+
+              {/* Answer Explanation */}
+              {showExplanation && answers[currentQuestion] !== undefined && (
+                <div className="mt-6">
+                  <QuizExplanation
+                    explanation={currentQ.explanation || "Explicação não disponível no momento."}
+                    isCorrect={isCorrect}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-between items-center pt-6 border-t-2 border-gray-200">
                 <div className="text-sm">
