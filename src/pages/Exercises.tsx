@@ -94,22 +94,22 @@ const Exercises = () => {
   return (
     <MobileContainer background="gradient">
       <div className="p-4 space-y-6 pb-20">
-        <div className="text-center pt-4">
-          <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">📚 Exercícios & Simulados</h1>
-          <p className="text-white/90 text-sm drop-shadow">Pratique com exercícios específicos ou faça simulados completos</p>
+        <div className="text-center pt-6">
+          <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">📚 Exercícios & Simulados</h1>
+          <p className="text-white/90 text-base drop-shadow leading-relaxed">Pratique com exercícios específicos ou faça simulados completos</p>
         </div>
 
         {/* ENEM Simulation Section */}
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="flex items-center justify-center gap-2 text-xl text-green-800">
-              <Trophy className="text-green-600" size={24} />
+        <Card className="bg-white/98 backdrop-blur-sm border-0 shadow-2xl">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="flex items-center justify-center gap-3 text-2xl text-green-800 font-bold">
+              <Trophy className="text-green-600" size={28} />
               🎯 Simulado ENEM
             </CardTitle>
-            <p className="text-green-700 text-sm">Questões de todas as matérias para preparação completa</p>
+            <p className="text-green-700 text-base font-medium mt-2">Questões de todas as matérias para preparação completa</p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+          <CardContent className="space-y-6 px-6 pb-6">
+            <div className="grid grid-cols-3 gap-4">
               {getQuestionCountForEnem().map((count) => (
                 <Button
                   key={count}
@@ -118,53 +118,53 @@ const Exercises = () => {
                     setShowSimulationModal(true);
                     setSelectedSubject('todas');
                   }}
-                  className="h-14 text-sm font-semibold bg-green-600 hover:bg-green-700 text-white"
-                  size="sm"
+                  className="h-16 text-base font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
                 >
                   {count} questões
                 </Button>
               ))}
             </div>
-            <div className="text-center">
-              <p className="text-green-600 text-xs font-medium">
-                ⏱️ Tempo: 3 min/questão • 🎯 Multidisciplinar
+            <div className="text-center bg-green-50 p-4 rounded-xl border border-green-200">
+              <p className="text-green-700 text-sm font-semibold">
+                ⏱️ Tempo: 3 min/questão • 🎯 Multidisciplinar • 🏆 Formato ENEM
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Subject-specific exercises */}
-        <div className="grid gap-4">
+        <div className="grid gap-6">
           {subjects.map((subject) => {
             const questionCounts = getAvailableQuestionCounts(subject.name);
             
             return (
-              <Card key={subject.name} className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center space-y-0 pb-3">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className="text-2xl">{subject.icon}</div>
+              <Card key={subject.name} className="bg-white/98 backdrop-blur-sm border-0 shadow-xl">
+                <CardHeader className="flex flex-row items-center space-y-0 pb-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div className="text-3xl">{subject.icon}</div>
                     <div>
-                      <CardTitle className="text-lg text-gray-800">{subject.displayName}</CardTitle>
-                      <p className="text-gray-600 text-xs">Exercícios específicos da matéria</p>
+                      <CardTitle className="text-xl text-gray-800 font-bold">{subject.displayName}</CardTitle>
+                      <p className="text-gray-600 text-sm font-medium">Exercícios específicos da matéria</p>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex gap-2">
+                <CardContent className="space-y-4 px-6 pb-6">
+                  <div className="flex gap-3">
                     {questionCounts.map((count) => (
                       <Button
                         key={count}
                         onClick={() => handleStartQuiz(subject.name, count)}
                         variant="outline"
-                        className="flex-1 h-10 text-sm font-medium hover:bg-blue-50 hover:border-blue-300"
+                        className="flex-1 h-12 text-base font-semibold hover:bg-blue-50 hover:border-blue-400 border-2 transition-all duration-200 hover:shadow-md"
                       >
                         {count} questões
                       </Button>
                     ))}
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>📊 Questões por matéria</span>
-                    <span>⏱️ 2 min/questão</span>
+                  <div className="flex justify-between text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <span className="font-medium">📊 Questões por matéria</span>
+                    <span className="font-medium">⏱️ 2 min/questão</span>
                   </div>
                 </CardContent>
               </Card>
@@ -174,12 +174,12 @@ const Exercises = () => {
 
         {/* Simulation Modal */}
         <Dialog open={showSimulationModal} onOpenChange={setShowSimulationModal}>
-          <DialogContent className="w-[95%] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95%] max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg text-center">
+              <DialogTitle className="text-xl text-center font-bold">
                 {selectedSubject === 'todas' ? '🎯 Simulado ENEM' : `📚 Simulado - ${subjects.find(s => s.name === selectedSubject)?.displayName}`}
               </DialogTitle>
-              <DialogDescription className="text-center text-sm">
+              <DialogDescription className="text-center text-base font-medium">
                 {selectedSubject === 'todas' 
                   ? `${selectedQuestionCount} questões multidisciplinares` 
                   : `${selectedQuestionCount} questões de ${subjects.find(s => s.name === selectedSubject)?.displayName}`
@@ -187,19 +187,19 @@ const Exercises = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-4">
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-3 text-sm">⏱️ Duração do Simulado</h4>
-                <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-6 py-6">
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                <h4 className="font-bold text-blue-800 mb-4 text-base">⏱️ Duração do Simulado</h4>
+                <div className="grid grid-cols-1 gap-4">
                   {selectedSubject === 'todas' ? (
                     [
                       { questions: 10, duration: 30 },
                       { questions: 20, duration: 60 },
                       { questions: 30, duration: 90 }
                     ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-3 rounded-lg border border-blue-300">
-                        <div className="text-xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-xs">{option.questions} questões</div>
+                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
+                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
+                        <div className="text-blue-700 text-sm font-medium">{option.questions} questões</div>
                       </div>
                     ))
                   ) : (
@@ -208,47 +208,47 @@ const Exercises = () => {
                       { questions: 20, duration: 40 },
                       { questions: 30, duration: 60 }
                     ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-3 rounded-lg border border-blue-300">
-                        <div className="text-xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-xs">{option.questions} questões</div>
+                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
+                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
+                        <div className="text-blue-700 text-sm font-medium">{option.questions} questões</div>
                       </div>
                     ))
                   )}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-800 text-sm">📋 Informações do Simulado</h4>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <BookOpen size={14} className="text-blue-600" />
-                    <span>{selectedQuestionCount} questões</span>
+              <div className="space-y-4">
+                <h4 className="font-bold text-gray-800 text-base">📋 Informações do Simulado</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                    <BookOpen size={16} className="text-blue-600" />
+                    <span className="font-medium">{selectedQuestionCount} questões</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Trophy size={14} className="text-green-600" />
-                    <span>10 pontos por acerto</span>
+                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                    <Trophy size={16} className="text-green-600" />
+                    <span className="font-medium">10 pontos por acerto</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-orange-600" />
-                    <span>Tempo limitado</span>
+                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                    <Clock size={16} className="text-orange-600" />
+                    <span className="font-medium">Tempo limitado</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={14} className="text-purple-600" />
-                    <span>Resultado imediato</span>
+                  <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                    <CheckCircle size={16} className="text-purple-600" />
+                    <span className="font-medium">Resultado imediato</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowSimulationModal(false)} className="flex-1 h-10 text-sm">
+            <DialogFooter className="flex gap-4">
+              <Button variant="outline" onClick={() => setShowSimulationModal(false)} className="flex-1 h-12 text-base font-medium">
                 Cancelar
               </Button>
               <Button 
                 onClick={startSimulation} 
-                className="flex-1 h-10 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                <Clock className="mr-1" size={16} />
+                <Clock className="mr-2" size={18} />
                 Iniciar Simulado
               </Button>
             </DialogFooter>
@@ -257,16 +257,14 @@ const Exercises = () => {
 
         {/* SimulatedExam Component */}
         {showExam && (
-          <div className="fixed inset-0 bg-white z-50 overflow-auto">
-            <div className="min-h-screen py-4 px-2">
-              <SimulatedExam
-                subject={selectedSubject}
-                duration={getSimulationDuration()}
-                questionCount={selectedQuestionCount}
-                isEnemMode={selectedSubject === 'todas'}
-                onComplete={handleExamComplete}
-              />
-            </div>
+          <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-purple-900 z-50 overflow-auto">
+            <SimulatedExam
+              subject={selectedSubject}
+              duration={getSimulationDuration()}
+              questionCount={selectedQuestionCount}
+              isEnemMode={selectedSubject === 'todas'}
+              onComplete={handleExamComplete}
+            />
           </div>
         )}
       </div>
