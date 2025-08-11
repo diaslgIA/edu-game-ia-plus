@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Progress } from "@/components/ui/progress";
 
 interface QuizZumbiFeedbackProps {
@@ -17,12 +17,6 @@ export const QuizZumbiFeedback = ({
   affinityLevel,
   affinityProgress 
 }: QuizZumbiFeedbackProps) => {
-  const [imageError, setImageError] = useState(false);
-  
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
   return (
     <div className="w-full bg-secondary/30 rounded-lg p-4 space-y-4 animate-fade-in">
       {/* Cabeçalho de Resultado */}
@@ -36,21 +30,11 @@ export const QuizZumbiFeedback = ({
       <div className="flex items-start gap-4">
         {/* Personagem Zumbi dos Palmares */}
         <div className="w-28 h-28 flex-shrink-0">
-          {!imageError ? (
-            <img 
-              src={isCorrect ? "/lovable-uploads/e53ff35a-0eda-4f4c-a123-bfd9828491fa.png" : "/lovable-uploads/d147eb3e-36e6-485f-8e5b-73dac30bdfc0.png"}
-              alt={`Zumbi dos Palmares ${isCorrect ? 'comemorando' : 'reflexivo'}`}
-              className="w-full h-full object-contain rounded-lg"
-              onError={handleImageError}
-            />
-          ) : (
-            <div className="w-full h-full bg-amber-100 dark:bg-amber-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-4xl mb-1">{isCorrect ? "⚔️" : "🛡️"}</div>
-                <div className="text-xs font-bold text-amber-700 dark:text-amber-300">Zumbi</div>
-              </div>
-            </div>
-          )}
+          <img 
+            src={isCorrect ? "/lovable-uploads/zumbi_acerto.png" : "/lovable-uploads/zumbi_erro.png"}
+            alt={`Zumbi dos Palmares ${isCorrect ? 'comemorando' : 'reflexivo'}`}
+            className="w-full h-full object-contain rounded-lg"
+          />
         </div>
 
         {/* Balão de Fala */}
