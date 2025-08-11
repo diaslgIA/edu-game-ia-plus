@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { SubjectContent } from '@/types/subject-content';
+import { getDbSubjects } from '@/utils/subjectMapping';
 
 interface GeneratedQuestion {
   id: string;
@@ -15,38 +16,62 @@ interface GeneratedQuestion {
 
 export const generateQuestionsFromContent = async (subject: string, count: number): Promise<GeneratedQuestion[]> => {
   try {
+    console.log(`Generating ${count} questions from content for subject: ${subject}`);
+    
+    const dbSubjects = getDbSubjects(subject);
+    console.log('Mapped subject names for content:', dbSubjects);
+    
     // Get content from the subject to generate questions
     const { data: contentData, error } = await supabase
       .from('subject_contents')
       .select('*')
-      .eq('subject', subject)
-      .limit(10);
+      .in('subject', dbSubjects)
+      .limit(20);
 
     if (error || !contentData || contentData.length === 0) {
-      console.log(`No content found for subject: ${subject}`);
-      return [];
-    }
-
-    const generatedQuestions: GeneratedQuestion[] = [];
-
-    for (let i = 0; i < count && i < contentData.length; i++) {
-      const content = contentData[i % contentData.length];
+      console.log(`No content found for subject: ${subject}, trying fallback search`);
       
-      // Generate a simple question based on the content
-      const question = generateQuestionFromContent(content, i);
-      if (question) {
-        generatedQuestions.push(question);
+      // Fallback: try with ilike for partial matches
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('subject_contents')
+        .select('*')
+        .ilike('subject', `%${subject}%`)
+        .limit(20);
+      
+      if (fallbackError || !fallbackData || fallbackData.length === 0) {
+        console.log(`No content found even with fallback for: ${subject}`);
+        return [];
       }
+      
+      console.log(`Found ${fallbackData.length} content items with fallback search`);
+      return generateQuestionsFromContentData(fallbackData, subject, count);
     }
 
-    return generatedQuestions;
+    console.log(`Found ${contentData.length} content items for question generation`);
+    return generateQuestionsFromContentData(contentData, subject, count);
   } catch (error) {
     console.error('Error generating questions from content:', error);
     return [];
   }
 };
 
-const generateQuestionFromContent = (content: any, index: number): GeneratedQuestion | null => {
+const generateQuestionsFromContentData = (contentData: any[], subject: string, count: number): GeneratedQuestion[] => {
+  const generatedQuestions: GeneratedQuestion[] = [];
+
+  for (let i = 0; i < count && i < contentData.length; i++) {
+    const content = contentData[i % contentData.length];
+    
+    // Generate a simple question based on the content
+    const question = generateQuestionFromContent(content, i, subject);
+    if (question) {
+      generatedQuestions.push(question);
+    }
+  }
+
+  return generatedQuestions;
+};
+
+const generateQuestionFromContent = (content: any, index: number, subject: string): GeneratedQuestion | null => {
   if (!content.title || !content.description) return null;
 
   // Convert key_concepts safely
@@ -97,7 +122,7 @@ const generateQuestionFromContent = (content: any, index: number): GeneratedQues
 
   return {
     id: `generated_${content.id}_${index}`,
-    subject: content.subject,
+    subject: subject,
     topic: content.topic_name || content.title,
     question: template.question,
     options: template.options,
@@ -109,6 +134,8 @@ const generateQuestionFromContent = (content: any, index: number): GeneratedQues
 
 export const getAllSubjectsQuestions = async (requestedCount: number) => {
   try {
+    console.log(`Loading ${requestedCount} questions from all subjects for ENEM simulation`);
+    
     // First, try to get questions from database
     const { data: dbQuestions, error } = await supabase
       .from('subject_questions')
@@ -120,16 +147,21 @@ export const getAllSubjectsQuestions = async (requestedCount: number) => {
     }
 
     const questions = dbQuestions || [];
+    console.log(`Found ${questions.length} total questions in database`);
     
     // If we have enough questions, return them shuffled
     if (questions.length >= requestedCount) {
-      return [...questions].sort(() => Math.random() - 0.5).slice(0, requestedCount);
+      const shuffled = [...questions].sort(() => Math.random() - 0.5).slice(0, requestedCount);
+      console.log(`Using ${shuffled.length} questions from database for ENEM simulation`);
+      return shuffled;
     }
 
     // If not enough, generate additional questions from content
     const subjects = ['matematica', 'portugues', 'historia', 'geografia', 'fisica', 'quimica', 'biologia', 'filosofia', 'sociologia', 'ingles'];
     const neededQuestions = requestedCount - questions.length;
     const questionsPerSubject = Math.ceil(neededQuestions / subjects.length);
+
+    console.log(`Need ${neededQuestions} more questions, generating ${questionsPerSubject} per subject`);
 
     const generatedQuestions = [];
     for (const subject of subjects) {
@@ -141,7 +173,11 @@ export const getAllSubjectsQuestions = async (requestedCount: number) => {
 
     // Combine database and generated questions
     const allQuestions = [...questions, ...generatedQuestions.slice(0, neededQuestions)];
-    return [...allQuestions].sort(() => Math.random() - 0.5).slice(0, requestedCount);
+    const finalQuestions = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, requestedCount);
+    
+    console.log(`Final ENEM question mix: ${questions.length} from DB + ${generatedQuestions.slice(0, neededQuestions).length} generated = ${finalQuestions.length} total`);
+    
+    return finalQuestions;
 
   } catch (error) {
     console.error('Error getting all subjects questions:', error);

@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubjectContent } from '@/types/subject-content';
+import { getDbSubjects } from '@/utils/subjectMapping';
 
 interface ContentProgress {
   content_id: string;
@@ -22,10 +22,13 @@ export const useSubjectContents = (subject: string) => {
     const fetchContents = async () => {
       setLoading(true);
       try {
+        const dbSubjects = getDbSubjects(subject);
+        console.log('Fetching contents for mapped subjects:', dbSubjects);
+        
         const { data, error } = await supabase
           .from('subject_contents')
           .select('*')
-          .eq('subject', subject)
+          .in('subject', dbSubjects)
           .order('order_index', { ascending: true });
 
         if (error) {
@@ -33,6 +36,7 @@ export const useSubjectContents = (subject: string) => {
         }
 
         if (data) {
+          console.log(`Found ${data.length} content items for ${subject}`);
           setContents(data as SubjectContent[]);
         }
       } finally {
@@ -43,28 +47,28 @@ export const useSubjectContents = (subject: string) => {
     fetchContents();
   }, [subject]);
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      if (!user) return;
+  const fetchProgress = async () => {
+    if (!user) return;
 
-      try {
-        const { data, error } = await supabase
-          .from('content_progress')
-          .select('*')
-          .eq('user_id', user.id);
+    try {
+      const { data, error } = await supabase
+        .from('content_progress')
+        .select('*')
+        .eq('user_id', user.id);
 
-        if (error) {
-          console.error('Erro ao buscar progresso:', error);
-        }
-
-        if (data) {
-          setProgress(data as ContentProgress[]);
-        }
-      } catch (error) {
+      if (error) {
         console.error('Erro ao buscar progresso:', error);
       }
-    };
 
+      if (data) {
+        setProgress(data as ContentProgress[]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar progresso:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchProgress();
   }, [user]);
 

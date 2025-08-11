@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +19,7 @@ const subjects = [
   { name: 'fisica', displayName: 'Física', icon: '⚛️' },
   { name: 'quimica', displayName: 'Química', icon: '🧪' },
   { name: 'biologia', displayName: 'Biologia', icon: '🧬' },
-   { name: 'filosofia', displayName: 'Filosofia', icon: '🤔' },
+  { name: 'filosofia', displayName: 'Filosofia', icon: '🤔' },
   { name: 'sociologia', displayName: 'Sociologia', icon: '🧑‍🤝‍🧑' },
   { name: 'ingles', displayName: 'Inglês', icon: '🇬🇧' },
 ];
@@ -45,12 +44,12 @@ const Exercises = () => {
   }, [examScore, examTimeSpent, toast]);
 
   const getAvailableQuestionCounts = (subject: string) => {
-    // Always return the standard options for better UX
-    return [10, 20, 30];
+    // Subject exercises are always limited to 10 questions
+    return [10];
   };
 
   const getQuestionCountForEnem = () => {
-    // Fixed options for ENEM simulation
+    // ENEM simulation can have multiple options
     return [10, 20, 30];
   };
 
@@ -75,13 +74,8 @@ const Exercises = () => {
         default: return 30;
       }
     } else {
-      // Subject-specific simulation
-      switch (selectedQuestionCount) {
-        case 10: return 20; // 20 minutes
-        case 20: return 40; // 40 minutes
-        case 30: return 60; // 60 minutes
-        default: return 20;
-      }
+      // Subject-specific simulation - always 10 questions, 20 minutes
+      return 20;
     }
   };
 
@@ -145,7 +139,7 @@ const Exercises = () => {
                     <div className="text-3xl">{subject.icon}</div>
                     <div>
                       <CardTitle className="text-xl text-gray-800 font-bold">{subject.displayName}</CardTitle>
-                      <p className="text-gray-600 text-sm font-medium">Exercícios específicos da matéria</p>
+                      <p className="text-gray-600 text-sm font-medium">10 questões específicas da matéria</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -155,16 +149,15 @@ const Exercises = () => {
                       <Button
                         key={count}
                         onClick={() => handleStartQuiz(subject.name, count)}
-                        variant="outline"
-                        className="flex-1 h-12 text-base font-semibold hover:bg-blue-50 hover:border-blue-400 border-2 transition-all duration-200 hover:shadow-md"
+                        className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-md"
                       >
                         {count} questões
                       </Button>
                     ))}
                   </div>
                   <div className="flex justify-between text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <span className="font-medium">📊 Questões por matéria</span>
-                    <span className="font-medium">⏱️ 2 min/questão</span>
+                    <span className="font-medium">📊 Simulado focado</span>
+                    <span className="font-medium">⏱️ 20 minutos</span>
                   </div>
                 </CardContent>
               </Card>
@@ -182,7 +175,7 @@ const Exercises = () => {
               <DialogDescription className="text-center text-base font-medium">
                 {selectedSubject === 'todas' 
                   ? `${selectedQuestionCount} questões multidisciplinares` 
-                  : `${selectedQuestionCount} questões de ${subjects.find(s => s.name === selectedSubject)?.displayName}`
+                  : `10 questões de ${subjects.find(s => s.name === selectedSubject)?.displayName}`
                 }
               </DialogDescription>
             </DialogHeader>
@@ -191,29 +184,12 @@ const Exercises = () => {
               <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                 <h4 className="font-bold text-blue-800 mb-4 text-base">⏱️ Duração do Simulado</h4>
                 <div className="grid grid-cols-1 gap-4">
-                  {selectedSubject === 'todas' ? (
-                    [
-                      { questions: 10, duration: 30 },
-                      { questions: 20, duration: 60 },
-                      { questions: 30, duration: 90 }
-                    ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
-                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-sm font-medium">{option.questions} questões</div>
-                      </div>
-                    ))
-                  ) : (
-                    [
-                      { questions: 10, duration: 20 },
-                      { questions: 20, duration: 40 },
-                      { questions: 30, duration: 60 }
-                    ].filter(option => option.questions === selectedQuestionCount).map((option) => (
-                      <div key={option.duration} className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
-                        <div className="text-2xl font-bold text-blue-600">{option.duration} min</div>
-                        <div className="text-blue-700 text-sm font-medium">{option.questions} questões</div>
-                      </div>
-                    ))
-                  )}
+                  <div className="text-center bg-white p-4 rounded-lg border border-blue-300 shadow-sm">
+                    <div className="text-2xl font-bold text-blue-600">{getSimulationDuration()} min</div>
+                    <div className="text-blue-700 text-sm font-medium">
+                      {selectedSubject === 'todas' ? `${selectedQuestionCount} questões` : '10 questões'}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -222,7 +198,9 @@ const Exercises = () => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
                     <BookOpen size={16} className="text-blue-600" />
-                    <span className="font-medium">{selectedQuestionCount} questões</span>
+                    <span className="font-medium">
+                      {selectedSubject === 'todas' ? `${selectedQuestionCount} questões` : '10 questões'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
                     <Trophy size={16} className="text-green-600" />
@@ -261,7 +239,7 @@ const Exercises = () => {
             <SimulatedExam
               subject={selectedSubject}
               duration={getSimulationDuration()}
-              questionCount={selectedQuestionCount}
+              questionCount={selectedSubject === 'todas' ? selectedQuestionCount : 10}
               isEnemMode={selectedSubject === 'todas'}
               onComplete={handleExamComplete}
             />

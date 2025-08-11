@@ -84,16 +84,20 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
         }));
         setSelectedQuestions(formattedQuestions);
       } else {
-        // Subject specific mode
-        console.log('Loading questions for subject:', subject);
+        // Subject specific mode - always target 10 questions
+        const targetCount = 10;
+        console.log(`Loading ${targetCount} questions for subject:`, subject);
+        
+        let finalQuestions = [];
         
         // First try to use existing subject questions
         if (subjectQuestions.length > 0) {
-          const availableCount = Math.min(questionCount, subjectQuestions.length);
+          console.log(`Found ${subjectQuestions.length} questions in database for ${subject}`);
+          const availableCount = Math.min(targetCount, subjectQuestions.length);
           const shuffled = [...subjectQuestions].sort(() => Math.random() - 0.5);
           const selected = shuffled.slice(0, availableCount);
           
-          const formattedQuestions = selected.map(q => ({
+          finalQuestions = selected.map(q => ({
             question: q.question,
             options: formatOptions(q.options),
             correctAnswer: q.correct_answer,
@@ -102,18 +106,29 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
             topic: q.topic || ''
           }));
           
-          setSelectedQuestions(formattedQuestions);
-        } else {
-          // Fallback: generate questions from content if no database questions available
-          console.log('No database questions found, generating from content...');
-          const generatedQuestions = await generateQuestionsFromContent(subject, questionCount);
-          
-          if (generatedQuestions.length === 0) {
-            setLoadingError(`Não foi possível carregar questões de ${subject}. Tente outra matéria.`);
-            return;
+          // If we have fewer than target, generate more from content
+          if (finalQuestions.length < targetCount) {
+            console.log(`Need ${targetCount - finalQuestions.length} more questions, generating from content...`);
+            const generatedQuestions = await generateQuestionsFromContent(subject, targetCount - finalQuestions.length);
+            
+            const formattedGenerated = generatedQuestions.map(q => ({
+              question: q.question,
+              options: formatOptions(q.options),
+              correctAnswer: q.correct_answer,
+              subject: q.subject || subject,
+              explanation: q.explanation || '',
+              topic: q.topic || ''
+            }));
+            
+            finalQuestions = [...finalQuestions, ...formattedGenerated];
+            console.log(`Final mix: ${selected.length} from DB + ${formattedGenerated.length} generated = ${finalQuestions.length} total`);
           }
+        } else {
+          // No database questions, generate all from content
+          console.log('No database questions found, generating all from content...');
+          const generatedQuestions = await generateQuestionsFromContent(subject, targetCount);
           
-          const formattedQuestions = generatedQuestions.map(q => ({
+          finalQuestions = generatedQuestions.map(q => ({
             question: q.question,
             options: formatOptions(q.options),
             correctAnswer: q.correct_answer,
@@ -122,8 +137,22 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
             topic: q.topic || ''
           }));
           
-          setSelectedQuestions(formattedQuestions);
+          console.log(`Generated ${finalQuestions.length} questions from content`);
         }
+        
+        if (finalQuestions.length === 0) {
+          setLoadingError(`Não foi possível carregar questões de ${subject}. Tente outra matéria.`);
+          return;
+        }
+        
+        // Always ensure we have exactly targetCount questions (even if we have to repeat some)
+        while (finalQuestions.length < targetCount && finalQuestions.length > 0) {
+          const questionsToAdd = Math.min(targetCount - finalQuestions.length, finalQuestions.length);
+          const additionalQuestions = finalQuestions.slice(0, questionsToAdd);
+          finalQuestions = [...finalQuestions, ...additionalQuestions];
+        }
+        
+        setSelectedQuestions(finalQuestions.slice(0, targetCount));
       }
     } catch (error) {
       console.error('Error loading questions:', error);
@@ -214,7 +243,7 @@ const SimulatedExam: React.FC<SimulatedExamProps> = ({
                 <p className="text-gray-600">
                   {isEnemMode 
                     ? `Selecionando ${questionCount} questões multidisciplinares` 
-                    : `Carregando ${questionCount} questões de ${subject}`
+                    : `Carregando 10 questões de ${subject}`
                   }
                 </p>
                 <div className="w-full bg-gray-200 rounded-full h-2">

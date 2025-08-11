@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getDbSubjects } from '@/utils/subjectMapping';
 
 interface SubjectQuestion {
   id: string;
@@ -28,17 +29,25 @@ export const useSubjectQuestions = (subject: string) => {
       setLoading(true);
       console.log('Loading questions for subject:', subject);
       
+      const dbSubjects = getDbSubjects(subject);
+      console.log('Mapped subject names:', dbSubjects);
+      
       const { data, error } = await supabase
         .from('subject_questions')
         .select('*')
-        .eq('subject', subject);
+        .in('subject', dbSubjects);
 
       if (error) {
         console.error('Error loading questions:', error);
         return;
       }
 
-      console.log('Loaded questions from database:', data);
+      console.log('Loaded questions from database:', data?.length || 0, 'questions');
+      console.log('Questions by subject:', data?.reduce((acc, q) => {
+        acc[q.subject] = (acc[q.subject] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
+      
       setQuestions(data || []);
     } catch (error) {
       console.error('Error loading questions:', error);
