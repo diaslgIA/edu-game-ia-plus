@@ -432,9 +432,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <QuizFlorestenFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
-          points={xpGained}
+          xpGained={xpGained}
           affinityLevel={1}
           affinityProgress={25}
+          isVisible={showMentorFeedback}
         />
       );
     } else if (subjectLower === 'português' || subjectLower === 'portugues') {
@@ -452,9 +453,10 @@ const SubjectQuiz: React.FC<SubjectQuizProps> = ({ subject, topic, onComplete, o
         <QuizZumbiFeedback
           isCorrect={isCorrect}
           explanation={question.explanation}
-          points={xpGained}
+          xpGained={xpGained}
           affinityLevel={1}
           affinityProgress={30}
+          isVisible={showMentorFeedback}
         />
       );
     } else {

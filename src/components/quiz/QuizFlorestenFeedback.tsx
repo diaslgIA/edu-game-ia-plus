@@ -5,18 +5,22 @@ import { Progress } from "@/components/ui/progress";
 interface QuizFlorestenFeedbackProps {
   isCorrect: boolean;
   explanation: string;
-  points: number;
+  xpGained: number;
   affinityLevel: number;
   affinityProgress: number;
+  isVisible: boolean;
 }
 
 export const QuizFlorestenFeedback = ({ 
   isCorrect, 
   explanation, 
-  points, 
+  xpGained, 
   affinityLevel,
-  affinityProgress 
+  affinityProgress,
+  isVisible 
 }: QuizFlorestenFeedbackProps) => {
+  if (!isVisible) return null;
+
   return (
     <div className="w-full bg-secondary/30 rounded-lg p-4 space-y-4 animate-fade-in">
       {/* Cabeçalho de Resultado */}
@@ -28,7 +32,7 @@ export const QuizFlorestenFeedback = ({
 
       {/* Linha com Personagem + Balão de Fala */}
       <div className="flex items-start gap-4">
-        {/* Personagem Florestan - SEM FALLBACK */}
+        {/* Personagem Florestan */}
         <div className="w-28 h-28 flex-shrink-0">
           <img 
             src={isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png"}
@@ -37,6 +41,10 @@ export const QuizFlorestenFeedback = ({
             onError={(e) => {
               console.error('Erro ao carregar imagem do Florestan:', isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png");
               console.error('Event:', e);
+              console.error('Image element:', e.target);
+            }}
+            onLoad={() => {
+              console.log('Imagem do Florestan carregada com sucesso:', isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png");
             }}
           />
         </div>
@@ -68,7 +76,7 @@ export const QuizFlorestenFeedback = ({
       <div className="bg-primary/5 rounded-lg p-3 space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-primary">
-            +{points} XP
+            +{xpGained} XP
           </span>
           <span className="text-xs text-muted-foreground">
             Afinidade com Florestan: Nível {affinityLevel}
