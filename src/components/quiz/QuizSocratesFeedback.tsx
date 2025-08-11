@@ -37,13 +37,17 @@ const QuizSocratesFeedback: React.FC<QuizSocratesFeedbackProps> = ({
 
       {/* 2. Linha com Personagem + Balão de Fala */}
       <div className="flex items-center gap-3">
-        {/* Imagem do Sócrates */}
+        {/* Imagem do Sócrates - SEM FALLBACK */}
         <div className="w-32 h-32 flex-shrink-0 p-1">
           <img 
             src={socratesImage} 
-            alt="Sócrates" 
+            alt={`Sócrates ${isCorrect ? 'aprovando' : 'reflexivo'}`}
             className="w-full h-full object-cover pixel-art"
             style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              console.error('Erro ao carregar imagem do Sócrates:', socratesImage);
+              console.error('Event:', e);
+            }}
           />
         </div>
 

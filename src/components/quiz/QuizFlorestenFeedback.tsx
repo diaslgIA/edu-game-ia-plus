@@ -28,12 +28,16 @@ export const QuizFlorestenFeedback = ({
 
       {/* Linha com Personagem + Balão de Fala */}
       <div className="flex items-start gap-4">
-        {/* Personagem Florestan */}
+        {/* Personagem Florestan - SEM FALLBACK */}
         <div className="w-28 h-28 flex-shrink-0">
           <img 
             src={isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png"}
             alt={`Florestan ${isCorrect ? 'confiante' : 'reflexivo'}`}
             className="w-full h-full object-contain rounded-lg"
+            onError={(e) => {
+              console.error('Erro ao carregar imagem do Florestan:', isCorrect ? "/lovable-uploads/florestan_acerto.png" : "/lovable-uploads/florestan_erro.png");
+              console.error('Event:', e);
+            }}
           />
         </div>
 

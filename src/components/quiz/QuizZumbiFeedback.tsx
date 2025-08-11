@@ -28,12 +28,16 @@ export const QuizZumbiFeedback = ({
 
       {/* Linha com Personagem + Balão de Fala */}
       <div className="flex items-start gap-4">
-        {/* Personagem Zumbi dos Palmares */}
+        {/* Personagem Zumbi dos Palmares - SEM FALLBACK */}
         <div className="w-28 h-28 flex-shrink-0">
           <img 
             src={isCorrect ? "/lovable-uploads/zumbi_acerto.png" : "/lovable-uploads/zumbi_erro.png"}
             alt={`Zumbi dos Palmares ${isCorrect ? 'comemorando' : 'reflexivo'}`}
             className="w-full h-full object-contain rounded-lg"
+            onError={(e) => {
+              console.error('Erro ao carregar imagem do Zumbi:', isCorrect ? "/lovable-uploads/zumbi_acerto.png" : "/lovable-uploads/zumbi_erro.png");
+              console.error('Event:', e);
+            }}
           />
         </div>
 
