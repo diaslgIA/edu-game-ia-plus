@@ -272,9 +272,13 @@ const SubjectTopics = () => {
                     const StatusIcon = contentStatus.icon;
                     
                     return (
-                      <div key={topic.id} onClick={() => handleTopicClick(topic.id)} className="bg-white/15 backdrop-blur-md rounded-2xl p-4 cursor-pointer hover:bg-white/25 transition-all hover:scale-105">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative">
+                      <div 
+                        key={topic.id} 
+                        onClick={() => handleTopicClick(topic.id)} 
+                        className="bg-white/15 backdrop-blur-md rounded-2xl p-5 cursor-pointer hover:bg-white/25 transition-all hover:scale-[1.02] shadow-lg border border-white/10"
+                      >
+                        <div className="flex items-start space-x-4">
+                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg relative flex-shrink-0">
                             <StatusIcon size={24} />
                             {progress && progress.completed && (
                               <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -282,23 +286,30 @@ const SubjectTopics = () => {
                               </div>
                             )}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h3 className="font-bold text-white text-lg">{topic.title}</h3>
-                              <span className={`text-xs px-2 py-1 rounded-full ${contentStatus.bgColor} ${contentStatus.color}`}>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h3 className="font-bold text-white text-base leading-tight">{topic.title}</h3>
+                              <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${contentStatus.bgColor} ${contentStatus.color}`}>
                                 {contentStatus.label}
                               </span>
                             </div>
-                            <p className="text-white/80 text-sm mb-2">
-                              {topic.description || 'Descrição em breve...'}
+                            
+                            <p className="text-white/80 text-sm mb-3 leading-relaxed break-words">
+                              {topic.description && topic.description.length > 80 
+                                ? `${topic.description.substring(0, 80)}...` 
+                                : topic.description || 'Descrição em breve...'}
                             </p>
-                            <div className="flex items-center space-x-4 text-xs">
+                            
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                               <div className="flex items-center space-x-1">
                                 <Clock size={12} className="text-blue-400" />
                                 <span className="text-white/80">{topic.estimated_time} min</span>
                               </div>
                               <div className="flex items-center space-x-1">
-                                <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>{getDifficultyText(topic.difficulty_level)}</span>
+                                <span className={`text-xs ${getDifficultyColor(topic.difficulty_level)}`}>
+                                  {getDifficultyText(topic.difficulty_level)}
+                                </span>
                               </div>
                               {progress && progress.progress_percentage > 0 && (
                                 <div className="flex items-center space-x-1">
@@ -309,7 +320,10 @@ const SubjectTopics = () => {
                               )}
                             </div>
                           </div>
-                          <div className="text-white/60"><Play size={20} /></div>
+                          
+                          <div className="text-white/60 flex-shrink-0 mt-1">
+                            <Play size={20} />
+                          </div>
                         </div>
                       </div>
                     );

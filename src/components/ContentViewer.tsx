@@ -230,71 +230,108 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {!processedContent ? (
-          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10 text-center">
-            <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-4">Conteúdo em Desenvolvimento</h2>
-            <div className="text-white/90 text-base leading-relaxed space-y-3">
-              <p>Este conteúdo está sendo preparado pela nossa equipe pedagógica.</p>
-              <p className="text-sm text-white/70">
-                Em breve você terá acesso ao material completo com explicações detalhadas, 
-                exemplos práticos e exercícios interativos.
-              </p>
-              {content.description && (
-                <div className="mt-4 p-3 bg-white/10 rounded-lg">
-                  <h3 className="font-semibold mb-2">Sobre este tópico:</h3>
-                  <p className="text-sm">{content.description}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : currentSectionData ? (
-          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10">
-            <div className="flex items-center space-x-2 mb-4">
-              <h2 className="text-xl font-bold text-white">{currentSectionData.title}</h2>
-              {statusInfo.status === 'basic' && (
-                <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
-                  Versão Básica
-                </span>
-              )}
-            </div>
-            <div className="text-white/90 text-base leading-relaxed whitespace-pre-line">
-              {currentSectionData.content || 'Conteúdo sendo preparado...'}
-            </div>
-            
-            {/* Informações adicionais se disponíveis */}
-            {processedContent.data.length === 1 && (
-              <div className="mt-6 space-y-4">
-                {content.examples && (
-                  <div className="p-4 bg-white/10 rounded-lg">
-                    <h3 className="font-semibold text-white mb-2 flex items-center">
-                      <BookOpen size={16} className="mr-2" />
-                      Exemplos
-                    </h3>
-                    <p className="text-white/80 text-sm whitespace-pre-line">{content.examples}</p>
-                  </div>
-                )}
-                
-                {content.study_tips && (
-                  <div className="p-4 bg-white/10 rounded-lg">
-                    <h3 className="font-semibold text-white mb-2 flex items-center">
-                      <FileText size={16} className="mr-2" />
-                      Dicas de Estudo
-                    </h3>
-                    <p className="text-white/80 text-sm whitespace-pre-line">{content.study_tips}</p>
+      <div className="flex-1 overflow-y-auto p-4 pb-6">
+        <div className="max-w-full space-y-6">
+          {!processedContent ? (
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10 text-center min-h-[300px] flex flex-col justify-center">
+              <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-white mb-4">Conteúdo em Desenvolvimento</h2>
+              <div className="text-white/90 text-base leading-relaxed space-y-3 max-w-2xl mx-auto">
+                <p>Este conteúdo está sendo preparado pela nossa equipe pedagógica.</p>
+                <p className="text-sm text-white/70">
+                  Em breve você terá acesso ao material completo com explicações detalhadas, 
+                  exemplos práticos e exercícios interativos.
+                </p>
+                {content.description && (
+                  <div className="mt-4 p-4 bg-white/10 rounded-lg text-left">
+                    <h3 className="font-semibold mb-3 text-white">Sobre este tópico:</h3>
+                    <p className="text-sm text-white/90 leading-relaxed">{content.description}</p>
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10 text-center">
-            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-4">Erro ao Carregar Conteúdo</h2>
-            <p className="text-white/90">Ocorreu um erro ao processar este conteúdo. Tente novamente.</p>
-          </div>
-        )}
+            </div>
+          ) : currentSectionData ? (
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-lg border border-white/10 overflow-hidden">
+              {/* Header da seção */}
+              <div className="p-6 border-b border-white/10 bg-white/5">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h2 className="text-xl font-bold text-white leading-tight flex-1">{currentSectionData.title}</h2>
+                  {statusInfo.status === 'basic' && (
+                    <span className="text-xs bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full whitespace-nowrap">
+                      Versão Básica
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Conteúdo principal */}
+              <div className="p-6">
+                <div className="text-white/90 text-base leading-relaxed space-y-4">
+                  {currentSectionData.content ? (
+                    <div className="whitespace-pre-line break-words">
+                      {currentSectionData.content.split('\n').map((paragraph: string, index: number) => (
+                        paragraph.trim() ? (
+                          <p key={index} className="mb-3 last:mb-0">{paragraph}</p>
+                        ) : (
+                          <div key={index} className="h-2"></div>
+                        )
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-white/70 italic">Conteúdo sendo preparado...</p>
+                  )}
+                </div>
+                
+                {/* Informações adicionais se disponíveis */}
+                {processedContent.data.length === 1 && (
+                  <div className="mt-8 space-y-6">
+                    {content.examples && (
+                      <div className="p-5 bg-white/10 rounded-xl border border-white/5">
+                        <h3 className="font-semibold text-white mb-4 flex items-center text-lg">
+                          <BookOpen size={18} className="mr-2" />
+                          Exemplos
+                        </h3>
+                        <div className="text-white/85 text-sm leading-relaxed space-y-3">
+                          {content.examples.split('\n').map((example: string, index: number) => (
+                            example.trim() ? (
+                              <p key={index} className="break-words">{example}</p>
+                            ) : (
+                              <div key={index} className="h-2"></div>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {content.study_tips && (
+                      <div className="p-5 bg-white/10 rounded-xl border border-white/5">
+                        <h3 className="font-semibold text-white mb-4 flex items-center text-lg">
+                          <FileText size={18} className="mr-2" />
+                          Dicas de Estudo
+                        </h3>
+                        <div className="text-white/85 text-sm leading-relaxed space-y-3">
+                          {content.study_tips.split('\n').map((tip: string, index: number) => (
+                            tip.trim() ? (
+                              <p key={index} className="break-words">{tip}</p>
+                            ) : (
+                              <div key={index} className="h-2"></div>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/10 text-center min-h-[200px] flex flex-col justify-center">
+              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-white mb-4">Erro ao Carregar Conteúdo</h2>
+              <p className="text-white/90">Ocorreu um erro ao processar este conteúdo. Tente novamente.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action Buttons */}
